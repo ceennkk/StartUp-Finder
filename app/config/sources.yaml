@@ -1,0 +1,41 @@
+# Source-specific configuration. Every URL below was taken from the sources' own sitemaps/pages.
+exist:
+  success_story_sitemap: https://exist.de/success-story-sitemap1.xml
+  wp_api: https://exist.de/wp-json/wp/v2/success-story   # public WordPress REST API; used for publication dates only
+  min_interval_seconds: 2
+  lookback_days: 7
+  programs:                      # keywords decide which programme a story text mentions (relationship stays "unverified")
+    - {key: gruendungsstipendium, name: "EXIST-Gründungsstipendium", url: "https://exist.de/programm/gruendungsstipendium/", keywords: ["Gründungsstipendium"]}
+    - {key: forschungstransfer, name: "EXIST-Forschungstransfer", url: "https://exist.de/programm/forschungstransfer/", keywords: ["Forschungstransfer"]}
+    - {key: women, name: "EXIST-Women", url: "https://exist.de/programm/women/", keywords: ["exist women", "EXIST-Women"]}
+
+# University sources. Each entry is one explicit page/feed (no crawling). robots.txt is always checked.
+# connector: rss | sitemap (url_pattern + JSON-LD per page) | jsonld (urls) | html (CSS selectors)
+# kind: press_release | news | research_project   plugin: optional name from app/adapters/university/plugins.py
+universities:
+  sources:
+    - key: kit
+      name: Karlsruher Institut für Technologie
+      aliases: ["KIT", "Karlsruhe Institute of Technology"]
+      country: DE
+      website: https://www.kit.edu
+      connector: rss
+      url: https://kit.edu/pi.rss                # offered by KIT on its press releases page
+      kind: press_release
+      plugin: kit
+    - key: tu_darmstadt
+      name: Technische Universität Darmstadt
+      aliases: ["TU Darmstadt"]
+      country: DE
+      website: https://www.tu-darmstadt.de
+      connector: rss
+      url: https://www.tu-darmstadt.de/universitaet/aktuelles_meldungen/neues_aus_der_tu_rss.de.rss
+      kind: news
+    # Template for a university without a feed (disabled until a real page has been checked against its robots.txt):
+    # - key: example_uni
+    #   name: Example University
+    #   connector: html
+    #   url: https://example.edu/research/projects
+    #   kind: research_project
+    #   selectors: {item: "article.project", link: "a", title: "h3", summary: "p", date: "time"}
+    #   enabled: false
