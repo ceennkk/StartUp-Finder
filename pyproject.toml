@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ventureradar-ingestion"
+name = "startup-finder"
 version = "0.1.0"
-description = "VentureRadar data ingestion: collectors, normalization and storage in PostgreSQL"
+description = "Startup Finder API and VentureRadar data collectors"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -24,18 +24,19 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = [
-    "pytest>=8.3",
-    "respx>=0.21",
-]
+live = ["graphiti-core>=0.17,<1"]
+dev = ["pytest>=8.3", "respx>=0.21"]
 
 [project.scripts]
+startup-graph = "startup_finder.cli:main"
+startup-finder = "startup_finder.__main__:main"
 ventureradar = "app.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["app*"]
+include = ["startup_finder*", "app*"]
 
 [tool.setuptools.package-data]
+startup_finder = ["static/*.html", "static/*.js"]
 app = ["config/*.yaml"]
 
 [tool.pytest.ini_options]
