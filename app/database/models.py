@@ -281,6 +281,64 @@ class Observation(Base):
     )
 
 
+class LLMAnalysis(Base):
+    __tablename__ = "llm_analyses"
+    __table_args__ = (
+        CheckConstraint(
+            "validation_status IN ('valid', 'invalid', 'failed')",
+            name="validation_status_valid",
+        ),
+        CheckConstraint(
+            "(validation_status = 'valid' AND result_json IS NOT NULL AND error_code IS NULL) "
+            "OR (validation_status IN ('invalid', 'failed') "
+            "AND result_json IS NULL AND error_code IS NOT NULL)",
+            name="result_matches_status",
+        ),
+        CheckConstraint(
+            "error_code IS NULL OR error_code IN "
+            "('provider_error', 'output_schema_invalid', 'evidence_invalid')",
+            name="error_code_valid",
+        ),
+        CheckConstraint(
+            "(input_tokens IS NULL OR input_tokens >= 0) "
+            "AND (output_tokens IS NULL OR output_tokens >= 0) "
+            "AND (estimated_cost_usd IS NULL OR estimated_cost_usd >= 0)",
+            name="usage_nonnegative",
+        ),
+        Index(
+            "uq_llm_analyses_success_identity",
+            "source_record_id",
+            "input_hash",
+            "analyzer_version",
+            "prompt_version",
+            "schema_version",
+            "provider_name",
+            "model_version",
+            unique=True,
+            postgresql_where=text("validation_status = 'valid'"),
+        ),
+        Index("ix_llm_analyses_source_record", "source_record_id", "created_at"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    source_record_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("source_records.id", ondelete="CASCADE"), nullable=False
+    )
+    input_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    analyzer_version: Mapped[str] = mapped_column(String(100), nullable=False)
+    prompt_version: Mapped[str] = mapped_column(String(100), nullable=False)
+    schema_version: Mapped[str] = mapped_column(String(100), nullable=False)
+    provider_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    model_version: Mapped[str] = mapped_column(String(100), nullable=False)
+    result_json: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    validation_status: Mapped[str] = mapped_column(String(20), nullable=False)
+    input_tokens: Mapped[int | None] = mapped_column(Integer)
+    output_tokens: Mapped[int | None] = mapped_column(Integer)
+    estimated_cost_usd: Mapped[Decimal | None] = mapped_column(Numeric(12, 6))
+    error_code: Mapped[str | None] = mapped_column(String(50))
+    created_at: Mapped[datetime] = _created_at()
+
+
 class SyncState(Base):
     """Incremental-sync watermarks, advanced only after a successful run."""
 

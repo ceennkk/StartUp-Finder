@@ -27,6 +27,8 @@ from app.database.repositories import IngestionRepository
 from app.discovery.engine import load_discovery, persist_discovery
 from app.discovery.types import DiscoveryResult
 from app.ingestion.types import RunResult
+from app.llm.allowlist import LLMAllowlistConfigurationError
+from app.llm.runner import LLMRunSummary, load_llm_source_records, preview_llm_records, run_llm_records
 from app.utils.logging import configure_logging
 
 EXIT_OK, EXIT_FAILED, EXIT_CONFIG, EXIT_DB = 0, 1, 2, 3
@@ -36,9 +38,11 @@ cli = typer.Typer(help="VentureRadar data ingestion", no_args_is_help=True, add_
 database_cli = typer.Typer(help="Database management", no_args_is_help=True)
 ingestion_cli = typer.Typer(help="Ingestion run information", no_args_is_help=True)
 discovery_cli = typer.Typer(help="Discovery over already ingested data", no_args_is_help=True)
+llm_cli = typer.Typer(help="LLM analysis of explicitly approved source fields", no_args_is_help=True)
 cli.add_typer(database_cli, name="database")
 cli.add_typer(ingestion_cli, name="ingestion")
 cli.add_typer(discovery_cli, name="discovery")
+cli.add_typer(llm_cli, name="llm")
 
 
 @cli.callback()
@@ -220,6 +224,62 @@ def discovery_run(
     except SQLAlchemyError as exc:
         raise _fail(f"database error: {exc}", EXIT_DB) from exc
     typer.echo(json.dumps(_discovery_payload(result, mode="run", persisted=persisted), indent=2))
+
+
+def _llm_payload(summary: LLMRunSummary) -> dict[str, Any]:
+    return {
+        "mode": summary.mode,
+        **summary.counts(),
+        "records": [
+            {
+                "source_record_id": str(item.source_record_id),
+                "source": item.source_name,
+                "status": item.status,
+                "reason": item.reason,
+            }
+            for item in summary.outcomes
+        ],
+    }
+
+
+@llm_cli.command("preview")
+def llm_preview(
+    source: Annotated[str | None, typer.Option(help="Filter by source name")] = None,
+    limit: Annotated[int, typer.Option(min=1, help="Maximum source records to inspect")] = 500,
+) -> None:
+    """Preview allowlist eligibility; does not call a provider or write to the database."""
+    try:
+        factory = make_session_factory(make_engine())
+        with factory() as session:
+            records = load_llm_source_records(session, source_name=source, limit=limit)
+            summary = preview_llm_records(records)
+    except DatabaseConfigError as exc:
+        raise _fail(str(exc), EXIT_CONFIG) from exc
+    except LLMAllowlistConfigurationError as exc:
+        raise _fail(str(exc), EXIT_CONFIG) from exc
+    except SQLAlchemyError as exc:
+        raise _fail(f"database error: {exc}", EXIT_DB) from exc
+    typer.echo(json.dumps(_llm_payload(summary), indent=2))
+
+
+@llm_cli.command("run")
+def llm_run(
+    source: Annotated[str | None, typer.Option(help="Filter by source name")] = None,
+    limit: Annotated[int, typer.Option(min=1, help="Maximum source records to inspect")] = 500,
+) -> None:
+    """Explicitly persist validated analyses for records approved by the production allowlist."""
+    try:
+        factory = make_session_factory(make_engine())
+        with session_scope(factory) as session:
+            records = load_llm_source_records(session, source_name=source, limit=limit)
+            summary = run_llm_records(session, records)
+    except DatabaseConfigError as exc:
+        raise _fail(str(exc), EXIT_CONFIG) from exc
+    except LLMAllowlistConfigurationError as exc:
+        raise _fail(str(exc), EXIT_CONFIG) from exc
+    except SQLAlchemyError as exc:
+        raise _fail(f"database error: {exc}", EXIT_DB) from exc
+    typer.echo(json.dumps(_llm_payload(summary), indent=2))
 
 
 def _exit_code(results: list[RunResult]) -> int:
