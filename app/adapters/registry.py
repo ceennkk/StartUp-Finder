@@ -14,6 +14,8 @@ ADAPTERS: dict[str, str] = {
     "huggingface": "app.adapters.huggingface:HuggingFaceAdapter",
     "exist": "app.adapters.exist:ExistAdapter",
     "university": "app.adapters.university:UniversityAdapter",
+    "cordis": "app.adapters.cordis:CordisAdapter",
+    "manual_import": "app.adapters.manual_import:ManualImportAdapter",
 }
 
 

@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     hf_token: str | None = None
 
     contact_email: str | None = None
+    manual_import_dir: str | None = None
     http_timeout_seconds: float = Field(default=30.0, gt=0)
     http_max_retries: int = Field(default=5, ge=0)
 
@@ -32,8 +33,8 @@ class Settings(BaseSettings):
 
     @property
     def user_agent(self) -> str:
-        contact = f" (mailto:{self.contact_email})" if self.contact_email else ""
-        return f"VentureRadar-Ingestion/0.1{contact}"
+        contact = f"; contact: {self.contact_email}" if self.contact_email else ""
+        return f"VentureRadar-Ingestion/0.1 (research collector for public sources{contact})"
 
 
 @lru_cache

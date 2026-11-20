@@ -34,7 +34,10 @@ class AdapterConfigError(RuntimeError):
 
 
 class BaseAdapter(ABC):
-    """Collect original source records; entity and relation extraction runs downstream."""
+    """Template for collectors: fetch -> store raw -> normalize -> validate -> store normalized.
+
+    Subclasses implement `fetch` and `normalize`; `run` handles runs, errors, dry-run and limits.
+    """
 
     name: ClassVar[str]
     source: ClassVar[SourceSpec]
@@ -64,8 +67,9 @@ class BaseAdapter(ABC):
     def fetch(self) -> Iterator[RawRecord]:
         """Yield raw records, handling pagination and incremental windows."""
 
-    # Adapter normalize() methods are retained for offline inspection only.
-    # The production ingestion path never calls or persists their graph drafts.
+    @abstractmethod
+    def normalize(self, raw: RawRecord) -> NormalizedBundle:
+        """Map one raw record to the common model. Unknown values stay None."""
 
     # --- default hooks ----------------------------------------------------
 
@@ -129,6 +133,11 @@ class BaseAdapter(ABC):
     def _run_dry(self, result: RunResult) -> None:
         for raw in self._limited():
             result.records_fetched += 1
+            try:
+                self.validate(self.normalize(raw))
+            except Exception as exc:
+                result.records_failed += 1
+                log.warning("record failed", extra={"external_id": raw.external_id, "error": str(exc)})
         result.status = (RunStatus.PARTIAL if result.records_failed else RunStatus.SUCCESS).value
 
     def _run_stored(self, result: RunResult) -> None:
@@ -208,8 +217,7 @@ class BaseAdapter(ABC):
         result: RunResult,
     ) -> None:
         assert self._source_id is not None
-        # The adapter writes only the original record. A worker later sends it
-        # to Graphiti for LLM-based entity extraction and identity resolution.
+        # Raw data goes in first so a normalization bug never loses source data.
         with session.begin_nested():
             stored = repo.upsert_source_record(self._source_id, run_id, raw, utcnow())
         if stored.status == "created":
@@ -219,3 +227,7 @@ class BaseAdapter(ABC):
         else:
             result.records_unchanged += 1
 
+        bundle = self.normalize(raw)
+        self.validate(bundle)
+        with session.begin_nested():
+            self.store(repo, self._source_id, stored.record, bundle)

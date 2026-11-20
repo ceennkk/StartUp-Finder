@@ -1,0 +1,520 @@
+{
+  "metadata": {
+    "created_on": "2026-11-20",
+    "validation_date": "2026-11-20",
+    "candidate_count": 8,
+    "research_scope": "Public web pages retrieved on the validation date; sources include official company/program/investor pages and selected independent startup/funding press. No external LLM was used. No paid databases were accessed.",
+    "caveat": "A missing public funding announcement is not proof that no private or undisclosed investment exists. The no_public_round_found and grant_only_no_public_round_found statuses are not assigned without the required multi-source search evidence.",
+    "company_status_counts": {
+      "company_confirmed": 8
+    },
+    "funding_status_counts": {
+      "funding_unclear": 3,
+      "funding_round_confirmed": 5
+    }
+  },
+  "candidates": [
+    {
+      "candidate_id": "candidate-additive-drives",
+      "name": "Additive Drives",
+      "company_status": "company_confirmed",
+      "company_identity_confidence": "high",
+      "company_website": null,
+      "founded_year": null,
+      "funding_status": "funding_unclear",
+      "funding_confidence": "medium",
+      "funding_summary": "The EXIST story reports a mid-double-digit-million financing in early 2026 without stating currency, instrument, stage or investors. AM Ventures confirms an investor relationship dating to October 2020, but its page does not establish a specific round. No round terms are asserted.",
+      "funding_rounds": [],
+      "public_grants_and_support": [
+        {
+          "name": "EXIST-Forschungstransfer",
+          "type": "public non-dilutive support",
+          "amount": null,
+          "details": "EXIST support is described as enabling early R&D and company formation."
+        }
+      ],
+      "sources": [
+        {
+          "id": "exist_story",
+          "title": "EXIST success story: Additive Drives",
+          "url": "https://exist.de/success-stories/additive-drives/",
+          "publisher": "EXIST",
+          "published_at": "2026-08-06",
+          "claim": "Official program success story identifies the company, describes its technology and discusses the research-to-company transition and public EXIST support.",
+          "accessed_on": "2026-11-20"
+        },
+        {
+          "id": "additive_amventures",
+          "title": "Additive Drives portfolio profile",
+          "url": "https://amventures.com/company-portfolios/additive-drives/",
+          "publisher": "AM Ventures",
+          "published_at": null,
+          "claim": "Investor portfolio page identifies Additive Drives as a portfolio company, says it joined in October 2020 and names Nordic Alpha Partners as co-investor.",
+          "accessed_on": "2026-11-20"
+        }
+      ],
+      "open_questions": [
+        "The early-2026 financing type, currency, amount and participating investors are not reported in detail.",
+        "A company website URL was not confirmed from an accessible source during this review."
+      ]
+    },
+    {
+      "candidate_id": "candidate-autonomiq",
+      "name": "AutonomIQ",
+      "company_status": "company_confirmed",
+      "company_identity_confidence": "high",
+      "company_website": null,
+      "founded_year": null,
+      "funding_status": "funding_unclear",
+      "funding_confidence": "medium",
+      "funding_summary": "The official EXIST story says a funding round is currently being prepared. No completed round is confirmed in the sources reviewed; this is not evidence that no private financing exists.",
+      "funding_rounds": [],
+      "public_grants_and_support": [
+        {
+          "name": "EXIST-Forschungstransfer",
+          "type": "public non-dilutive support",
+          "amount": null,
+          "details": "The EXIST success story says the program supported the research-to-company transition; no amount reported."
+        }
+      ],
+      "sources": [
+        {
+          "id": "exist_story",
+          "title": "EXIST success story: AutonomIQ",
+          "url": "https://exist.de/success-stories/autonomiq/",
+          "publisher": "EXIST",
+          "published_at": "2026-06-14",
+          "claim": "Official program success story identifies the company, describes its technology and discusses the research-to-company transition and public EXIST support.",
+          "accessed_on": "2026-11-20"
+        },
+        {
+          "id": "autonomiq_launch_rm",
+          "title": "AutonomIQ startup profile",
+          "url": "https://www.launch-rm.de/en/portfolio/startups/autonomiq",
+          "publisher": "LAUNCH Rhein-Main e.V.",
+          "published_at": null,
+          "claim": "Portfolio entry lists AutonomIQ, Darmstadt, AI and founders. The profile shows inconsistent founding fields (2026 and N/A), so no founding year is asserted.",
+          "accessed_on": "2026-11-20"
+        }
+      ],
+      "open_questions": [
+        "No completed funding round is confirmed; the official EXIST profile says fundraising is being prepared.",
+        "The LAUNCH Rhein-Main profile has inconsistent founding-date fields."
+      ]
+    },
+    {
+      "candidate_id": "candidate-co-reactive",
+      "name": "Co-reactive",
+      "company_status": "company_confirmed",
+      "company_identity_confidence": "high",
+      "company_website": "https://co-reactive.com/",
+      "founded_year": 2024,
+      "funding_status": "funding_round_confirmed",
+      "funding_confidence": "high",
+      "funding_summary": "HTGF and the company report a EUR 6.5 million seed round announced 2026-01-28. A separate seven-figure BIK public grant is not equity.",
+      "funding_rounds": [
+        {
+          "stage": "Seed",
+          "amount_display": "EUR 6.5 million",
+          "currency": "EUR",
+          "announced_on": "2026-01-28",
+          "lead_investor": "High-Tech Gründerfonds",
+          "other_investors": [
+            "NRW.Bank",
+            "HBG Ventures",
+            "AFI Ventures",
+            "Evercurious VC",
+            "climate-tech business angels"
+          ],
+          "evidence_sources": [
+            "co_reactive_htgf_2026",
+            "co_reactive_company_2026"
+          ]
+        }
+      ],
+      "public_grants_and_support": [
+        {
+          "name": "EXIST-Forschungstransfer",
+          "type": "public non-dilutive support",
+          "amount": null,
+          "details": "EXIST support cited separately."
+        },
+        {
+          "name": "Federal Funding for Industry and Climate (BIK)",
+          "type": "public grant",
+          "amount_display": "seven-figure amount; exact amount not stated",
+          "details": "HTGF announcement explicitly separates this grant from the EUR 6.5 million seed round."
+        }
+      ],
+      "sources": [
+        {
+          "id": "exist_story",
+          "title": "EXIST success story: Co-reactive",
+          "url": "https://exist.de/success-stories/co-reactive/",
+          "publisher": "EXIST",
+          "published_at": "2026-06-17",
+          "claim": "Official program success story identifies the company, describes its technology and discusses the research-to-company transition and public EXIST support.",
+          "accessed_on": "2026-11-20"
+        },
+        {
+          "id": "co_reactive_htgf_2026",
+          "title": "Co-reactive secures €6.5 million in seed funding for CO₂-negative construction materials technology",
+          "url": "https://www.htgf.de/en/co-reactive-seed-funding/",
+          "publisher": "High-Tech Gründerfonds",
+          "published_at": "2026-01-28",
+          "claim": "Lead-investor announcement confirms the seed round, amount, investors, founding year 2024 and separate BIK public grant.",
+          "accessed_on": "2026-11-20"
+        },
+        {
+          "id": "co_reactive_company_2026",
+          "title": "Co-reactive secures €6.5 million in seed funding",
+          "url": "https://co-reactive.com/news/co-reactive-secures-eu6-5-milion-in-seed-funding",
+          "publisher": "Co-reactive",
+          "published_at": null,
+          "claim": "Company announcement corroborates the seed round and participating investors.",
+          "accessed_on": "2026-11-20"
+        }
+      ],
+      "open_questions": [
+        "The exact BIK grant amount is not stated in the reviewed announcement."
+      ]
+    },
+    {
+      "candidate_id": "candidate-inleap-photonics",
+      "name": "INLEAP Photonics",
+      "company_status": "company_confirmed",
+      "company_identity_confidence": "high",
+      "company_website": "https://inleap-photonics.com/",
+      "founded_year": 2023,
+      "funding_status": "funding_round_confirmed",
+      "funding_confidence": "high",
+      "funding_summary": "EXIST reports a completed pre-seed round; Tech Funding News reports a later seed round of approximately EUR 20 million led by UVC Partners (2026-09-02).",
+      "funding_rounds": [
+        {
+          "stage": "Seed",
+          "amount_display": "approximately EUR 20 million",
+          "currency": "EUR",
+          "announced_on": "2026-09-02",
+          "lead_investor": "UVC Partners",
+          "other_investors": [
+            "High-Tech Gründerfonds",
+            "Balnord",
+            "Sentris Capital",
+            "Scale Capital"
+          ],
+          "evidence_sources": [
+            "inleap_tfn_2026"
+          ]
+        }
+      ],
+      "public_grants_and_support": [
+        {
+          "name": "EXIST-Forschungstransfer",
+          "type": "public non-dilutive support",
+          "amount": null,
+          "details": "EXIST support is described separately from the reported seed round."
+        }
+      ],
+      "sources": [
+        {
+          "id": "exist_story",
+          "title": "EXIST success story: INLEAP Photonics",
+          "url": "https://exist.de/success-stories/inleap-photonics/",
+          "publisher": "EXIST",
+          "published_at": "2026-06-14",
+          "claim": "Official program success story identifies the company, describes its technology and discusses the research-to-company transition and public EXIST support.",
+          "accessed_on": "2026-11-20"
+        },
+        {
+          "id": "inleap_company",
+          "title": "INLEAP Photonics",
+          "url": "https://inleap-photonics.com/",
+          "publisher": "INLEAP Photonics",
+          "published_at": null,
+          "claim": "Company site describes FASTLIGHT SHIELD and its laser-steering technology.",
+          "accessed_on": "2026-11-20"
+        },
+        {
+          "id": "inleap_tfn_2026",
+          "title": "INLEAP Photonics raises €20M in funding as UVC Partners backs its eye-safe anti-drone lasers",
+          "url": "https://techfundingnews.com/inleap-photonics-raises-20m-eye-safe-anti-drone-lasers/",
+          "publisher": "Tech Funding News",
+          "published_at": "2026-09-02",
+          "claim": "Reports an approximately EUR 20 million seed round led by UVC Partners and lists participating investors.",
+          "accessed_on": "2026-11-20"
+        }
+      ],
+      "open_questions": [
+        "The amount and investor list are based on a secondary funding-news report; independently obtained term documents were not available."
+      ]
+    },
+    {
+      "candidate_id": "candidate-noxon",
+      "name": "Noxon",
+      "company_status": "company_confirmed",
+      "company_identity_confidence": "high",
+      "company_website": "https://noxon.io/",
+      "founded_year": 2022,
+      "funding_status": "funding_round_confirmed",
+      "funding_confidence": "high",
+      "funding_summary": "HTGF and SCE independently report a multi-million-euro seed round announced 2026-03-02; the exact amount is not disclosed in the primary announcement.",
+      "funding_rounds": [
+        {
+          "stage": "Seed",
+          "amount_display": "multi-million euro; exact amount not disclosed",
+          "currency": "EUR",
+          "announced_on": "2026-03-02",
+          "lead_investor": "High-Tech Gründerfonds",
+          "other_investors": [
+            "Bayern Kapital",
+            "Auxxo",
+            "one unnamed institutional investor"
+          ],
+          "evidence_sources": [
+            "noxon_htgf_2026",
+            "noxon_sce_2026"
+          ]
+        }
+      ],
+      "public_grants_and_support": [
+        {
+          "name": "EXIST-Gründungsstipendium",
+          "type": "public non-dilutive support",
+          "amount": null,
+          "details": "EXIST story identifies the program; it is not counted as an equity round."
+        }
+      ],
+      "sources": [
+        {
+          "id": "exist_story",
+          "title": "EXIST success story: Noxon",
+          "url": "https://exist.de/success-stories/noxon/",
+          "publisher": "EXIST",
+          "published_at": "2026-06-14",
+          "claim": "Official program success story identifies the company, describes its technology and discusses the research-to-company transition and public EXIST support.",
+          "accessed_on": "2026-11-20"
+        },
+        {
+          "id": "noxon_company",
+          "title": "Noxon",
+          "url": "https://noxon.io/",
+          "publisher": "Noxon",
+          "published_at": null,
+          "claim": "Company site describes its muscle-computer interface and OCIAN product.",
+          "accessed_on": "2026-11-20"
+        },
+        {
+          "id": "noxon_htgf_2026",
+          "title": "Muscles Become Digital Interfaces: Noxon Closes Seed Funding Round",
+          "url": "https://www.htgf.de/en/noxon-seed-funding-round/",
+          "publisher": "High-Tech Gründerfonds",
+          "published_at": "2026-03-02",
+          "claim": "Investor announcement confirms a multi-million-euro seed round, founded in 2022, and names HTGF, Bayern Kapital and Auxxo.",
+          "accessed_on": "2026-11-20"
+        },
+        {
+          "id": "noxon_sce_2026",
+          "title": "MedTech startup Noxon secures million-euro financing",
+          "url": "https://www.sce.de/en/news-details/medtech-startup-noxon-sichert-sich-millionen-finanzierung.html",
+          "publisher": "Strascheg Center for Entrepreneurship",
+          "published_at": null,
+          "claim": "Independent university incubator account corroborates the seed round, investor group and 2022 founding.",
+          "accessed_on": "2026-11-20"
+        }
+      ],
+      "open_questions": [
+        "The exact size of the seed round is not public in the sources reviewed."
+      ]
+    },
+    {
+      "candidate_id": "candidate-porelio",
+      "name": "Porelio",
+      "company_status": "company_confirmed",
+      "company_identity_confidence": "high",
+      "company_website": "https://www.porelio.com/",
+      "founded_year": null,
+      "funding_status": "funding_round_confirmed",
+      "funding_confidence": "high",
+      "funding_summary": "Startbase and the official EXIST story report a EUR 2.4 million pre-seed round. Startbase separately reports approximately EUR 2.5 million in prior public support; it does not identify the grant program(s).",
+      "funding_rounds": [
+        {
+          "stage": "Pre-seed",
+          "amount_display": "EUR 2.4 million",
+          "currency": "EUR",
+          "announced_on": "2026-07-07",
+          "lead_investor": "Faber",
+          "other_investors": [
+            "Polytechnique Ventures",
+            "Grupo Tecnológica",
+            "better ventures",
+            "business angels"
+          ],
+          "evidence_sources": [
+            "porelio_startbase_2026",
+            "exist_story"
+          ]
+        }
+      ],
+      "public_grants_and_support": [
+        {
+          "name": "EXIST-Forschungstransfer",
+          "type": "public non-dilutive support",
+          "amount": null,
+          "details": "EXIST support is described separately."
+        },
+        {
+          "name": "Other public funding (program not specified)",
+          "type": "public funding; instrument not identified",
+          "amount_display": "approximately EUR 2.5 million",
+          "details": "Reported by Startbase as prior public funding; program and instruments are not identified."
+        }
+      ],
+      "sources": [
+        {
+          "id": "exist_story",
+          "title": "EXIST success story: Porelio",
+          "url": "https://exist.de/success-stories/porelio/",
+          "publisher": "EXIST",
+          "published_at": "2026-07-08",
+          "claim": "Official program success story identifies the company, describes its technology and discusses the research-to-company transition and public EXIST support.",
+          "accessed_on": "2026-11-20"
+        },
+        {
+          "id": "porelio_company",
+          "title": "Porelio",
+          "url": "https://www.porelio.com/",
+          "publisher": "Porelio",
+          "published_at": null,
+          "claim": "Official company page confirms a public company presence; limited product detail was available on the retrieved page.",
+          "accessed_on": "2026-11-20"
+        },
+        {
+          "id": "porelio_startbase_2026",
+          "title": "Porelio Receives 2.4 Million Euros for the Circular Economy",
+          "url": "https://www.startbase.com/news/porelio-erhaelt-24-millionen-euro-fuer-die-kreislaufwirtschaft",
+          "publisher": "Startbase",
+          "published_at": "2026-07-07",
+          "claim": "Reports the EUR 2.4 million pre-seed, lead and co-investors, and approximately EUR 2.5 million prior public funding.",
+          "accessed_on": "2026-11-20"
+        }
+      ],
+      "open_questions": [
+        "The founding date and the programs/instruments behind the approximately EUR 2.5 million prior public funding were not established."
+      ]
+    },
+    {
+      "candidate_id": "candidate-prime-vector-technologies",
+      "name": "Prime Vector Technologies",
+      "company_status": "company_confirmed",
+      "company_identity_confidence": "high",
+      "company_website": "https://www.prime-vector-technologies.com/",
+      "founded_year": null,
+      "funding_status": "funding_unclear",
+      "funding_confidence": "low",
+      "funding_summary": "The official EXIST story documents EXIST support and a Boehringer Ingelheim collaboration, but does not confirm equity financing. A collaboration is not treated as an investment. The company site returned HTTP 403 during review; no absence-of-funding claim is made.",
+      "funding_rounds": [],
+      "public_grants_and_support": [
+        {
+          "name": "EXIST-Forschungstransfer",
+          "type": "public non-dilutive support",
+          "amount": null,
+          "details": "The official EXIST profile describes support for technology development and company formation."
+        }
+      ],
+      "sources": [
+        {
+          "id": "exist_story",
+          "title": "EXIST success story: Prime Vector Technologies",
+          "url": "https://exist.de/success-stories/prime-vector-technologies/",
+          "publisher": "EXIST",
+          "published_at": "2026-08-06",
+          "claim": "Official program success story identifies the company, describes its technology and discusses the research-to-company transition and public EXIST support.",
+          "accessed_on": "2026-11-20"
+        },
+        {
+          "id": "prime_vector_website",
+          "title": "Prime Vector Technologies website",
+          "url": "https://www.prime-vector-technologies.com/",
+          "publisher": "Prime Vector Technologies",
+          "published_at": null,
+          "claim": "The official EXIST profile links to this site; direct retrieval returned HTTP 403, so its contents were not used.",
+          "accessed_on": "2026-11-20"
+        }
+      ],
+      "open_questions": [
+        "No completed equity round was verified, but a sufficiently broad independent funding search was not possible.",
+        "Company website was inaccessible during review."
+      ]
+    },
+    {
+      "candidate_id": "candidate-tentris",
+      "name": "Tentris",
+      "company_status": "company_confirmed",
+      "company_identity_confidence": "high",
+      "company_website": "https://tentris.io/",
+      "founded_year": 2024,
+      "funding_status": "funding_round_confirmed",
+      "funding_confidence": "high",
+      "funding_summary": "Tech Funding News reports a EUR 2 million pre-seed; the EXIST story says “over two million euros.” The amount is recorded with this source wording discrepancy.",
+      "funding_rounds": [
+        {
+          "stage": "Pre-seed",
+          "amount_display": "EUR 2 million (Tech Funding News) / over EUR 2 million (EXIST)",
+          "currency": "EUR",
+          "announced_on": null,
+          "lead_investor": "Bloomhaus Ventures",
+          "other_investors": [
+            "Vanagon Ventures",
+            "āltitude",
+            "10x Value Partners",
+            "Pascal Wichmann"
+          ],
+          "evidence_sources": [
+            "tentris_tfn_2026",
+            "exist_story"
+          ]
+        }
+      ],
+      "public_grants_and_support": [
+        {
+          "name": "EXIST-Forschungstransfer",
+          "type": "public non-dilutive grant",
+          "amount": null,
+          "details": "Tech Funding News says the company built its first product with the German government grant before attracting venture capital."
+        }
+      ],
+      "sources": [
+        {
+          "id": "exist_story",
+          "title": "EXIST success story: Tentris",
+          "url": "https://exist.de/success-stories/tentris/",
+          "publisher": "EXIST",
+          "published_at": "2026-07-22",
+          "claim": "Official program success story identifies the company, describes its technology and discusses the research-to-company transition and public EXIST support.",
+          "accessed_on": "2026-11-20"
+        },
+        {
+          "id": "tentris_company",
+          "title": "Tentris",
+          "url": "https://tentris.io/",
+          "publisher": "Tentris",
+          "published_at": null,
+          "claim": "Official company website describes its graph-database product and technical approach.",
+          "accessed_on": "2026-11-20"
+        },
+        {
+          "id": "tentris_tfn_2026",
+          "title": "Tentris raises €2M for graph database from Paderborn",
+          "url": "https://techfundingnews.com/tentris-raises-2m-graph-database-paderborn/",
+          "publisher": "Tech Funding News",
+          "published_at": null,
+          "claim": "Reports a EUR 2 million pre-seed round, investor names, 2024 start and prior EXIST grant.",
+          "accessed_on": "2026-11-20"
+        }
+      ],
+      "open_questions": [
+        "The exact public announcement date and final round amount are not consistent across the reviewed sources."
+      ]
+    }
+  ]
+}

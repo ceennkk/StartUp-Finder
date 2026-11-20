@@ -1,6 +1,4 @@
 .env
-.env.local
-.env.*.local
 .venv/
 venv/
 __pycache__/
@@ -10,6 +8,8 @@ __pycache__/
 .ruff_cache/
 build/
 dist/
-data/
+data/manual_imports/
+.env.local
+.env.*.local
 node_modules/
 .next/
