@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>UDE Forschung (Fixture)</title>
+    <link>https://www.uni-due.de/</link>
+    <description>Synthetic fixture shaped like the UDE research feed</description>
+    <item>
+      <title>Neues Verfahren fuer Quantensensoren</title>
+      <link>https://www.uni-due.de/2026-11-10-quantensensoren</link>
+      <guid isPermaLink="false">ude-fixture-1</guid>
+      <pubDate>Tue, 10 Nov 2026 09:00:00 +0100</pubDate>
+      <description>&lt;p&gt;Ein Forschungsteam zeigt ein neues Verfahren. Kurzer Teaser.&lt;/p&gt;</description>
+      <enclosure url="https://www.uni-due.de/imperia/md/images/quanten.jpg" length="123456" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Sehr langer Artikel ohne Ende</title>
+      <link>https://www.uni-due.de/2026-11-05-langer-artikel</link>
+      <guid isPermaLink="false">ude-fixture-2</guid>
+      <pubDate>Thu, 05 Nov 2026 10:00:00 +0100</pubDate>
+      <description>LONGTEXT_PLACEHOLDER</description>
+      <content:encoded>FULL_ARTICLE_BODY_MUST_NOT_BE_STORED</content:encoded>
+    </item>
+    <item>
+      <title>Aelterer Beitrag</title>
+      <link>https://www.uni-due.de/2025-01-15-aelterer-beitrag</link>
+      <guid isPermaLink="false">ude-fixture-3</guid>
+      <pubDate>Wed, 15 Jan 2025 08:00:00 +0100</pubDate>
+      <description>Alt.</description>
+    </item>
+  </channel>
+</rss>

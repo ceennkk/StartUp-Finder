@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 from collections.abc import Callable, Iterator
 from datetime import datetime
 from typing import Any
-from urllib.parse import urldefrag, urljoin
+from urllib.parse import urldefrag, urljoin, urlparse
 
 import feedparser
 from bs4 import BeautifulSoup
@@ -20,6 +20,55 @@ Connector = Callable[[PoliteHttpClient, dict[str, Any], datetime | None], Iterat
 
 _SITEMAP_NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 _JSONLD_ITEM_TYPES = {"Article", "NewsArticle", "BlogPosting", "Event", "ResearchProject", "Project", "Dataset", "WebPage"}
+# Only metadata and a short teaser are stored; complete article texts are never reproduced.
+SUMMARY_MAX_CHARS = 500
+SITEMAP_MAX_URLS = 50_000  # limit from the sitemaps.org protocol
+
+
+class SitemapError(ValueError):
+    """The sitemap is not valid enough to be used for URL discovery."""
+
+
+def short_text(value: str | None, limit: int = SUMMARY_MAX_CHARS) -> str | None:
+    text = clean_text(value)
+    if text and len(text) > limit:
+        text = text[: limit - 1].rstrip() + "\u2026"
+    return text
+
+
+def _same_site(a: str, b: str) -> bool:
+    return a.lower().removeprefix("www.") == b.lower().removeprefix("www.")
+
+
+def validate_sitemap(xml: bytes, sitemap_url: str) -> list[tuple[str, datetime | None]]:
+    """Parse a <urlset> sitemap and return (url, lastmod). Raises SitemapError unless the document is well-formed,
+    uses the sitemap namespace, stays within the protocol limits and only lists URLs of the sitemap's own site."""
+    if b"<!DOCTYPE" in xml[:2048].upper() or b"<!ENTITY" in xml.upper():
+        raise SitemapError("sitemap must not contain a DOCTYPE or entity declarations")
+    try:
+        root = ET.fromstring(xml)
+    except ET.ParseError as exc:
+        raise SitemapError(f"sitemap is not well-formed XML: {exc}") from exc
+    if root.tag != f"{{{_SITEMAP_NS['s']}}}urlset":
+        raise SitemapError(f"unexpected sitemap root element {root.tag!r} (expected a urlset in the sitemap namespace)")
+    nodes = root.findall("s:url", _SITEMAP_NS)
+    if not nodes:
+        raise SitemapError("sitemap contains no <url> entries")
+    if len(nodes) > SITEMAP_MAX_URLS:
+        raise SitemapError(f"sitemap lists {len(nodes)} URLs, more than the allowed {SITEMAP_MAX_URLS}")
+    host = urlparse(sitemap_url).hostname or ""
+    entries: dict[str, datetime | None] = {}
+    for node in nodes:
+        loc = node.find("s:loc", _SITEMAP_NS)
+        url = (loc.text or "").strip() if loc is not None else ""
+        parsed = urlparse(url)
+        if parsed.scheme not in ("http", "https") or not parsed.hostname:
+            raise SitemapError(f"invalid <loc> value {url!r}")
+        if not _same_site(parsed.hostname, host):
+            raise SitemapError(f"sitemap lists a URL of another site: {url!r}")
+        lastmod = node.find("s:lastmod", _SITEMAP_NS)
+        entries[urldefrag(url)[0]] = parse_datetime(lastmod.text) if lastmod is not None and lastmod.text else None
+    return list(entries.items())
 
 
 def _item(url: str, title: str | None, summary: str | None, published: Any, tags: list[str] | None = None) -> Item | None:
@@ -30,7 +79,7 @@ def _item(url: str, title: str | None, summary: str | None, published: Any, tags
     return {
         "url": url,
         "title": title,
-        "summary": clean_text(summary),
+        "summary": short_text(summary),
         "published": published.isoformat() if isinstance(published, datetime) else published,
         "tags": [t for t in (tags or []) if t],
     }
@@ -39,10 +88,12 @@ def _item(url: str, title: str | None, summary: str | None, published: Any, tags
 def rss_connector(http: PoliteHttpClient, src: dict[str, Any], since: datetime | None) -> Iterator[Item]:
     """Extraction method: RSS/Atom feed parsed with feedparser; the item link is the identity (feed GUIDs may embed timestamps)."""
     feed = feedparser.parse(http.get(src["url"], respect_robots=True).content)
+    emitted = 0
     for entry in feed.entries:
         published = parse_datetime(entry.get("published") or entry.get("updated"))
         if since and published and published < since:
             continue
+        # Enclosures (images) and full content are deliberately ignored.
         item = _item(
             entry.get("link", ""),
             entry.get("title"),
@@ -52,6 +103,9 @@ def rss_connector(http: PoliteHttpClient, src: dict[str, Any], since: datetime |
         )
         if item:
             yield item
+            emitted += 1
+            if emitted >= int(src.get("max_items", 500)):
+                return
 
 
 def parse_jsonld(html: str) -> list[dict[str, Any]]:
@@ -89,27 +143,69 @@ def jsonld_connector(http: PoliteHttpClient, src: dict[str, Any], since: datetim
             yield item
 
 
-def sitemap_connector(http: PoliteHttpClient, src: dict[str, Any], since: datetime | None) -> Iterator[Item]:
-    """Extraction method: sitemap URLs filtered by `url_pattern`, then JSON-LD of each page (no blind crawling)."""
-    pattern = re.compile(src.get("url_pattern", ".*"))
-    limit = int(src.get("max_pages", 50))
-    root = ET.fromstring(http.get(src["url"], respect_robots=True).content)
-    fetched = 0
-    for node in root.findall("s:url", _SITEMAP_NS):
-        loc = node.find("s:loc", _SITEMAP_NS)
-        lastmod = node.find("s:lastmod", _SITEMAP_NS)
-        if loc is None or not loc.text or not pattern.search(loc.text):
+def discover_sitemap_urls(
+    http: PoliteHttpClient,
+    sitemap_url: str,
+    since: datetime | None,
+    *,
+    pattern: str | None = None,
+    prefix: str | None = None,
+) -> list[tuple[str, datetime | None]]:
+    """Validated sitemap URLs filtered by regex and/or path prefix; entries unchanged since `since` are skipped."""
+    entries = validate_sitemap(http.get(sitemap_url, respect_robots=True).content, sitemap_url)
+    regex = re.compile(pattern) if pattern else None
+    found = []
+    for url, modified in entries:
+        if regex and not regex.search(url):
             continue
-        modified = parse_datetime(lastmod.text) if lastmod is not None else None
+        if prefix and not urlparse(url).path.startswith(prefix):
+            continue
         if since and modified and modified < since:
             continue
-        item = jsonld_item(loc.text.strip(), http.get(loc.text.strip(), respect_robots=True).text)
+        found.append((url, modified))
+    return found
+
+
+def sitemap_connector(http: PoliteHttpClient, src: dict[str, Any], since: datetime | None) -> Iterator[Item]:
+    """Extraction method: validated sitemap URLs filtered by `url_pattern`, then JSON-LD of each page (no blind crawling)."""
+    limit = int(src.get("max_pages", 50))
+    for url, modified in discover_sitemap_urls(http, src["url"], since, pattern=src.get("url_pattern"))[:limit]:
+        item = jsonld_item(url, http.get(url, respect_robots=True).text)
         if item:
             item["published"] = item["published"] or (modified.isoformat() if modified else None)
             yield item
-        fetched += 1
-        if fetched >= limit:
-            return
+
+
+def parse_page_metadata(html: str, url: str) -> Item | None:
+    """Title and meta description only; page body text is never read. The requested URL stays the identity."""
+    soup = BeautifulSoup(html, "html.parser")
+    h1 = soup.find("h1")
+    og_title = soup.find("meta", attrs={"property": "og:title"})
+    title = (h1.get_text(" ") if h1 else None) or (og_title.get("content") if og_title else None) or (
+        soup.title.get_text(" ") if soup.title else None
+    )
+    description = soup.find("meta", attrs={"name": "description"}) or soup.find("meta", attrs={"property": "og:description"})
+    return _item(url, title, description.get("content") if description else None, None)
+
+
+def page_metadata_connector(http: PoliteHttpClient, src: dict[str, Any], since: datetime | None) -> Iterator[Item]:
+    """Extraction method: an explicit URL allowlist (`url` + `urls`), optionally extended with URLs from a validated
+    sitemap restricted to a path prefix (`sitemap: {url, prefix, max_pages}`). No links are followed."""
+    targets: dict[str, datetime | None] = {src["url"]: None}
+    targets.update({u: None for u in src.get("urls") or []})
+    sitemap = src.get("sitemap")
+    if sitemap:
+        found = discover_sitemap_urls(http, sitemap["url"], since, prefix=sitemap.get("prefix"))
+        for url, modified in found[: int(sitemap.get("max_pages", 10))]:
+            targets.setdefault(url, modified)
+        for url, modified in found:
+            if url in targets:
+                targets[url] = modified
+    for url, modified in targets.items():
+        item = parse_page_metadata(http.get(url, respect_robots=True).text, url)
+        if item:
+            item["extra"] = {"sitemap_lastmod": modified.isoformat()} if modified else {}
+            yield item
 
 
 def html_connector(http: PoliteHttpClient, src: dict[str, Any], since: datetime | None) -> Iterator[Item]:
@@ -141,4 +237,5 @@ CONNECTORS: dict[str, Connector] = {
     "sitemap": sitemap_connector,
     "jsonld": jsonld_connector,
     "html": html_connector,
+    "page_metadata": page_metadata_connector,
 }

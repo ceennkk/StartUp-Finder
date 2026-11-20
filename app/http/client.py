@@ -175,6 +175,7 @@ class PoliteHttpClient:
         if origin not in self._robots:
             parser: RobotFileParser | None = RobotFileParser()
             try:
+                self._throttle(parsed.netloc)
                 response = self._client.get(f"{origin}/robots.txt")
                 if response.status_code == 200:
                     parser.parse(response.text.splitlines())

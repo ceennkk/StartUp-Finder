@@ -10,8 +10,11 @@ exist:
     - {key: women, name: "EXIST-Women", url: "https://exist.de/programm/women/", keywords: ["exist women", "EXIST-Women"]}
 
 # University sources. Each entry is one explicit page/feed (no crawling). robots.txt is always checked.
-# connector: rss | sitemap (url_pattern + JSON-LD per page) | jsonld (urls) | html (CSS selectors)
-# kind: press_release | news | research_project   plugin: optional name from app/adapters/university/plugins.py
+# connector: rss | sitemap (validated sitemap + url_pattern + JSON-LD per page) | jsonld (urls) | html (CSS selectors)
+#            | page_metadata (url + urls + optional validated sitemap with path prefix; title/description only)
+# kind: press_release | news | research_project | organization_unit   plugin: optional name from plugins.py
+# group: optional; sources of one university share one university entity. enabled: false = collector off.
+# Non-RSS connectors always wait >= 10 s between requests to a host.
 universities:
   sources:
     - key: kit
@@ -31,6 +34,64 @@ universities:
       connector: rss
       url: https://www.tu-darmstadt.de/universitaet/aktuelles_meldungen/neues_aus_der_tu_rss.de.rss
       kind: news
+    # --- University of Duisburg-Essen (UDE): first fully worked example -------------------------------------
+    # All three sources share group "ude" (one university entity) and can be selected with
+    # `collect university --source ude` or individually. UDE publishes no reuse/licence terms that cover
+    # automated reuse, so only the research feed (metadata + <=500 char teaser, no enclosures) is enabled.
+    # robots.txt disallows GPTBot; this collector identifies itself and must not be repurposed for AI training.
+    # require_contact_email: the User-Agent must name a contact (CONTACT_EMAIL), otherwise the run aborts.
+    - key: ude_forschung
+      group: ude
+      name: Universität Duisburg-Essen
+      aliases: ["UDE", "University of Duisburg-Essen", "Uni Duisburg-Essen"]
+      country: DE
+      website: https://www.uni-due.de
+      connector: rss
+      url: https://www.uni-due.de/rss/forschung.rss     # linked from https://www.uni-due.de/de/presse/feeds.php
+      kind: news
+      min_interval_seconds: 10
+      require_contact_email: true
+      max_items: 200
+      initial_days: 90
+      lookback_days: 7
+      properties: {topic: research}
+    - key: ude_aktuell
+      group: ude
+      name: Universität Duisburg-Essen
+      aliases: ["UDE", "University of Duisburg-Essen", "Uni Duisburg-Essen"]
+      country: DE
+      website: https://www.uni-due.de
+      connector: rss
+      url: https://www.uni-due.de/rss/aktuell.rss
+      kind: news
+      enabled: false                                   # secondary source; enable once usage terms are clarified
+      min_interval_seconds: 10
+      require_contact_email: true
+      max_items: 200
+      initial_days: 30
+      lookback_days: 7
+      properties: {topic: general}
+    - key: ude_guide
+      group: ude
+      name: Universität Duisburg-Essen
+      aliases: ["UDE", "University of Duisburg-Essen", "Uni Duisburg-Essen"]
+      country: DE
+      website: https://www.uni-due.de
+      connector: page_metadata
+      url: https://www.uni-due.de/guide/                 # GUIDE start-up centre; only title/description are read
+      urls: []                                           # more explicit pages may be listed here
+      sitemap:                                           # validated before use; discovery limited to this prefix
+        url: https://www.uni-due.de/sitemap.xml
+        prefix: /guide/
+        max_pages: 5
+      kind: organization_unit
+      unit_name: GUIDE (Universität Duisburg-Essen)
+      unit_aliases: ["GUIDE"]
+      enabled: false                                   # targeted source; enable once usage terms are clarified
+      min_interval_seconds: 10
+      require_contact_email: true
+      initial_days: 3650
+      properties: {topic: startup_support}
     # Template for a university without a feed (disabled until a real page has been checked against its robots.txt):
     # - key: example_uni
     #   name: Example University

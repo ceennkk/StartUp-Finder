@@ -105,8 +105,8 @@ def test_plugin_registry_and_kit_enrichment() -> None:
 
 CONFIG = {"sources": [
     {"key": "kit", "name": "Karlsruher Institut für Technologie", "aliases": ["KIT"], "country": "DE",
-     "connector": "rss", "url": "https://uni.test/pi.rss", "kind": "press_release", "plugin": "kit", "min_interval_seconds": 0},
-    {"key": "broken", "name": "Broken Uni", "connector": "rss", "url": "https://down.test/feed.rss", "min_interval_seconds": 0},
+     "connector": "rss", "url": "https://uni.test/pi.rss", "kind": "press_release", "plugin": "kit", "min_interval_seconds": 0, "initial_days": 36500},
+    {"key": "broken", "name": "Broken Uni", "connector": "rss", "url": "https://down.test/feed.rss", "min_interval_seconds": 0, "initial_days": 36500},
 ]}
 
 

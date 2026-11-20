@@ -113,7 +113,7 @@ def test_limit_and_dry_run(session_factory) -> None:
     assert count(session_factory, SourceRecord) == before
 
 
-def test_same_name_persons_from_different_identifiers_stay_separate(session_factory) -> None:
+def test_same_source_identifier_reuses_one_person_entity(session_factory) -> None:
     items = [
         {"id": "1", "name": "a", "owner": "sam", "stars": 1},
         {"id": "2", "name": "b", "owner": "sam", "stars": 1},

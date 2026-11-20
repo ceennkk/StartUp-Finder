@@ -32,8 +32,8 @@ class Settings(BaseSettings):
 
     @property
     def user_agent(self) -> str:
-        contact = f" (mailto:{self.contact_email})" if self.contact_email else ""
-        return f"VentureRadar-Ingestion/0.1{contact}"
+        contact = f"; contact: {self.contact_email}" if self.contact_email else ""
+        return f"VentureRadar-Ingestion/0.1 (research collector for public sources{contact})"
 
 
 @lru_cache

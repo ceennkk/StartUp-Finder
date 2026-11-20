@@ -143,11 +143,16 @@ def collect(
     collector: Annotated[str, typer.Argument(help="Collector name or 'all'")],
     limit: Annotated[int | None, typer.Option(help="Maximum number of records to fetch")] = None,
     dry_run: Annotated[bool, typer.Option("--dry-run", help="Fetch and normalize without writing to the database")] = False,
+    source: Annotated[
+        str | None, typer.Option(help="Only for 'university': a configured source key or group (e.g. ude_forschung, ude)")
+    ] = None,
 ) -> None:
     """Run one collector (or all). Exit codes: 0 ok, 10 partial, 1 failed, 2 config, 3 database."""
     names = registry.available() if collector == "all" else [collector]
     if not names:
         raise _fail("no collectors registered", EXIT_CONFIG)
+    if source is not None and collector != "university":
+        raise _fail("--source is only supported for the 'university' collector", EXIT_CONFIG)
 
     factory = None
     if not dry_run:
@@ -163,7 +168,8 @@ def collect(
     results: list[RunResult] = []
     for name in names:
         try:
-            adapter = registry.get_adapter_class(name)(factory, limit=limit, dry_run=dry_run)
+            extra = {"only": source} if source else {}
+            adapter = registry.get_adapter_class(name)(factory, limit=limit, dry_run=dry_run, **extra)
         except KeyError as exc:
             raise _fail(str(exc), EXIT_CONFIG) from exc
         except AdapterConfigError as exc:
