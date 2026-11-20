@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "startup-finder"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+live = ["graphiti-core>=0.17,<1", "python-dotenv>=1,<2", "psycopg[binary]>=3.2,<4"]
+
+[project.scripts]
+startup-graph = "startup_finder.cli:main"
+startup-finder = "startup_finder.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["startup_finder*"]
+
+[tool.setuptools.package-data]
+startup_finder = ["static/*.html", "static/*.js"]
