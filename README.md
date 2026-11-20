@@ -73,6 +73,7 @@ Secrets are only read from the environment / `.env` (which is git-ignored). No c
 python -m app.cli collect openalex
 python -m app.cli collect github --limit 20 --dry-run
 python -m app.cli collect all
+python -m app.cli collect university --source ude_forschung   # --source: only for `university` (key or group)
 python -m app.cli database init | status
 python -m app.cli ingestion history --limit 10 --source github
 ```
@@ -99,7 +100,7 @@ Every collector runs standalone, is incremental (watermarks in `sync_state`, adv
 | `arxiv` | Atom API | categories | 1 request / 3 s, oldest-first so capped runs resume. ID (version separate), title, abstract, authors, published/updated, categories, DOI, comment, abstract and PDF **URL** (PDFs are not stored). Affiliations only when present in the metadata. |
 | `huggingface` | Hub API | language filters / search | Models, datasets, spaces (+ model card text), namespaces resolved to organization or user, public org members (handles only). Observations: downloads, likes. |
 | `exist` | sitemap + WordPress REST (dates) + HTML | `sources.yaml` | Success stories (company, website, summary) and the three programme pages. Programme mentions are keyword matches and stored as **unverified** `FUNDED_BY`. |
-| `university` | RSS, sitemap + JSON-LD, JSON-LD, HTML selectors | `sources.yaml` | Plugin system. Working examples: KIT press releases and TU Darmstadt news (RSS). |
+| `university` | RSS, validated sitemap + JSON-LD, JSON-LD, page metadata, HTML selectors | `sources.yaml` | Plugin system. Working examples: KIT, TU Darmstadt and the University of Duisburg-Essen (see [below](#university-of-duisburg-essen-ude)). |
 
 ### Source facts, terms and technical limits
 
@@ -111,7 +112,30 @@ Every collector runs standalone, is incremental (watermarks in `sync_state`, adv
 | Hugging Face | Hub API rate limits via 429 handling. | **`huggingface.co` could not be reached from the development network (TLS interception / DNS filtering), so this collector is verified with mocked responses only.** Tag formats (`de`, `language:de`) and the org endpoints (`/api/organizations/{name}/overview` and `/members`) must be confirmed on the first live run. |
 | exist.de | `robots.txt` honored, 2 s spacing. | Success stories contain no structured project start / funding start; those stay `NULL`. Person names in interviews are not extracted. |
 | foerderdatenbank.de | **Not collected.** `robots.txt` disallows `/FDB/SiteGlobals/` (the search paths) and sets `Crawl-delay: 30`. | Add explicit detail pages to `sources.yaml` only after checking terms. |
-| Universities | `robots.txt` honored per fetch, configurable spacing, explicit pages only (no crawling). | Each university needs its own entry; there is no uniform API. |
+| Universities | `robots.txt` honored per fetch, configurable spacing (HTML connectors: at least 10 s), explicit pages only (no crawling). | Each university needs its own entry; there is no uniform API. |
+
+### University of Duisburg-Essen (UDE)
+
+First worked example of the university adapter. All URLs live in `app/config/sources.yaml` (`universities.sources`, keys `ude_*`, group `ude`).
+
+| Key | Source | Connector / kind | Status |
+|---|---|---|---|
+| `ude_forschung` | `https://www.uni-due.de/rss/forschung.rss` (research news) | `rss` / `news` | **enabled** |
+| `ude_aktuell` | `https://www.uni-due.de/rss/aktuell.rss` (general news) | `rss` / `news` | disabled |
+| `ude_guide` | `https://www.uni-due.de/guide/` start-up centre GUIDE, plus validated `sitemap.xml` discovery limited to `/guide/` (max 5 pages) | `page_metadata` / `organization_unit` | disabled |
+
+```powershell
+python -m app.cli collect university --source ude_forschung --limit 5 --dry-run
+python -m app.cli collect university --source ude_forschung
+python -m app.cli collect university --source ude        # whole group; fails while a member is disabled
+```
+
+* **Why two sources are disabled.** The UDE pages we checked state no terms for automated reuse of feed or page content, and `robots.txt` explicitly disallows `GPTBot`. Until the university clarifies this, only the research feed (public RSS meant for syndication; only metadata and a teaser are kept) is on. Selecting a disabled source fails with exit code 2. To enable one, set `enabled: true` after clarifying usage with the university; do not use the data for AI training.
+* **Stored:** title, link, publication date, a teaser of at most 500 characters (feed description, HTML stripped), raw feed item metadata as provenance (`source_records`), watermark per source in `sync_state`. **Not stored:** `content:encoded` / complete article texts, enclosures or images (not even their URLs), authors, page bodies. GUIDE pages contribute only `<h1>`/`<title>` and the meta description.
+* **Model:** feed items become `publication` entities `PUBLISHED_BY` the university entity (`university:ude`, shared by all three sources) with a `NEW_PRESS_RELEASE` signal. GUIDE becomes one `organization` entity (`unit:ude_guide`) `MEMBER_OF` the university; only the home page may update it, other pages are provenance. No signal is created for it.
+* **Politeness.** `CONTACT_EMAIL` is required for UDE (`require_contact_email`) and sent in the `User-Agent` (`VentureRadar-Ingestion/0.1 (...; contact: <email>)`). `robots.txt` is checked before every origin is used and is itself fetched through the host throttle. Requests to `www.uni-due.de` are at least 10 s apart (HTML connectors cannot be configured below 10 s). The first run reads at most `initial_days` of history (90 for the research feed) and at most `max_items` entries.
+* **Sitemap.** Before any URL from `sitemap.xml` is used it is validated: well-formed XML without DOCTYPE/entities, `urlset` in the sitemap namespace, at least one and at most 50,000 URLs, valid `http(s)` `<loc>` values on the sitemap's own host. An invalid sitemap fails that source; there is no silent fallback. At the time of writing the sitemap lists exactly 5,000 URLs and only six under `/guide/`; this looks like a size cap, so it may be incomplete and must not be treated as a full site index.
+* **Adding another German university:** add an entry with its own `key` (optional shared `group`), pick `rss`, `sitemap`, `jsonld`, `page_metadata` or `html`, check its `robots.txt` and terms, and keep `enabled: false` while anything is unclear. A plugin is only needed for source-specific enrichment.
 
 Timestamps are never conflated: `published_at` is the date in the source, `event_date` the real-world event (often `NULL`), `first_seen_at` the first discovery by VentureRadar, `created_at`/`updated_at` database bookkeeping. All are UTC; unknown values stay `NULL`.
 
@@ -189,7 +213,7 @@ n8n only schedules; processing stays here.
 2. Register it in `app/adapters/registry.py`.
 3. Put scope and URLs in `app/config/search_terms.yaml` or `sources.yaml`.
 4. Add fixtures and tests (see `tests/adapters/`): normalization, pagination, idempotent re-run.
-5. For another university: add an entry under `universities.sources` (connector `rss`, `sitemap`, `jsonld` or `html`), optionally a plugin in `app/adapters/university/plugins.py`.
+5. For another university: add an entry under `universities.sources` (connector `rss`, `sitemap`, `jsonld`, `page_metadata` or `html`; see the UDE example), optionally a plugin in `app/adapters/university/plugins.py`.
 
 ## Known limitations
 * Hugging Face has not been verified against the live API from the development network (see above).

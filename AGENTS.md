@@ -21,6 +21,8 @@ Aktuell registrierte Collector-Namen:
 
 Die Collector-Registrierung steht in [`app/adapters/registry.py`](app/adapters/registry.py). Laufzeitparameter und Suchbereiche liegen in [`app/config/search_terms.yaml`](app/config/search_terms.yaml) und [`app/config/sources.yaml`](app/config/sources.yaml).
 
+**Projektumfang:** Umgesetzt ist ausschließlich Phase 1 (Datenbasis und Ingestion). Nicht Teil davon und nur auf ausdrückliche Freigabe zu beginnen: Start-up-Scoring/-Klassifikation, Entity Resolution/Merging, Team-Erkennung, Marktanalyse, KI-Analyse, Rankings, Dashboard/Frontend, FastAPI.
+
 ## 2. Architektur und Datenfluss
 
 Die zentrale Pipeline ist in [`app/adapters/base.py`](app/adapters/base.py) implementiert. Jeder Adapter liefert Quelldaten, die gemeinsame Basisklasse übernimmt Orchestrierung und Persistenz:
@@ -75,7 +77,7 @@ Die SQLAlchemy-Modelle sind in [`app/database/models.py`](app/database/models.py
 
 ## 4. Collector und Quellenverhalten
 
-Alle Adapter erben von `BaseAdapter` und implementieren mindestens `fetch()` und `normalize()`. Die gemeinsame HTTP-Infrastruktur liegt in [`app/http/client.py`](app/http/client.py): `PoliteHttpClient` bietet Timeouts, User-Agent, Abstände pro Host, Retry bei Transportfehlern und ausgewählten HTTP-Statuscodes sowie optional `robots.txt`-Prüfung. Bei nicht erreichbarer `robots.txt` wird für entsprechende Prüfungen fail-closed verfahren.
+Alle Adapter erben von `BaseAdapter` und implementieren mindestens `fetch()` und `normalize()`. Die gemeinsame HTTP-Infrastruktur liegt in [`app/http/client.py`](app/http/client.py): `PoliteHttpClient` bietet Timeouts, User-Agent, Abstände pro Host, Retry bei Transportfehlern und ausgewählten HTTP-Statuscodes sowie optional `robots.txt`-Prüfung. Bei nicht erreichbarer `robots.txt` wird für entsprechende Prüfungen fail-closed verfahren; der `robots.txt`-Abruf selbst läuft durch die Host-Drosselung. Der User-Agent enthält `CONTACT_EMAIL`, falls gesetzt (`VentureRadar-Ingestion/0.1 (research collector for public sources; contact: <E-Mail>)`).
 
 ### OpenAlex
 
@@ -99,7 +101,11 @@ Liest konfigurierte Programmseiten und Erfolgsgeschichten aus der Sitemap. Der �
 
 ### Hochschulen
 
-Die Hochschulquellen stehen unter `universities.sources` in `sources.yaml`; derzeit sind KIT und TU Darmstadt konfiguriert. `UniversityAdapter` kann RSS, Sitemap mit JSON-LD pro passender URL, JSON-LD auf expliziten URLs oder CSS-Selektoren auf einer Listingseite nutzen. Es wird nicht allgemein oder unbeschränkt gecrawlt. Die Connectoren stehen in [`app/adapters/university/connectors.py`](app/adapters/university/connectors.py); optionale quellspezifische Anpassungen liegen in [`app/adapters/university/plugins.py`](app/adapters/university/plugins.py). Der KIT-Plugin ergänzt eine aus der URL extrahierte Pressemitteilungsnummer. Neue Einträge werden mit der Universität verknüpft und als Pressemitteilung, News oder Forschungsprojekt signalisiert.
+Die Hochschulquellen stehen unter `universities.sources` in `sources.yaml`; konfiguriert sind KIT, TU Darmstadt und die Universität Duisburg-Essen (UDE). `UniversityAdapter` unterstützt die Connectoren `rss`, `sitemap` (validierte Sitemap + JSON-LD pro passender URL), `jsonld` (explizite URLs), `page_metadata` (explizite URLs und/oder validierte Sitemap mit Pfadpräfix; nur Titel und Meta-Beschreibung) und `html` (CSS-Selektoren auf einer Listingseite). Es wird nicht allgemein oder unbeschränkt gecrawlt. Die Connectoren stehen in [`app/adapters/university/connectors.py`](app/adapters/university/connectors.py); optionale quellspezifische Anpassungen liegen in [`app/adapters/university/plugins.py`](app/adapters/university/plugins.py). Der KIT-Plugin ergänzt eine aus der URL extrahierte Pressemitteilungsnummer.
+
+Quellenoptionen in `sources.yaml`: `enabled` (`false` = Collector aus), `group` (Quellen derselben Hochschule teilen eine Universitäts-Entity `university:<group>`), `kind` (`press_release`, `news`, `research_project`, `organization_unit`), `min_interval_seconds`, `require_contact_email`, `initial_days` (Zeitfenster beim ersten Lauf ohne Cursor, Standard 30), `lookback_days`, `max_items`, `properties` (zusätzliche Entity-Eigenschaften), `unit_name`/`unit_aliases` (für `organization_unit`). Regeln im Adapter: Nicht-RSS-Connectoren warten mindestens 10 s pro Host; ohne `CONTACT_EMAIL` bricht eine Quelle mit `require_contact_email` mit einem Konfigurationsfehler ab; eine explizit per `--source` gewählte deaktivierte Quelle ist ein Konfigurationsfehler (Exit-Code 2); jede Sitemap wird vor der Nutzung mit `validate_sitemap()` geprüft (kein DOCTYPE/Entities, `urlset` im Sitemap-Namespace, 1 bis 50.000 URLs, nur Hosts der Sitemap), ein Fehler lässt die Quelle fehlschlagen statt still auf etwas anderes zurückzufallen. Gespeichert werden nur Metadaten, Links, Datum und ein Teaser von höchstens 500 Zeichen; keine Volltexte (`content:encoded`), Bilder/Enclosures oder Autoren.
+
+**UDE (erstes ausgearbeitetes Beispiel, Gruppe `ude`):** `ude_forschung` (RSS, aktiv), `ude_aktuell` (RSS, deaktiviert) und `ude_guide` (Gründungszentrum GUIDE, `page_metadata` + Sitemap-Präfix `/guide/`, deaktiviert; als `organization_unit` `unit:ude_guide` mit `MEMBER_OF` zur Universität, ohne Signal, nur die Startseite aktualisiert die Entity). Zwei Quellen sind deaktiviert, weil keine Nutzungsbedingungen für automatisierte Weiterverwendung gefunden wurden und die `robots.txt` `GPTBot` ausdrücklich sperrt; sie erst nach Klärung aktivieren, die Daten nicht für KI-Training verwenden. Die UDE-Sitemap listet genau 5.000 URLs (vermutlich gekappt) und gilt nicht als vollständiger Index. Tests: [`tests/adapters/test_university_ude.py`](tests/adapters/test_university_ude.py) mit Fixtures `ude_forschung.rss`, `ude_sitemap.xml`, `ude_guide.html`.
 
 ## 5. Konfiguration und Einstellungen
 
@@ -138,8 +144,11 @@ ventureradar database init
 ventureradar database status
 ventureradar collect openalex --limit 10 --dry-run
 ventureradar collect all --limit 10
+ventureradar collect university --source ude_forschung --limit 5 --dry-run
 ventureradar ingestion history --limit 20 --source github
 ```
+
+`collect --source` gilt nur für `university` (Quellschlüssel oder Gruppe, z. B. `ude_forschung`, `ude`); für andere Collector ist es ein Konfigurationsfehler (Exit-Code 2).
 
 Alternativ zur installierten CLI kann `python -m app.cli ...` verwendet werden. `python scripts/initialize_database.py` führt `database init` aus; `python scripts/run_collector.py` delegiert an die CLI. Collector-Läufe geben JSON-Ergebnisse aus. Exit-Codes: `0` erfolgreich, `10` partiell, `1` fehlgeschlagen, `2` Konfiguration, `3` Datenbank.
 
@@ -170,7 +179,7 @@ Bei Änderungen sollen passende Parser-, Adapter-, Pipeline- und/oder Migrations
 5. Adapter in `app/adapters/registry.py` eintragen und passende Konfiguration in den bestehenden YAML-Dateien ergänzen.
 6. HTTP- und Adaptertests mit Mock-Transporten/Fixtures schreiben; Idempotenz, Fehler, Pagination, Dry-Run und Cursorverhalten testen.
 
-Für eine zusätzliche Universität zuerst einen passenden vorhandenen Connector und die `universities.sources`-Konfiguration verwenden. Einen Plugin-Hook nur hinzufügen, wenn die generischen Connectoren nicht ausreichen.
+Für eine zusätzliche Universität zuerst einen passenden vorhandenen Connector und die `universities.sources`-Konfiguration verwenden (Vorlage: die UDE-Einträge). Robots.txt und Nutzungsbedingungen prüfen und die Quelle mit `enabled: false` belassen, solange etwas unklar ist. Einen Plugin-Hook nur hinzufügen, wenn die generischen Connectoren nicht ausreichen.
 
 ### Datenbankschema ändern
 
@@ -206,3 +215,36 @@ Bei Persistenzänderungen auch Constraints, Quell-Provenienz, Upsert-Idempotenz 
 - Bewahre Rohdaten, Provenienz und bisherige Fehlersemantik. Keine stillen Fallbacks, die einen fehlgeschlagenen Abruf als erfolgreichen leeren Lauf ausgeben.
 - Aktualisiere direkt betroffene Tests und Dokumentation; führe den kleinsten passenden Testumfang aus.
 - Committe keine Secrets, lokalen `.env`-Dateien, personenbezogenen Rohdaten oder privaten Zugangsdaten.
+- Gib Werte aus `.env` (Tokens, Keys, Passwörter, E-Mail-Adressen) weder in Terminalausgaben noch in Dateien aus; prüfe nur, ob sie gesetzt sind.
+- Rufe keine sehr großen Seiten ab (z. B. die UDE-Feed-Übersicht `feeds.php`) und halte bei Live-Prüfungen Abstände und Limits ein.
+
+## 11. Recherchierte Quellen (Stand 2026-11-20)
+
+Welche externen Quellen für die Entwicklung herangezogen oder vom Code abgerufen werden. „Live geprüft“ bedeutet: im Rahmen der Entwicklung real abgerufen (UDE am 2026-11-20 mit wenigen, gedrosselten Anfragen). Alle anderen Einträge sind die im Code hinterlegten Basis- bzw. Terms-URLs und wurden hier nicht erneut inhaltlich bewertet.
+
+### Universität Duisburg-Essen (live geprüft)
+
+| Quelle | URL | Verwendung / Befund |
+| --- | --- | --- |
+| Forschungs-RSS | https://www.uni-due.de/rss/forschung.rss | Aktiver Collector `ude_forschung`; Live-Dry-Run und gespeicherter Lauf (5 Datensätze, zweiter Lauf idempotent) |
+| Allgemeiner News-RSS | https://www.uni-due.de/rss/aktuell.rss | Konfiguriert als `ude_aktuell`, deaktiviert |
+| RSS-Übersicht | https://www.uni-due.de/de/presse/feeds.php | Quelle der Feed-URLs; Seite sehr groß, nicht erneut komplett laden |
+| GUIDE (Gründungszentrum) | https://www.uni-due.de/guide/ | Konfiguriert als `ude_guide`, deaktiviert; nur Titel und Meta-Beschreibung; nicht live abgerufen, nur mit Fixtures getestet |
+| robots.txt | https://www.uni-due.de/robots.txt | Wird vor jedem Abruf beachtet; sperrt `GPTBot` |
+| Sitemap | https://www.uni-due.de/sitemap.xml | Valides `urlset`, genau 5.000 URLs, davon 6 unter `/guide/`; wird vor Nutzung validiert |
+
+Keine Nutzungs- oder Lizenzbedingungen für automatisierte Weiterverwendung der UDE-Inhalte gefunden; deshalb sind `ude_aktuell` und `ude_guide` aus.
+
+### Weitere konfigurierte Quellen (in `sources.yaml` bzw. `SourceSpec`)
+
+| Collector | Basis-URL | Hinterlegte Terms-/Limit-Seite |
+| --- | --- | --- |
+| `openalex` | https://api.openalex.org | https://help.openalex.org/how-to-use-the-api/rate-limits-and-authentication |
+| `github` | https://api.github.com | https://docs.github.com/en/site-policy/github-terms/github-terms-of-service#h-api-terms |
+| `arxiv` | https://export.arxiv.org/api | https://info.arxiv.org/help/api/tou.html (höchstens 1 Anfrage je 3 s) |
+| `huggingface` | Hub-API von huggingface.co (im Entwicklungsnetz nicht erreichbar, nur mit Mocks getestet) | https://huggingface.co/terms-of-service |
+| `exist` | https://exist.de (Programmseiten und Erfolgsgeschichten aus der Sitemap) | https://exist.de/datenschutz/ |
+| `university` / KIT | https://kit.edu/pi.rss | – |
+| `university` / TU Darmstadt | https://www.tu-darmstadt.de/universitaet/aktuelles_meldungen/neues_aus_der_tu_rss.de.rss | – |
+
+Beim Hinzufügen oder Ändern einer Quelle diesen Abschnitt mit URL, Prüfdatum und Befund (Terms, `robots.txt`, Limits) aktualisieren.
