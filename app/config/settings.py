@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     hf_token: str | None = None
 
     contact_email: str | None = None
+    manual_import_dir: str | None = None
     http_timeout_seconds: float = Field(default=30.0, gt=0)
     http_max_retries: int = Field(default=5, ge=0)
 

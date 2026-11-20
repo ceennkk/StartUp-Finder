@@ -9,6 +9,28 @@ exist:
     - {key: forschungstransfer, name: "EXIST-Forschungstransfer", url: "https://exist.de/programm/forschungstransfer/", keywords: ["Forschungstransfer"]}
     - {key: women, name: "EXIST-Women", url: "https://exist.de/programm/women/", keywords: ["exist women", "EXIST-Women"]}
 
+# CORDIS: EU research projects via the public EURIO SPARQL endpoint (CC BY 4.0, attribution "© European Union, CORDIS").
+# Only projects with at least one participant in `countries` (ISO 3166-1 alpha-2); only those participants are stored.
+# The endpoint has no documented limits: requests are spaced >= 10 s and kept small. No bulk ZIPs (robots.txt disallows /data/).
+cordis:
+  endpoint: https://cordis.europa.eu/datalab/sparql-api
+  countries: ["DE"]
+  initial_days: 90               # first run: projects whose startDate lies this many days back (up to today + future_days)
+  future_days: 0
+  lookback_days: 60              # later runs re-read this overlap; CORDIS exposes no change date
+  page_size: 25                  # projects per request (max 50); each page costs two requests
+  max_projects_per_run: 1000
+  min_interval_seconds: 10
+
+# Manual import of reference lists (local CSV/JSON files only, no network). Files are read from MANUAL_IMPORT_DIR
+# (default data/manual_imports/), which is git-ignored together with its subdirectories.
+manual_import:
+  extensions: [".csv", ".json"]
+  max_file_bytes: 5000000
+  max_rows_per_file: 5000
+  processed_retention_days: 30   # successfully imported files are moved to processed/ and deleted after this period
+  failed_retention_days: 14      # rejected files are moved to failed/ and deleted after this period
+
 # University sources. Each entry is one explicit page/feed (no crawling). robots.txt is always checked.
 # connector: rss | sitemap (validated sitemap + url_pattern + JSON-LD per page) | jsonld (urls) | html (CSS selectors)
 #            | page_metadata (url + urls + optional validated sitemap with path prefix; title/description only)

@@ -18,10 +18,43 @@ Aktuell registrierte Collector-Namen:
 - `huggingface` – Modelle, Datensätze, Spaces und Organisationen
 - `exist` – EXIST-Erfolgsgeschichten und Förderprogramme
 - `university` – ausgewählte Hochschulmeldungen und Forschungsprojekte
+- `cordis` – EU-geförderte Forschungsprojekte (CORDIS/EURIO-SPARQL) mit Teilnehmern aus konfigurierten Ländern (Standard `DE`)
+- `manual_import` – lokale CSV/JSON-Referenzlisten (Personen und Unternehmen), kein Netzwerkzugriff
 
 Die Collector-Registrierung steht in [`app/adapters/registry.py`](app/adapters/registry.py). Laufzeitparameter und Suchbereiche liegen in [`app/config/search_terms.yaml`](app/config/search_terms.yaml) und [`app/config/sources.yaml`](app/config/sources.yaml).
 
 **Projektumfang:** Umgesetzt ist ausschließlich Phase 1 (Datenbasis und Ingestion). Nicht Teil davon und nur auf ausdrückliche Freigabe zu beginnen: Start-up-Scoring/-Klassifikation, Entity Resolution/Merging, Team-Erkennung, Marktanalyse, KI-Analyse, Rankings, Dashboard/Frontend, FastAPI.
+
+### 1.1 Produktziel und Funding-Anforderung (verbindlich, noch nicht umgesetzt)
+
+**Produktziel:** „Build a sourcing engine that spots upcoming startups from the traces they leave long before their funding round.“ StartUp-Finder soll aufkommende Start-ups und Gründungsvorhaben anhand ihrer frühen öffentlichen Spuren entdecken, möglichst lange vor ihrer ersten externen Start-up-Finanzierungsrunde. Dieses Ziel ist für die weitere Produktentwicklung verbindlich.
+
+**Drei getrennte Stufen:**
+
+1. **Datensammlung (heutiger Stand, Phase 1):** Die Collectors erfassen öffentliche Spuren (Publikationen, Repositories, Modelle, Förderprojekte, Erfolgsgeschichten, manuelle Referenzlisten). Sie prüfen und speichern **keine** Finanzierungsrunden und treffen keine Aussage darüber, ob ein Unternehmen oder Vorhaben finanziert ist.
+2. **Funding-Verification (zukünftig):** Eine eigene, spätere Stufe soll pro Kandidat prüfen, ob eine externe Finanzierungsrunde belegt ist, und das Ergebnis nachvollziehbar dokumentieren.
+3. **Start-up-Auswahl (zukünftig):** Erst auf Basis der Verification wird das primäre Suchprofil gebildet.
+
+**Begriffsabgrenzung:**
+
+- Forschungsförderungen (EXIST, CORDIS-Zuschüsse, andere öffentliche Fördermittel), Forschungsbudgets, Stipendien, Förderprogramme und Wettbewerbspreise sind **keine** Start-up-Finanzierungsrunden und dürfen nicht als solche behandelt oder benannt werden. Der Signal-Typ `NEW_FUNDING_PROJECT` und die Beziehung `FUNDED_BY` beschreiben Förderung, nicht Funding Rounds.
+- Als Finanzierungsereignis (Funding Round) gelten externe Eigenkapitalfinanzierungen wie Pre-Seed, Seed, Series A und spätere Runden.
+- Ein Finanzierungsereignis muss später mit Quelle, Datum, Art und – sofern öffentlich verfügbar – Betrag nachvollziehbar dokumentiert werden.
+- Eine fehlende Information über eine Runde bedeutet nicht, dass nachweislich keine Finanzierung erfolgt ist.
+
+**Geplante Funding-Zustände (nur Konzept, nicht im Code, nicht in der Datenbank, nicht in `app/domain.py`):**
+
+| Zustand | Bedeutung |
+| --- | --- |
+| `funding_round_found` | Eine externe Finanzierungsrunde wurde durch eine belastbare Quelle nachgewiesen. |
+| `no_funding_round_found` | Bei der Recherche wurde keine Finanzierungsrunde gefunden. Das ist keine Garantie für fehlende Finanzierung. |
+| `funding_status_unknown` | Eine zuverlässige Prüfung war nicht möglich oder die Datenlage ist unzureichend. |
+
+**Primäres Suchprofil (Zielbild):** Es soll Unternehmen ohne nachgewiesene erste externe Finanzierungsrunde enthalten. Unternehmen mit belegter Finanzierungsrunde (`funding_round_found`) sollen separat gekennzeichnet und aus diesem Profil ausgeschlossen werden. Ob `no_funding_round_found` und `funding_status_unknown` in das Profil gehören und wie sie sichtbar getrennt werden, ist bei der Umsetzung zu entscheiden.
+
+**Aktueller Stand und Einschränkung:** Die heutige Datenaufnahme bietet **keine Garantie**, ausschließlich noch nicht finanzierte Start-ups zu erfassen. Sie ist quellen- und keyword-getrieben: Gespeicherte Entities (auch Organisationen aus EXIST, CORDIS oder dem manuellen Import) können bereits extern finanziert sein, und ob sie Start-ups sind, ist nicht klassifiziert. Datensätze dürfen daher weder als „unfinanziert“ noch als „Start-up ohne Finanzierung“ dargestellt werden.
+
+**Zukünftige Entwicklungsaufgabe (nicht Teil des aktuellen Auftrags):** Konzeption und Umsetzung der Funding-Verification und der Start-up-Auswahl einschließlich der drei Zustände, der Dokumentation von Finanzierungsereignissen (Quelle, Datum, Art, Betrag) und des Ausschlusses im primären Suchprofil. Das betrifft voraussichtlich Datenmodell, geeignete Quellen und deren Nutzungsbedingungen sowie Entity Resolution (Zuordnung von Kandidaten zu Finanzierungsdaten). Beginn nur nach ausdrücklicher Freigabe; vorher keine entsprechenden Tabellen, Spalten, Enums, Adapter oder Logik anlegen.
 
 ## 2. Architektur und Datenfluss
 
@@ -107,6 +140,18 @@ Quellenoptionen in `sources.yaml`: `enabled` (`false` = Collector aus), `group` 
 
 **UDE (erstes ausgearbeitetes Beispiel, Gruppe `ude`):** `ude_forschung` (RSS, aktiv), `ude_aktuell` (RSS, deaktiviert) und `ude_guide` (Gründungszentrum GUIDE, `page_metadata` + Sitemap-Präfix `/guide/`, deaktiviert; als `organization_unit` `unit:ude_guide` mit `MEMBER_OF` zur Universität, ohne Signal, nur die Startseite aktualisiert die Entity). Zwei Quellen sind deaktiviert, weil keine Nutzungsbedingungen für automatisierte Weiterverwendung gefunden wurden und die `robots.txt` `GPTBot` ausdrücklich sperrt; sie erst nach Klärung aktivieren, die Daten nicht für KI-Training verwenden. Die UDE-Sitemap listet genau 5.000 URLs (vermutlich gekappt) und gilt nicht als vollständiger Index. Tests: [`tests/adapters/test_university_ude.py`](tests/adapters/test_university_ude.py) mit Fixtures `ude_forschung.rss`, `ude_sitemap.xml`, `ude_guide.html`.
 
+### CORDIS
+
+`CordisAdapter` ([`app/adapters/cordis.py`](app/adapters/cordis.py), Konfiguration `cordis:` in `sources.yaml`) liest ausschließlich per `GET` und `SELECT` den öffentlichen EURIO-SPARQL-Endpoint `https://cordis.europa.eu/datalab/sparql-api` (am 2026-11-20 live geprüft, Antwort `application/sparql-results+json`). Keine Bulk-ZIPs (`robots.txt` sperrt `/data/`), keine Data-Extraction-API, keine föderierten Abfragen, kein Ersatzendpoint: Nicht erreichbarer Endpoint, `robots.txt`-Sperre oder Nicht-SPARQL-Antwort lassen den Lauf fehlschlagen. Pro Seite zwei Anfragen (Projektliste mit `LIMIT/OFFSET`, dann Details und Teilnehmer per `VALUES`), mindestens 10 s Abstand, Seitengröße höchstens 50. Gefiltert wird auf Projekte mit Teilnehmern in `countries`; nur diese Teilnehmer werden gespeichert (Ländercodes und Projekt-URIs werden vor dem Einbau in die Abfrage validiert). Cursor: Startdatum plus `skip` (Wiederaufnahme innerhalb eines Startdatums, wenn `max_projects_per_run` erreicht wurde), danach `lookback_days` Überlappung, weil CORDIS kein Änderungsdatum liefert.
+
+Modell: Projekt → `RESEARCH_PROJECT` (`project:<Projektnummer>`, Signal `NEW_FUNDING_PROJECT` am Startdatum, Abstract höchstens 1000 Zeichen); Teilnehmer → `ORGANIZATION` mit `properties.organization_type` (JSONB, persistent), Ländern und Website; `PARTICIPATED_IN` mit `SOURCE_ASSERTED` und Rollen. Jeder Rohdatensatz enthält Lizenz (CC BY 4.0, Beschluss 2011/833/EU), Attribution „© European Union, CORDIS“, Projekt-URL und Endpoint. **Einschränkung Organisationstypen:** Das Datenmodell kennt nur `UNIVERSITY` und `ORGANIZATION`; CORDIS liefert keinen Aktivitätstyp (an einer Stichprobe geprüft), daher ist `organization_type` der generische Wert `organization`. Typen wie `research_institute`/`research_organization` brauchen eine Änderung an `app/domain.py` und der Datenbank und sind nicht Teil von Phase 1. Nicht übernommen, weil nicht belastbar verifiziert: Förderprogramm (Grant-Ressource ohne Label), Akronym (eigene Ressource), Gesamtkosten, Zahlungsbeträge. Tests: [`tests/adapters/test_cordis.py`](tests/adapters/test_cordis.py) mit den synthetischen Fixtures `cordis_projects.json` und `cordis_details.json` im EURIO-Antwortformat.
+
+### Manueller Import
+
+`ManualImportAdapter` ([`app/adapters/manual_import.py`](app/adapters/manual_import.py), Konfiguration `manual_import:`) liest lokale `.csv`/`.json`-Dateien aus `MANUAL_IMPORT_DIR` (Standard `data/manual_imports/`, samt Unterordnern in `.gitignore`). Er nutzt **kein Netzwerk**, öffnet LinkedIn-URLs nie (nur Syntaxprüfung `linkedin.com/in/<profil>`) und übermittelt nichts an Dritte. Felder: `linkedin_url`, `name` (Pflicht), `position`, `company`, `project_affiliation` (Freitext), `verification_status` (`unverified` Standard oder `manually_verified`, dann sind `verification_method` und `checked_at` Pflicht), `notes`, `row_id`; unbekannte Spalten verwerfen die Datei. Modell: `PERSON` (`person:<Hash der normalisierten URL>`), `ORGANIZATION` (`org:<normalisierter Name>`, nur innerhalb dieser Quelle) und `WORKS_AT` mit dem angegebenen Status; keine Signals/Observations; keine automatische Zuordnung zu Entities anderer Quellen.
+
+Dateien: Eine Datei mit irgendeiner ungültigen Zeile wird komplett abgelehnt (Rohsatz `rejected_file` mit Hash und Feldnamen, Lauf `partial`, Datei nach `failed/` mit `.problems.txt`). Gültige Dateien werden erst nach vollständig gespeicherten Zeilen nach `processed/` verschoben (neutraler Name aus UTC-Zeit und Inhalts-Hash); bei Satzfehler, `--limit` oder `--dry-run` bleiben sie liegen. Aufbewahrung: `processed_retention_days` (30) und `failed_retention_days` (14), danach werden die Dateien gelöscht. Logs und Fehlermeldungen enthalten nur Anzahlen, Zeilennummern und Feldnamen, keine Namen, Firmen, URLs oder Notizen; Tests verwenden ausschließlich synthetische Daten ([`tests/adapters/test_manual_import.py`](tests/adapters/test_manual_import.py)). Importierte Zeilen sind personenbezogene Daten in der Datenbank (Löschverfahren: README).
+
 ## 5. Konfiguration und Einstellungen
 
 - [`app/config/search_terms.yaml`](app/config/search_terms.yaml): Suchbegriffe, Topics, Kategorien, Zeiträume, Caps und adapterbezogene Abrufgrenzen für API-Collector.
@@ -114,7 +159,7 @@ Quellenoptionen in `sources.yaml`: `enabled` (`false` = Collector aus), `group` 
 - [`app/config/settings.py`](app/config/settings.py): Pydantic-Settings, YAML-Lader und Umgebungsvariablen. Einstellungen werden pro Prozess gecacht.
 - `.env.example`: Variablennamen und lokale Konfigurationsvorlage. Zugangsdaten gehören ausschließlich in eine lokale, nicht versionierte `.env` oder sichere Deployment-Secrets; niemals in Dokumentation, Tests, Logs oder Commits kopieren.
 
-Wichtige Umgebungsvariablen: `DATABASE_URL`, optional `DATABASE_URL_DIRECT`, `TEST_DATABASE_URL`, `GITHUB_TOKEN`, `OPENALEX_API_KEY`, `HF_TOKEN`, `CONTACT_EMAIL`, `HTTP_TIMEOUT_SECONDS`, `HTTP_MAX_RETRIES`, `LOG_LEVEL`, `LOG_FORMAT` und `OBSERVATION_BUCKET`. `DATABASE_URL` wird für normale DB-Verbindungen genutzt; Migrationen verwenden bevorzugt `DATABASE_URL_DIRECT`. Der PostgreSQL-Treiber wird bei Bedarf auf psycopg 3 normalisiert.
+Wichtige Umgebungsvariablen: `DATABASE_URL`, optional `DATABASE_URL_DIRECT`, `TEST_DATABASE_URL`, `GITHUB_TOKEN`, `OPENALEX_API_KEY`, `HF_TOKEN`, `CONTACT_EMAIL`, `MANUAL_IMPORT_DIR`, `HTTP_TIMEOUT_SECONDS`, `HTTP_MAX_RETRIES`, `LOG_LEVEL`, `LOG_FORMAT` und `OBSERVATION_BUCKET`. `DATABASE_URL` wird für normale DB-Verbindungen genutzt; Migrationen verwenden bevorzugt `DATABASE_URL_DIRECT`. Der PostgreSQL-Treiber wird bei Bedarf auf psycopg 3 normalisiert.
 
 Bevor du Suchbereiche oder Quellen änderst, prüfe die Nutzungsbedingungen und Abrufregeln der jeweiligen Quelle. Halte Begrenzungen, Host-Abstände und `robots.txt`-Vorgaben ein; nimm keine Zugangsdaten in YAML auf.
 
@@ -217,6 +262,7 @@ Bei Persistenzänderungen auch Constraints, Quell-Provenienz, Upsert-Idempotenz 
 - Committe keine Secrets, lokalen `.env`-Dateien, personenbezogenen Rohdaten oder privaten Zugangsdaten.
 - Gib Werte aus `.env` (Tokens, Keys, Passwörter, E-Mail-Adressen) weder in Terminalausgaben noch in Dateien aus; prüfe nur, ob sie gesetzt sind.
 - Rufe keine sehr großen Seiten ab (z. B. die UDE-Feed-Übersicht `feeds.php`) und halte bei Live-Prüfungen Abstände und Limits ein.
+- Beachte Abschnitt 1.1: Förderungen (EXIST, CORDIS u. a.) sind keine Finanzierungsrunden; bezeichne gesammelte Daten nicht als „unfinanziert“ und implementiere die Funding-Verification nicht ohne ausdrückliche Freigabe.
 
 ## 11. Recherchierte Quellen (Stand 2026-11-20)
 
@@ -246,5 +292,26 @@ Keine Nutzungs- oder Lizenzbedingungen für automatisierte Weiterverwendung der 
 | `exist` | https://exist.de (Programmseiten und Erfolgsgeschichten aus der Sitemap) | https://exist.de/datenschutz/ |
 | `university` / KIT | https://kit.edu/pi.rss | – |
 | `university` / TU Darmstadt | https://www.tu-darmstadt.de/universitaet/aktuelles_meldungen/neues_aus_der_tu_rss.de.rss | – |
+| `cordis` | https://cordis.europa.eu, Endpoint `/datalab/sparql-api`; live geprüft 2026-11-20: `robots.txt` erlaubt den Pfad, JSON-Antwort, Antwortzeit unter 0,5 s, `OFFSET`-Paginierung funktioniert, rund 24.000 Projekte mit deutscher Beteiligung, keine Authentifizierung | https://cordis.europa.eu/about/legal (CC BY 4.0 und Beschluss 2011/833/EU, Attribution „© European Union, CORDIS“), Hilfe https://cordis.europa.eu/about/sparql. Die SPARQL-Antwort selbst trägt keinen Lizenzhinweis; die Lizenz stammt von der Rechtsseite. Endpoint-Limits sind nicht dokumentiert. `robots.txt` sperrt u. a. `/search`, `/data/` (Bulk-ZIPs), `/booklet/`, `/publication/` und `format=xml`/`format=pdf`. |
+| `manual_import` | lokale Dateien, kein Abruf | – |
+
+### Geprüft, nicht im Umfang (nur Dokumentation, nicht implementiert, auch nicht deaktiviert)
+
+Bei unklaren oder restriktiven Nutzungsbedingungen wird keine Quelle angelegt. Stand 2026-11-20:
+
+| Quelle | Befund |
+| --- | --- |
+| RSS Fraunhofer | Impressum: kommerzielle Nutzung nur mit schriftlicher Genehmigung |
+| RSS Max-Planck-Gesellschaft | alle Rechte vorbehalten |
+| RSS DLR | Nutzungsbedingungen richten sich an Presse/Rundfunk, Bilder CC BY-NC-ND |
+| RSS Leibniz-Gemeinschaft | nur Pressemitteilungen der Gemeinschaft frei; `rss.xml` mischt Institutsmeldungen und Magazin, `content:encoded` enthält Volltext |
+| Atom Universität Hamburg (`/newsroom.atom`) | keine Nutzungsbedingungen gefunden |
+| STARTPLATZ | Impressum: Vervielfältigung nur mit schriftlicher Zustimmung |
+| SPRIND, UnternehmerTUM, TUM, Max Planck Innovation, Deutscher Gründerpreis, Gründungswoche | `robots.txt` technisch offen, aber keine Nutzungsbedingungen für automatisierte Weiterverwendung gefunden; TUM-Sitemaps enthalten keine Eventdaten |
+| GEPRIS | `robots.txt` sperrt `/` für alle Agents |
+| HTGF | Content-Signal `ai-input=no`, `ai-train=no` |
+| Bundesanzeiger | automatisierter Abruf untersagt |
+
+Ein Eventadapter entfällt, weil keine Quelle mit klaren Bedingungen gefunden wurde.
 
 Beim Hinzufügen oder Ändern einer Quelle diesen Abschnitt mit URL, Prüfdatum und Befund (Terms, `robots.txt`, Limits) aktualisieren.

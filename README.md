@@ -3,6 +3,22 @@
 Collects public data on research, funding and developer activity, normalizes it into a common model and stores it, with full provenance and history, in PostgreSQL (Neon). 
 **Scope of this repository: data collection, normalization and storage only.** There is no scoring, ranking, startup detection, entity resolution, team detection, market analysis, dashboard or API server. The schema leaves room for those later phases but none of their logic exists here.
 
+## Product goal and funding requirement (planned, not implemented)
+
+> Build a sourcing engine that spots upcoming startups from the traces they leave long before their funding round.
+
+StartUp-Finder is meant to discover emerging startups and founding projects from their early public traces, as long as possible before their first external startup funding round. Today only the first of three separate stages exists:
+
+1. **Data collection (this repository, Phase 1):** collectors store public traces with provenance. They do not check or record funding rounds.
+2. **Funding verification (future):** a later stage checks per candidate whether an external funding round is documented.
+3. **Startup selection (future):** the primary search profile is built from the verification result.
+
+* Research grants, scholarships, funding programmes and competition prizes (EXIST, CORDIS grants, other public funds) are **not** startup funding rounds. Pre-seed, seed, Series A and later external equity rounds are. Funding events must later be documented with source, date, type and, where public, amount.
+* Planned funding states (concept only, not in code or database): `funding_round_found` (a reliable source proves an external round), `no_funding_round_found` (research found none; no guarantee that none exists) and `funding_status_unknown` (no reliable check possible or insufficient data). Missing information about a round never proves that no funding was received.
+* The primary search profile is meant to contain companies without a proven first external funding round; companies with a documented round are to be flagged separately and excluded from it.
+* **Current limitation:** the present data collection gives **no guarantee** that only not-yet-funded startups are captured. Stored organisations may already be funded and are not classified as startups.
+* This is a documented future task; no part of it is implemented, and it needs explicit approval before work starts (see `AGENTS.md`, section 1.1).
+
 ## Contents
 1. [Architecture](#architecture)
 2. [Setup](#setup)
@@ -22,7 +38,7 @@ Collects public data on research, funding and developer activity, normalizes it 
 ```mermaid
 flowchart LR
   CLI[CLI / n8n] --> RUN[BaseAdapter.run]
-  RUN --> A[Adapters: OpenAlex, GitHub, arXiv, Hugging Face, EXIST, Universities]
+  RUN --> A[Adapters: OpenAlex, GitHub, arXiv, Hugging Face, EXIST, Universities, CORDIS, Manual import]
   HTTP[PoliteHttpClient: spacing, retries, Retry-After, robots.txt] --> A
   A -->|RawRecord| STORE1[(source_records + revisions)]
   A -->|normalize| N[NormalizedBundle: entities, relationships, signals, observations]
@@ -60,6 +76,7 @@ python -m app.cli database status
 | `OPENALEX_API_KEY` | recommended | Free key. Without it the shared keyless budget ($0.10/day per IP) and basic paging (10,000 results) apply. |
 | `HF_TOKEN` | optional | Public endpoints work without it. |
 | `CONTACT_EMAIL` | recommended | Included in the `User-Agent`. |
+| `MANUAL_IMPORT_DIR` | optional | Directory read by `manual_import` (default `data/manual_imports`). Must stay git-ignored. |
 
 Secrets are only read from the environment / `.env` (which is git-ignored). No credentials are stored in code or in the database.
 
@@ -101,6 +118,8 @@ Every collector runs standalone, is incremental (watermarks in `sync_state`, adv
 | `huggingface` | Hub API | language filters / search | Models, datasets, spaces (+ model card text), namespaces resolved to organization or user, public org members (handles only). Observations: downloads, likes. |
 | `exist` | sitemap + WordPress REST (dates) + HTML | `sources.yaml` | Success stories (company, website, summary) and the three programme pages. Programme mentions are keyword matches and stored as **unverified** `FUNDED_BY`. |
 | `university` | RSS, validated sitemap + JSON-LD, JSON-LD, page metadata, HTML selectors | `sources.yaml` | Plugin system. Working examples: KIT, TU Darmstadt and the University of Duisburg-Essen (see [below](#university-of-duisburg-essen-ude)). |
+| `cordis` | public EURIO SPARQL endpoint (read-only `SELECT`) | `sources.yaml` (`cordis`) | EU-funded projects with at least one participant in the configured countries (default `DE`). Project -> `research_project` (`NEW_FUNDING_PROJECT` signal on its start date), participants -> `organization` with property `organization_type` and a `source_asserted` `PARTICIPATED_IN`. See [CORDIS](#cordis) and [Manual import](#manual-import). |
+| `manual_import` | local CSV/JSON files, **no network** | `sources.yaml` (`manual_import`) | Reference lists of people and their company, supplied by hand. `person` + `organization` + `WORKS_AT` (`unverified` by default). See [Manual import](#manual-import). |
 
 ### Source facts, terms and technical limits
 
@@ -113,6 +132,29 @@ Every collector runs standalone, is incremental (watermarks in `sync_state`, adv
 | exist.de | `robots.txt` honored, 2 s spacing. | Success stories contain no structured project start / funding start; those stay `NULL`. Person names in interviews are not extracted. |
 | foerderdatenbank.de | **Not collected.** `robots.txt` disallows `/FDB/SiteGlobals/` (the search paths) and sets `Crawl-delay: 30`. | Add explicit detail pages to `sources.yaml` only after checking terms. |
 | Universities | `robots.txt` honored per fetch, configurable spacing (HTML connectors: at least 10 s), explicit pages only (no crawling). | Each university needs its own entry; there is no uniform API. |
+| CORDIS | Endpoint `https://cordis.europa.eu/datalab/sparql-api` (checked 2026-11-20); `robots.txt` honored, 10 s spacing, 25 projects per page (two requests each), no federated queries, no bulk ZIPs (`/data/` is disallowed). Data: CC BY 4.0 / Commission Decision 2011/833/EU, attribution "(c) European Union, CORDIS" (stored with every record). | No documented endpoint limits. No change date, so each run re-reads a 60-day overlap by project start date. Organisation activity type (university, research centre, company) is not exposed, so `organization_type` is the generic `organization`. |
+| Manual import | Local files only; nothing is sent anywhere. | See [Manual import](#manual-import). |
+
+### CORDIS
+
+```powershell
+python -m app.cli collect cordis --limit 5 --dry-run
+```
+
+* Config: `sources.yaml` -> `cordis` (`countries`, `initial_days`, `lookback_days`, `page_size`, `max_projects_per_run`). Only participants from the configured countries are stored. An unreachable endpoint, a `robots.txt` block or a non-SPARQL answer fails the run; there is no fallback to another endpoint or access method.
+* Watermark: project start date plus a skip count, so a capped run resumes inside a start date that holds many projects.
+* CORDIS projects are public research funding, not startup funding rounds (see the product goal above).
+* **Organisation types:** the data model only knows `university` and `organization`. CORDIS organisations are stored as `organization` with `properties.organization_type = "organization"` (the source gives nothing finer). Types such as `research_institute` or `research_organization` would need a change to `app/domain.py` and the database; that is not part of this phase.
+
+### Manual import
+
+Drop CSV or JSON files into `MANUAL_IMPORT_DIR` (default `data/manual_imports/`, git-ignored with all subdirectories) and run `python -m app.cli collect manual_import [--dry-run]`.
+
+* Columns/keys: `linkedin_url` and `name` (required); `position`, `company`, `project_affiliation` (free text), `verification_status` (`unverified` default, or `manually_verified`, which needs `verification_method` and `checked_at`), `notes`, `row_id`. Unknown columns reject the file. The LinkedIn URL is only checked syntactically (`linkedin.com/in/<profile>`) and never opened.
+* A file with any invalid row is rejected as a whole and nothing from it is imported. Rejected files go to `failed/` with a `.problems.txt` that names rows and fields only; the run is `partial` (exit 10).
+* Files are moved only after every row was stored: to `processed/` under a neutral name (`<UTC time>_<content hash>`). A failed record, `--limit` or `--dry-run` leaves them in place. `processed/` files are deleted after `processed_retention_days` (30), `failed/` after `failed_retention_days` (14).
+* Logs and error messages contain counts, row numbers and field names, never names, companies, URLs or notes. Tests use synthetic data only.
+* People and companies are never matched to entities of other sources; within this source a company is identified by its normalized name. Imported rows are personal data in the database: use the erasure procedure below to remove them.
 
 ### University of Duisburg-Essen (UDE)
 
@@ -220,7 +262,7 @@ n8n only schedules; processing stays here.
 * GitHub and arXiv have no country filter; German focus is only possible for OpenAlex (institution country) and the German sources.
 * OpenAlex without an API key is practically limited to a few requests per day.
 * HTML sources can change; parser output is covered by fixtures but a layout change needs a parser update.
-* Corporate spin-outs, Product Hunt, pitch events and the LinkedIn reference adapter are not part of this phase.
+* Corporate spin-outs and pitch events are not part of this phase.
 
 ## Tests
 ```powershell
