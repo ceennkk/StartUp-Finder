@@ -22,6 +22,7 @@ from app.database.models import (
     SourceRecordRevision,
     SyncState,
 )
+from app.discovery.types import DiscoveryInput, DiscoverySignalDraft, ObservationInput
 from app.domain import AliasType, RunStatus
 from app.ingestion.types import EntityDraft, NormalizedBundle, RawRecord, SourceSpec
 from app.utils.dates import bucket_time
@@ -230,6 +231,152 @@ class IngestionRepository:
                 )
             )
 
+    def list_discovery_inputs(
+        self, *, source_name: str | None = None, limit: int = 500
+    ) -> list[DiscoveryInput]:
+        stmt = (
+            select(
+                Signal.id,
+                Signal.source_record_id,
+                Signal.entity_id,
+                Source.source_name,
+                SourceRecord.record_type,
+                Signal.signal_type,
+                Signal.event_date,
+                Signal.published_at,
+                SourceRecord.raw_payload,
+            )
+            .join(SourceRecord, SourceRecord.id == Signal.source_record_id)
+            .join(Source, Source.id == SourceRecord.source_id)
+            .where(Signal.properties["discovery_rule_id"].as_string().is_(None))
+            .order_by(Signal.first_seen_at, Signal.id)
+            .limit(limit)
+        )
+        if source_name:
+            stmt = stmt.where(Source.source_name == source_name)
+
+        return [
+            DiscoveryInput(
+                source_signal_id=signal_id,
+                source_record_id=source_record_id,
+                entity_id=entity_id,
+                source_name=name,
+                record_type=record_type,
+                source_signal_type=signal_type,
+                event_date=event_date,
+                published_at=published_at,
+                raw_payload=payload,
+            )
+            for (
+                signal_id,
+                source_record_id,
+                entity_id,
+                name,
+                record_type,
+                signal_type,
+                event_date,
+                published_at,
+                payload,
+            ) in self.session.execute(stmt).all()
+        ]
+
+    def list_discovery_observations(
+        self, *, source_name: str | None = None, limit: int = 500
+    ) -> list[ObservationInput]:
+        stmt = (
+            select(
+                Observation.id,
+                Observation.source_record_id,
+                Observation.entity_id,
+                Source.source_name,
+                Observation.metric_name,
+                Observation.metric_value,
+                Observation.metric_unit,
+                Observation.observed_at,
+            )
+            .join(SourceRecord, SourceRecord.id == Observation.source_record_id)
+            .join(Source, Source.id == SourceRecord.source_id)
+            .order_by(Observation.observed_at, Observation.id)
+            .limit(limit)
+        )
+        if source_name:
+            stmt = stmt.where(Source.source_name == source_name)
+
+        return [
+            ObservationInput(
+                observation_id=observation_id,
+                source_record_id=source_record_id,
+                entity_id=entity_id,
+                source_name=name,
+                metric_name=metric_name,
+                metric_value=metric_value,
+                metric_unit=metric_unit,
+                observed_at=observed_at,
+            )
+            for (
+                observation_id,
+                source_record_id,
+                entity_id,
+                name,
+                metric_name,
+                metric_value,
+                metric_unit,
+                observed_at,
+            ) in self.session.execute(stmt).all()
+        ]
+
+    def reconcile_discovery_signals(
+        self,
+        *,
+        entity_id: uuid.UUID,
+        source_record_id: uuid.UUID,
+        derived_signals: list[DiscoverySignalDraft],
+        rule_ids: tuple[str, ...],
+        now: datetime,
+    ) -> int:
+        desired = {draft.signal_type.value: draft for draft in derived_signals}
+        if len(desired) != len(derived_signals):
+            raise ValueError("only one derived signal per type is allowed for a source record and entity")
+        if any(
+            draft.entity_id != entity_id or draft.source_record_id != source_record_id
+            for draft in derived_signals
+        ):
+            raise ValueError("derived signals must match the reconciled entity and source record")
+
+        existing = self.session.execute(
+            select(Signal)
+            .where(Signal.entity_id == entity_id, Signal.source_record_id == source_record_id)
+            .with_for_update()
+        ).scalars()
+        for signal in existing:
+            rule_id = signal.properties.get("discovery_rule_id")
+            if rule_id in rule_ids and signal.signal_type not in desired:
+                self.session.delete(signal)
+
+        for draft in desired.values():
+            self.session.execute(
+                insert(Signal)
+                .values(
+                    entity_id=entity_id,
+                    source_record_id=source_record_id,
+                    signal_type=draft.signal_type.value,
+                    signal_description=draft.description,
+                    event_date=None,
+                    published_at=draft.published_at,
+                    first_seen_at=now,
+                    properties=draft.properties,
+                )
+                .on_conflict_do_update(
+                    constraint="uq_signals_entity_type_record",
+                    set_={
+                        "signal_description": draft.description,
+                        "published_at": draft.published_at,
+                        "properties": draft.properties,
+                    },
+                )
+            )
+        return len(desired)
+
     def _upsert_entity(
         self, source_id: uuid.UUID, record_id: uuid.UUID, draft: EntityDraft, now: datetime
     ) -> uuid.UUID:
@@ -347,4 +494,3 @@ class IngestionRepository:
                       Relationship, Signal, Observation):
             counts[model.__tablename__] = self.session.execute(select(func.count()).select_from(model)).scalar_one()
         return counts
-

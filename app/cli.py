@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 import typer
 from alembic import command
@@ -24,6 +24,8 @@ from app.database.connection import (
     session_scope,
 )
 from app.database.repositories import IngestionRepository
+from app.discovery.engine import load_discovery, persist_discovery
+from app.discovery.types import DiscoveryResult
 from app.ingestion.types import RunResult
 from app.utils.logging import configure_logging
 
@@ -33,8 +35,10 @@ EXIT_PARTIAL = 10
 cli = typer.Typer(help="VentureRadar data ingestion", no_args_is_help=True, add_completion=False)
 database_cli = typer.Typer(help="Database management", no_args_is_help=True)
 ingestion_cli = typer.Typer(help="Ingestion run information", no_args_is_help=True)
+discovery_cli = typer.Typer(help="Discovery over already ingested data", no_args_is_help=True)
 cli.add_typer(database_cli, name="database")
 cli.add_typer(ingestion_cli, name="ingestion")
+cli.add_typer(discovery_cli, name="discovery")
 
 
 @cli.callback()
@@ -129,6 +133,93 @@ def ingestion_history(
     except SQLAlchemyError as exc:
         raise _fail(f"database error: {exc}", EXIT_DB) from exc
     typer.echo(json.dumps(runs, indent=2))
+
+
+def _discovery_payload(
+    result: DiscoveryResult, *, mode: str, persisted: int | None = None
+) -> dict[str, Any]:
+    payload = {
+        "mode": mode,
+        "persisted": persisted is not None,
+        "source_signal_classifications": [
+            {
+                "source_signal_id": str(item.source_signal_id),
+                "source_record_id": str(item.source_record_id),
+                "entity_id": str(item.entity_id),
+                "source": item.source_name,
+                "source_signal_type": item.source_signal_type,
+                "category": item.category,
+                "strength": item.strength,
+                "interpretation": item.interpretation,
+            }
+            for item in result.classifications
+        ],
+        "observation_classifications": [
+            {
+                "observation_id": str(item.observation_id),
+                "source_record_id": str(item.source_record_id),
+                "entity_id": str(item.entity_id),
+                "source": item.source_name,
+                "metric_name": item.metric_name,
+                "metric_value": str(item.metric_value),
+                "metric_unit": item.metric_unit,
+                "observed_at": item.observed_at.isoformat(),
+                "category": item.category,
+                "strength": item.strength,
+                "interpretation": item.interpretation,
+            }
+            for item in result.observation_classifications
+        ],
+        "derived_signals": [
+            {
+                "source_record_id": str(item.source_record_id),
+                "entity_id": str(item.entity_id),
+                "signal_type": item.signal_type.value,
+                "published_at": item.published_at.isoformat() if item.published_at else None,
+                "properties": item.properties,
+            }
+            for item in result.derived_signals
+        ],
+    }
+    if persisted is not None:
+        payload["derived_signals_upserted"] = persisted
+        payload["source_records_reconciled"] = len(result.scopes)
+    return payload
+
+
+@discovery_cli.command("preview")
+def discovery_preview(
+    source: Annotated[str | None, typer.Option(help="Filter by source name")] = None,
+    limit: Annotated[int, typer.Option(min=1, help="Maximum source signals and observations to inspect")] = 500,
+) -> None:
+    """Classify existing signals/observations and preview derived mentions without writing."""
+    try:
+        factory = make_session_factory(make_engine())
+        with factory() as session:
+            result = load_discovery(session, source_name=source, limit=limit)
+    except DatabaseConfigError as exc:
+        raise _fail(str(exc), EXIT_CONFIG) from exc
+    except SQLAlchemyError as exc:
+        raise _fail(f"database error: {exc}", EXIT_DB) from exc
+    typer.echo(json.dumps(_discovery_payload(result, mode="preview"), indent=2))
+
+
+@discovery_cli.command("run")
+def discovery_run(
+    source: Annotated[str | None, typer.Option(help="Filter by source name")] = None,
+    limit: Annotated[int, typer.Option(min=1, help="Maximum source signals and observations to inspect")] = 500,
+) -> None:
+    """Persist derived mention signals; source-signal classifications are not duplicated."""
+    try:
+        factory = make_session_factory(make_engine())
+        with session_scope(factory) as session:
+            result = load_discovery(session, source_name=source, limit=limit)
+            persisted = persist_discovery(session, result)
+    except DatabaseConfigError as exc:
+        raise _fail(str(exc), EXIT_CONFIG) from exc
+    except SQLAlchemyError as exc:
+        raise _fail(f"database error: {exc}", EXIT_DB) from exc
+    typer.echo(json.dumps(_discovery_payload(result, mode="run", persisted=persisted), indent=2))
 
 
 def _exit_code(results: list[RunResult]) -> int:

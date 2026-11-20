@@ -1,15 +1,15 @@
-# VentureRadar Ingestion (Phase 1: Data Foundation)
+# VentureRadar Ingestion (Phase 1 + 2A/2B)
 
 Collects public data on research, funding and developer activity, normalizes it into a common model and stores it, with full provenance and history, in PostgreSQL (Neon). 
-**Scope of this repository: data collection, normalization and storage only.** There is no scoring, ranking, startup detection, entity resolution, team detection, market analysis, dashboard or API server. The schema leaves room for those later phases but none of their logic exists here.
+**Scope of this repository: data collection, normalization, storage, and deterministic early-signal discovery.** Discovery classifies existing source signals and individual observations and can emit rule-based text-mention signals with source-record provenance. It does not identify startups or founding teams. There is no entity resolution, funding verification, scoring, ranking, market analysis, dashboard or API server.
 
-## Product goal and funding requirement (planned, not implemented)
+## Product goal and funding requirement
 
 > Build a sourcing engine that spots upcoming startups from the traces they leave long before their funding round.
 
-StartUp-Finder is meant to discover emerging startups and founding projects from their early public traces, as long as possible before their first external startup funding round. Today only the first of three separate stages exists:
+StartUp-Finder is meant to discover emerging startups and founding projects from their early public traces, as long as possible before their first external startup funding round. The current implementation includes data ingestion plus a bounded early-signal discovery layer; funding verification and startup selection remain future stages:
 
-1. **Data collection (this repository, Phase 1):** collectors store public traces with provenance. They do not check or record funding rounds.
+1. **Data collection and early-signal discovery (Phase 1 plus 2A/2B):** collectors store public traces with provenance; deterministic rules classify signals and explicit text mentions. This is not startup classification and does not check or record equity funding rounds.
 2. **Funding verification (future):** a later stage checks per candidate whether an external funding round is documented.
 3. **Startup selection (future):** the primary search profile is built from the verification result.
 
@@ -17,21 +17,22 @@ StartUp-Finder is meant to discover emerging startups and founding projects from
 * Planned funding states (concept only, not in code or database): `funding_round_found` (a reliable source proves an external round), `no_funding_round_found` (research found none; no guarantee that none exists) and `funding_status_unknown` (no reliable check possible or insufficient data). Missing information about a round never proves that no funding was received.
 * The primary search profile is meant to contain companies without a proven first external funding round; companies with a documented round are to be flagged separately and excluded from it.
 * **Current limitation:** the present data collection gives **no guarantee** that only not-yet-funded startups are captured. Stored organisations may already be funded and are not classified as startups.
-* This is a documented future task; no part of it is implemented, and it needs explicit approval before work starts (see `AGENTS.md`, section 1.1).
+* Startup selection and funding verification are documented future tasks; they are not implemented and need explicit approval before work starts (see `AGENTS.md`, section 1.1).
 
 ## Contents
 1. [Architecture](#architecture)
 2. [Setup](#setup)
 3. [Running collectors](#running-collectors-cli)
 4. [Collectors](#collectors)
-5. [Database schema](#database-schema)
-6. [Data quality rules](#data-quality-rules)
-7. [Privacy and legal notes](#privacy-and-legal-notes)
-8. [Error handling](#error-handling)
-9. [n8n integration](#n8n-integration)
-10. [Adding a new source](#adding-a-new-source)
-11. [Known limitations](#known-limitations)
-12. [Tests](#tests)
+5. [Early-signal discovery](#early-signal-discovery)
+6. [Database schema](#database-schema)
+7. [Data quality rules](#data-quality-rules)
+8. [Privacy and legal notes](#privacy-and-legal-notes)
+9. [Error handling](#error-handling)
+10. [n8n integration](#n8n-integration)
+11. [Adding a new source](#adding-a-new-source)
+12. [Known limitations](#known-limitations)
+13. [Tests](#tests)
 
 ## Architecture
 
@@ -43,10 +44,14 @@ flowchart LR
   A -->|RawRecord| STORE1[(source_records + revisions)]
   A -->|normalize| N[NormalizedBundle: entities, relationships, signals, observations]
   N --> STORE2[(entities, aliases, relationships, signals, observations)]
+  DCLI[discovery preview / run] --> DISC[Deterministic discovery rules]
+  STORE2 --> DISC
+  DISC -->|derived mention signals only| STORE2
 ```
 
 * `app/adapters/base.py` - template method: `fetch -> store raw -> normalize -> validate -> store normalized`. Raw data is written first, each record in its own savepoint, so one bad record never loses data or stops the run.
 * `app/database/repositories.py` - all writes are upserts on unique constraints, which makes every run idempotent.
+* `app/discovery/` - classifies existing source signals and individual observations without duplicating them; versioned text rules can add source-record-linked mention signals.
 * `app/normalization/` - pure helpers (text cleaning, DOI, persons, organizations). Missing values stay `NULL`; nothing is inferred.
 * Entities are scoped to **one source identifier** (for example `github user 123`, `openalex author A5...`). Entities from different sources or with the same name are **never merged** - that is entity resolution and belongs to a later phase. External IDs (ORCID, ROR, DOI) are stored as aliases only.
 
@@ -120,6 +125,47 @@ Every collector runs standalone, is incremental (watermarks in `sync_state`, adv
 | `university` | RSS, validated sitemap + JSON-LD, JSON-LD, page metadata, HTML selectors | `sources.yaml` | Plugin system. Working examples: KIT, TU Darmstadt and the University of Duisburg-Essen (see [below](#university-of-duisburg-essen-ude)). |
 | `cordis` | public EURIO SPARQL endpoint (read-only `SELECT`) | `sources.yaml` (`cordis`) | EU-funded projects with at least one participant in the configured countries (default `DE`). Project -> `research_project` (`NEW_FUNDING_PROJECT` signal on its start date), participants -> `organization` with property `organization_type` and a `source_asserted` `PARTICIPATED_IN`. See [CORDIS](#cordis) and [Manual import](#manual-import). |
 | `manual_import` | local CSV/JSON files, **no network** | `sources.yaml` (`manual_import`) | Reference lists of people and their company, supplied by hand. `person` + `organization` + `WORKS_AT` (`unverified` by default). See [Manual import](#manual-import). |
+
+## Early-signal discovery
+
+Discovery only reads data already ingested into the database; it makes no
+network requests. Preview classifications and candidate text mentions without
+writing:
+
+```powershell
+python -m app.cli discovery preview --limit 100
+python -m app.cli discovery preview --source github --limit 100
+```
+
+Persist derived mention signals only with the explicit `run` command:
+
+```powershell
+python -m app.cli discovery run --source university --limit 100
+```
+
+* Existing adapter-generated source signals (`NEW_PUBLICATION`,
+  `NEW_REPOSITORY`, `NEW_MODEL`, `NEW_CONTRIBUTOR`, etc.) are returned as
+  discovery-category classifications. They are not reinterpreted or duplicated
+  as new `signals` rows.
+* Individual metric observations are classified by metric and source as weak
+  research, technology, developer-activity, or organization-activity evidence.
+  A single value is not a trend, growth claim, or threshold event.
+* The deterministic text rules emit only `FOUNDING_ACTIVITY_MENTION`,
+  `SPINOUT_MENTION`, and `COMMERCIALIZATION_MENTION`. These are lexical
+  mentions, not verified founding, spin-out, product launch, sales, or startup
+  facts. `event_date` is not inferred from a publication date.
+* The write path stores rule ID/version, matched field/term and source-signal
+  reference in `signals.properties`; `source_record_id` links to the unchanged
+  original record. Upserts use the existing `(entity_id, signal_type,
+  source_record_id)` uniqueness constraint. Re-running a rule updates the same
+  derived row; obsolete derived matches for processed records are reconciled
+  without deleting adapter source signals.
+* No schema migration is required. Trend rules that compare observations across
+  time, Candidate Resolution, funding verification, startup classification and
+  ranking are out of scope.
+
+The full field inventory, rule contract, exclusions and evidence limitations
+are in [docs/phase2-signal-contract.md](docs/phase2-signal-contract.md).
 
 ### Source facts, terms and technical limits
 
@@ -262,12 +308,17 @@ n8n only schedules; processing stays here.
 * GitHub and arXiv have no country filter; German focus is only possible for OpenAlex (institution country) and the German sources.
 * OpenAlex without an API key is practically limited to a few requests per day.
 * HTML sources can change; parser output is covered by fixtures but a layout change needs a parser update.
-* Corporate spin-outs and pitch events are not part of this phase.
+* Spin-out, founding and commercialization rules detect bounded text mentions only; they do not verify events or classify startups. No adapter currently emits `NEW_PITCH_PRESENTATION`.
 
 ## Tests
 ```powershell
 docker compose up -d
-python -m pytest              # unit + database tests (mocked HTTP)
+python -m pytest -m "not db and not live"  # safe unit tests; no database required
+python -m pytest              # includes DB tests; only use a disposable TEST_DATABASE_URL
 python -m pytest -m live      # smoke tests against the real services
 ```
+
+**Warning:** DB tests reset the `public` schema of `TEST_DATABASE_URL`. Never
+point them at a database containing data you need to keep. Discovery preview is
+read-only; `discovery run` writes derived mention signals.
 Database tests skip automatically when `TEST_DATABASE_URL` is not reachable.

@@ -23,7 +23,7 @@ Aktuell registrierte Collector-Namen:
 
 Die Collector-Registrierung steht in [`app/adapters/registry.py`](app/adapters/registry.py). Laufzeitparameter und Suchbereiche liegen in [`app/config/search_terms.yaml`](app/config/search_terms.yaml) und [`app/config/sources.yaml`](app/config/sources.yaml).
 
-**Projektumfang:** Umgesetzt ist ausschließlich Phase 1 (Datenbasis und Ingestion). Nicht Teil davon und nur auf ausdrückliche Freigabe zu beginnen: Start-up-Scoring/-Klassifikation, Entity Resolution/Merging, Team-Erkennung, Marktanalyse, KI-Analyse, Rankings, Dashboard/Frontend, FastAPI.
+**Projektumfang:** Umgesetzt sind Phase 1 (Datenbasis und Ingestion) sowie die begrenzten Phasen 2A/2B (Signaldefinition und deterministische Early-Signal-Discovery). Die Discovery klassifiziert Quellsignale und einzelne Beobachtungen und erkennt begrenzte Text-Erwähnungen; sie klassifiziert keine Start-ups. Nicht Teil davon und nur auf ausdrückliche Freigabe zu beginnen: Candidate Resolution, Entity Resolution/Merging, Funding-Verification, Start-up-Scoring/-Klassifikation, Team-Erkennung, Marktanalyse, KI-Analyse, Rankings, Dashboard/Frontend und FastAPI.
 
 ### 1.1 Produktziel und Funding-Anforderung (verbindlich, noch nicht umgesetzt)
 
@@ -31,7 +31,7 @@ Die Collector-Registrierung steht in [`app/adapters/registry.py`](app/adapters/r
 
 **Drei getrennte Stufen:**
 
-1. **Datensammlung (heutiger Stand, Phase 1):** Die Collectors erfassen öffentliche Spuren (Publikationen, Repositories, Modelle, Förderprojekte, Erfolgsgeschichten, manuelle Referenzlisten). Sie prüfen und speichern **keine** Finanzierungsrunden und treffen keine Aussage darüber, ob ein Unternehmen oder Vorhaben finanziert ist.
+1. **Datensammlung und begrenzte Early-Signal-Discovery (heutiger Stand, Phase 1 und 2A/2B):** Die Collectors erfassen öffentliche Spuren (Publikationen, Repositories, Modelle, Förderprojekte, Erfolgsgeschichten, manuelle Referenzlisten). Deterministische Regeln klassifizieren Quellsignale und einzelne Beobachtungen; textbasierte Ableitungen bleiben als Erwähnungen gekennzeichnet und quellenbelegt. Die Software prüft und speichert **keine** Finanzierungsrunden und trifft keine Aussage darüber, ob ein Unternehmen oder Vorhaben finanziert ist.
 2. **Funding-Verification (zukünftig):** Eine eigene, spätere Stufe soll pro Kandidat prüfen, ob eine externe Finanzierungsrunde belegt ist, und das Ergebnis nachvollziehbar dokumentieren.
 3. **Start-up-Auswahl (zukünftig):** Erst auf Basis der Verification wird das primäre Suchprofil gebildet.
 
