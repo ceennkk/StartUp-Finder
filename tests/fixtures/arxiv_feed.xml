@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom">
+  <title>ArXiv Query</title>
+  <opensearch:totalResults>{total}</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2611.00001v2</id>
+    <updated>2026-11-19T10:00:00Z</updated>
+    <published>2026-11-18T09:30:00Z</published>
+    <title>Learning   Robot
+      Policies</title>
+    <summary>  We study robot learning.
+      Results are good.  </summary>
+    <author><name>Ann Example</name><arxiv:affiliation>TU Munich</arxiv:affiliation></author>
+    <author><name>Bob Example</name></author>
+    <arxiv:comment>12 pages, 3 figures</arxiv:comment>
+    <arxiv:doi>10.1000/XYZ.123</arxiv:doi>
+    <link href="http://arxiv.org/abs/2611.00001v2" rel="alternate" type="text/html"/>
+    <link title="pdf" href="http://arxiv.org/pdf/2611.00001v2" rel="related" type="application/pdf"/>
+    <arxiv:primary_category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/quant-ph/0611002v1</id>
+    <updated>2026-11-18T12:00:00Z</updated>
+    <published>2026-11-18T12:00:00Z</published>
+    <title>Old style identifier paper</title>
+    <summary>Short.</summary>
+    <author><name>Ann Example</name></author>
+    <link href="http://arxiv.org/abs/quant-ph/0611002v1" rel="alternate" type="text/html"/>
+    <arxiv:primary_category term="quant-ph" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="quant-ph" scheme="http://arxiv.org/schemas/atom"/>
+  </entry>
+</feed>

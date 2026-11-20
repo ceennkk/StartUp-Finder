@@ -1,0 +1,36 @@
+{
+  "id": "https://openalex.org/W7161281135",
+  "doi": "https://doi.org/10.1088/2058-9565/AEC477",
+  "title": "  Fraxonium: Fractional fluxon states\nfor qudit encoding ",
+  "display_name": "Fraxonium: Fractional fluxon states for qudit encoding",
+  "publication_date": "2026-11-19",
+  "publication_year": 2026,
+  "type": "article",
+  "language": "en",
+  "authorships": [
+    {
+      "author_position": "first",
+      "author": {"id": "https://openalex.org/A5015504301", "display_name": "Luca Chirolli", "orcid": "https://orcid.org/0000-0002-8439-9949"},
+      "institutions": [{"id": "https://openalex.org/I45084792", "display_name": "University of Florence", "ror": "https://ror.org/04jr1s763", "country_code": "IT", "type": "education"}],
+      "is_corresponding": false
+    },
+    {
+      "author_position": "middle",
+      "author": {"id": "https://openalex.org/A5012928884", "display_name": "Uri Vool", "orcid": null},
+      "institutions": [{"id": "https://openalex.org/I4210105091", "display_name": "Max Planck Institute for Chemical Physics of Solids", "ror": "https://ror.org/01c997669", "country_code": "DE", "type": "facility"}],
+      "is_corresponding": true
+    },
+    {
+      "author_position": "last",
+      "author": {"id": null, "display_name": "Author Without Id", "orcid": null},
+      "institutions": []
+    }
+  ],
+  "primary_topic": {"id": "https://openalex.org/T10020", "display_name": "Quantum Information and Cryptography", "field": {"display_name": "Physics and Astronomy"}},
+  "topics": [{"id": "https://openalex.org/T10020", "display_name": "Quantum Information and Cryptography"}],
+  "keywords": [{"id": "https://openalex.org/keywords/qudits", "display_name": "qudits", "score": 0.81}],
+  "abstract_inverted_index": {"We": [0], "encode": [1], "qudits": [2, 4], "in": [3], "fluxonium.": [5]},
+  "referenced_works": ["https://openalex.org/W1", "https://openalex.org/W2"],
+  "cited_by_count": 3,
+  "updated_date": "2026-11-20T13:11:24.684918"
+}

@@ -1,0 +1,67 @@
+# Collection scope per adapter. These terms only decide WHAT is fetched; they do not classify anything.
+openalex:
+  countries: [DE]           # ISO codes; works with at least one author institution in these countries
+  per_page: 100
+  default_start_days_back: 30   # first run (no watermark yet)
+  lookback_days: 7              # overlap on later runs, because OpenAlex indexes works some time after publication
+  max_authors_per_work: 100     # additional authors stay in the raw payload only
+  topics:                       # keep each list short: more than 5 boolean operators hits a stricter rate limit
+    artificial_intelligence: ["artificial intelligence", "machine learning", "deep learning"]
+    robotics: ["robotics", "autonomous robot"]
+    biotechnology: ["biotechnology", "synthetic biology", "gene editing"]
+    quantum_computing: ["quantum computing", "quantum sensing"]
+    climate_tech: ["climate technology", "carbon capture", "decarbonization"]
+    energy: ["energy storage", "hydrogen", "battery technology"]
+    material_science: ["advanced materials", "nanomaterials"]
+    medical_technology: ["medical device", "medical imaging"]
+    industrial_automation: ["industrial automation", "smart manufacturing"]
+    semiconductors: ["semiconductor", "photonic integrated circuit"]
+
+# GitHub has no repository-level geography, so scope is defined by topics/keywords only.
+github:
+  default_start_days_back: 14   # first run (no watermark yet)
+  lookback_days: 1
+  window_days: 7                # search windows are split further when a window exceeds 1000 results
+  min_stars: 3
+  max_repositories_per_query: 100   # per query and run; keeps API usage bounded
+  refresh_known_limit: 25           # already stored repositories re-observed per run (time series)
+  activity_items: 30                # recent commits / issues / pull requests kept per repository
+  queries:                          # one search per entry; repository search rejects OR between qualifiers
+    - {name: machine-learning, q: "topic:machine-learning"}
+    - {name: deep-learning, q: "topic:deep-learning"}
+    - {name: llm, q: "topic:llm"}
+    - {name: robotics, q: "topic:robotics"}
+    - {name: quantum-computing, q: "topic:quantum-computing"}
+    - {name: bioinformatics, q: "topic:bioinformatics"}
+    - {name: synthetic-biology, q: "topic:synthetic-biology"}
+    - {name: climate-change, q: "topic:climate-change"}
+    - {name: energy-storage, q: "topic:energy-storage"}
+    - {name: medical-imaging, q: "topic:medical-imaging"}
+    - {name: industrial-automation, q: "topic:industrial-automation"}
+    - {name: materials-science, q: "topic:materials-science"}
+    - {name: fpga, q: "topic:fpga"}
+
+# arXiv has no country metadata, so scope is defined by subject categories (and optional keywords).
+arxiv:
+  categories: [cs.AI, cs.LG, cs.RO, cs.AR, quant-ph, eess.SY, cond-mat.mtrl-sci, q-bio.BM, q-bio.GN, physics.app-ph, physics.med-ph]
+  keywords: []                  # optional phrases, ANDed with the categories
+  page_size: 100
+  default_start_days_back: 3    # first run (no watermark yet)
+  lookback_days: 1
+  max_results_per_run: 1000     # oldest-first; a capped run resumes where it stopped
+
+# Hub items have no country metadata; language tags and search terms define the scope.
+# NOTE: tag formats ("de" for models, "language:de" for datasets) must be confirmed on first live run.
+huggingface:
+  kinds: [models, datasets, spaces]
+  models: {filters: [de], search: []}
+  datasets: {filters: ["language:de"], search: []}
+  spaces: {filters: [], search: [german]}
+  organizations: []              # namespaces that are always collected, e.g. [your-org-name]
+  page_size: 100
+  max_items_per_query: 100
+  default_start_days_back: 7
+  lookback_days: 1
+  max_namespace_lookups: 50      # org/user lookups per run (one request each)
+  fetch_cards: true
+  card_max_chars: 20000
