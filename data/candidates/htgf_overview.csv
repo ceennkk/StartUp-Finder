@@ -1,0 +1,9 @@
+candidate_id,candidate,technology_fields,tech_startup_status,technology_status,company_age_status,germany_presence_status,htgf_eligibility_status,funding_status,assessment_date
+candidate-additive-drives,Additive Drives,industrial,unclear,unclear,unclear,unclear,htgf_unclear,funding_unclear,2026-11-20
+candidate-autonomiq,AutonomIQ,digital_tech; industrial,unclear,unclear,unclear,unclear,htgf_unclear,funding_unclear,2026-11-20
+candidate-co-reactive,Co-reactive,climate_deeptech; industrial,unclear,unclear,unclear,unclear,htgf_unclear,funding_round_confirmed,2026-11-20
+candidate-inleap-photonics,INLEAP Photonics,climate_deeptech; industrial,unclear,unclear,unclear,unclear,htgf_unclear,funding_round_confirmed,2026-11-20
+candidate-noxon,Noxon,life_sciences,unclear,unclear,unclear,unclear,htgf_unclear,funding_round_confirmed,2026-11-20
+candidate-porelio,Porelio,chemistry; climate_deeptech; industrial,unclear,unclear,unclear,unclear,htgf_unclear,funding_round_confirmed,2026-11-20
+candidate-prime-vector-technologies,Prime Vector Technologies,life_sciences,unclear,unclear,unclear,unclear,htgf_unclear,funding_unclear,2026-11-20
+candidate-tentris,Tentris,digital_tech,unclear,unclear,unclear,unclear,htgf_unclear,funding_round_confirmed,2026-11-20

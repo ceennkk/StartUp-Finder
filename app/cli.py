@@ -27,6 +27,7 @@ from app.database.repositories import IngestionRepository
 from app.discovery.engine import load_discovery, persist_discovery
 from app.discovery.types import DiscoveryResult
 from app.ingestion.types import RunResult
+from app.htgf.workflow import run as run_htgf
 from app.llm.allowlist import LLMAllowlistConfigurationError
 from app.llm.runner import LLMRunSummary, load_llm_source_records, preview_llm_records, run_llm_records
 from app.utils.logging import configure_logging
@@ -39,10 +40,12 @@ database_cli = typer.Typer(help="Database management", no_args_is_help=True)
 ingestion_cli = typer.Typer(help="Ingestion run information", no_args_is_help=True)
 discovery_cli = typer.Typer(help="Discovery over already ingested data", no_args_is_help=True)
 llm_cli = typer.Typer(help="LLM analysis of explicitly approved source fields", no_args_is_help=True)
+htgf_cli = typer.Typer(help="Offline HTGF eligibility assessment", no_args_is_help=True)
 cli.add_typer(database_cli, name="database")
 cli.add_typer(ingestion_cli, name="ingestion")
 cli.add_typer(discovery_cli, name="discovery")
 cli.add_typer(llm_cli, name="llm")
+cli.add_typer(htgf_cli, name="htgf")
 
 
 @cli.callback()
@@ -61,6 +64,23 @@ def _alembic_config() -> Config:
 def _fail(message: str, code: int) -> typer.Exit:
     typer.echo(json.dumps({"error": message}), err=False)
     return typer.Exit(code)
+
+
+@htgf_cli.command("run")
+def htgf_run(
+    input_path: Annotated[Path, typer.Option("--input")] = Path("data") / "candidates" / "htgf_input.json",
+    discovery_path: Annotated[Path, typer.Option("--discovery")] = Path("data") / "candidates" / "candidate_discovery.json",
+    validation_path: Annotated[Path, typer.Option("--validation")] = Path("data") / "candidates" / "candidate_validation.json",
+    history_path: Annotated[Path, typer.Option("--history")] = Path("data") / "candidates" / "htgf_assessments.json",
+    csv_path: Annotated[Path, typer.Option("--csv")] = Path("data") / "candidates" / "htgf_overview.csv",
+    report_path: Annotated[Path, typer.Option("--report")] = Path("data") / "candidates" / "htgf_research_report.md",
+) -> None:
+    """Assess curated evidence offline, without using the database."""
+    try:
+        result = run_htgf(input_path, discovery_path, validation_path, history_path, csv_path, report_path)
+    except (OSError, ValueError, KeyError) as exc:
+        raise _fail(f"HTGF assessment failed: {exc}", EXIT_CONFIG) from exc
+    typer.echo(json.dumps(result, ensure_ascii=False))
 
 
 @database_cli.command("init")

@@ -1,0 +1,624 @@
+{
+  "metadata": {
+    "created_on": "2026-11-20",
+    "candidate_limit": 30,
+    "candidate_count": 8,
+    "snapshot": {
+      "schema": "public",
+      "database": "neondb",
+      "snapshot_at": "2026-11-20T20:41:23.57222+00:00",
+      "alembic_version": [
+        "0001"
+      ],
+      "running_ingestion": [
+        {
+          "run_id": "d50845c0-2f3a-4512-bc9d-55b59dacf218",
+          "source": "openalex",
+          "status": "running",
+          "started_at": "2026-11-20T20:28:15.203251+00:00"
+        }
+      ],
+      "transaction_read_only": "on"
+    },
+    "database_counts": {
+      "records": 211,
+      "entities": 1289,
+      "signals": 244,
+      "relationships": 1528,
+      "observations": 195,
+      "source_record_counts": {
+        "arxiv": 77,
+        "cordis": 17,
+        "exist": 12,
+        "github": 20,
+        "openalex": 55,
+        "university": 30
+      }
+    },
+    "method": "Candidates were selected from named EXIST success stories describing a research-to-company transition and a technology or science-based product. Public-funding mentions are signals of transfer, not equity. Standalone publications, repositories and CORDIS projects without an explicit commercialization link were not promoted to company candidates.",
+    "score_definition": {
+      "scale": "0-10",
+      "components": {
+        "technology_specificity": "0-3",
+        "research_transfer": "0-2",
+        "commercialization_evidence": "0-2",
+        "independent_database_sources": "0-2",
+        "recency_within_12_months": "0-1"
+      },
+      "interpretation": "A research-priority aid only; not an investment-worthiness assessment or proof of company/funding status. Scores use stored discovery evidence; financing is assessed separately."
+    },
+    "limitations": [
+      "All selected candidates have only one independent database source (EXIST); no multi-source entity corroboration was found.",
+      "A running OpenAlex ingestion was visible at snapshot time; repeatable-read consistency preserves one committed point-in-time view.",
+      "The database was at Alembic 0001 while the local repository contains revision 0002; no migration was run."
+    ]
+  },
+  "candidates": [
+    {
+      "candidate_id": "candidate-additive-drives",
+      "name": "Additive Drives",
+      "candidate_type": "technology_startup_or_research_spinout",
+      "technology_area": "Electric motors and additive manufacturing",
+      "description": "High-performance, lightweight electric motors and control electronics using proprietary 3D-printing and conventional manufacturing processes.",
+      "priority_score": 8,
+      "score_components": {
+        "technology_specificity": 3,
+        "research_transfer": 2,
+        "commercialization_evidence": 2,
+        "independent_database_sources": 0,
+        "recency_within_12_months": 1
+      },
+      "database_entity_ids": [
+        "bec413dd-d6a0-428b-b7a1-a9d7ffb938b3"
+      ],
+      "database_source_record_ids": [
+        "851e8e02-5528-4953-9c35-a80570ea920e"
+      ],
+      "database_sources": [
+        "exist"
+      ],
+      "independent_database_source_count": 1,
+      "source_records": [
+        {
+          "source_name": "exist",
+          "record_id": "851e8e02-5528-4953-9c35-a80570ea920e",
+          "external_id": "story:additive-drives",
+          "record_type": "success_story",
+          "title": "Additive Drives",
+          "canonical_url": "https://exist.de/success-stories/additive-drives/",
+          "published_at": "2026-08-06T13:04:52+00:00",
+          "first_seen_at": "2026-11-20T16:11:45.121619+00:00",
+          "evidence_excerpt": "Wie lassen sich Elektromotoren leistungsfähiger, effizienter und nachhaltiger gestalten? Mit dieser Frage beschäftigten sich Additive Drives. Sie entwickeln und fertigten Hochleistungs-Elektromotoren sowie die dazugehörige Steuerungselektronik für Anwendungen in den Be-reichen Aerospace, Defense, Automotive und Industrie. Dabei kombiniert das Team eigene 3D-Druckverfahren mit konventionellen Fertigungstechnologien, um besonders leistungs-starke und ressourcenschonende Antriebslösungen zu entwickeln. Ein besonderer Fokus liegt auf effizienten, leichten und magnetfreien Motoren, die ohne seltene Erden auskom-men und neue Möglichkeiten für die Elektrifizierung anspruchsvoller Anwendungen eröffnen. Eine entscheidende Rolle auf diesem Weg spielte der exist Forschungstransfer. Wie Co-Founder Philipp Arnold berichtet, erwies sich insbesondere die frühe Entwicklungsphase als herausfordernd. Der Weg von den ersten Konzepten hin zu funktionsfähigen Elektromotoren und belastbaren Fertigungsprozessen war deutlich komplexer als ursprünglich angenommen. Die Förderung ermöglichte es dem Team, die notwendige Forschungs- und Entwicklungsarbeit voranzutreiben, technische Infrastruktur aufzubauen und wichtige Maschinen für die Erprobung und Weiterentwicklung der Technologie anzuschaffen. Gleichzeitig schuf der exist Forschungstransfer die Grundlage, das Unternehmen mit vergleichsweise geringem Risiko aufzubauen. Arnold betont, dass Additive Drives ohne diese Unterstützung wahrscheinlich nicht i",
+          "extraction_method": "exist_success_story_html",
+          "link_confidence": null
+        }
+      ],
+      "stored_signals": [
+        {
+          "signal_id": "50d9fc22-838a-481d-a68d-62c2218d5833",
+          "signal_type": "NEW_FUNDING_PROJECT",
+          "description": "Additive Drives",
+          "source_record_id": "851e8e02-5528-4953-9c35-a80570ea920e",
+          "published_at": "2026-08-06T13:04:52+00:00"
+        }
+      ],
+      "relationships": [
+        {
+          "relationship_id": "cc3595dd-3b81-4061-a3fd-5d3ca6240cc4",
+          "relationship_type": "FUNDED_BY",
+          "other_entity_id": "0844d807-c8d1-4609-94f0-2463d827fbb4",
+          "other_entity_name": "EXIST-Forschungstransfer",
+          "other_entity_type": "funding_program",
+          "verification_status": "unverified",
+          "confidence": null,
+          "source_record_id": "851e8e02-5528-4953-9c35-a80570ea920e"
+        }
+      ],
+      "early_phase_signals": [
+        "Named startup/company in an EXIST success story.",
+        "The source explicitly connects a research/technology-transfer activity to a commercial technology or product.",
+        "EXIST public support is recorded separately from equity financing."
+      ],
+      "selection_reason": "Selected because its EXIST source record describes electric motors and additive manufacturing and a research-to-company transition; it is a named company with technology/product details. It has 1 directly linked database record(s) from 1 independent database source(s), so cross-source corroboration is absent.",
+      "confidence": "High for the source-to-entity link; medium for candidate prioritization because discovery relies on one database source.",
+      "priority_rank": 1
+    },
+    {
+      "candidate_id": "candidate-tentris",
+      "name": "Tentris",
+      "candidate_type": "technology_startup_or_research_spinout",
+      "technology_area": "Graph databases and enterprise AI infrastructure",
+      "description": "University of Paderborn spinout developing a graph database for connected enterprise data and AI applications.",
+      "priority_score": 8,
+      "score_components": {
+        "technology_specificity": 3,
+        "research_transfer": 2,
+        "commercialization_evidence": 2,
+        "independent_database_sources": 0,
+        "recency_within_12_months": 1
+      },
+      "database_entity_ids": [
+        "32ab4f36-2535-4e99-8c8d-77bf83a64448"
+      ],
+      "database_source_record_ids": [
+        "9dc6c932-7248-44e1-91ad-453d80efc877"
+      ],
+      "database_sources": [
+        "exist"
+      ],
+      "independent_database_source_count": 1,
+      "source_records": [
+        {
+          "source_name": "exist",
+          "record_id": "9dc6c932-7248-44e1-91ad-453d80efc877",
+          "external_id": "story:tentris",
+          "record_type": "success_story",
+          "title": "Tentris",
+          "canonical_url": "https://exist.de/success-stories/tentris/",
+          "published_at": "2026-07-22T13:59:24+00:00",
+          "first_seen_at": "2026-11-20T16:11:41.097084+00:00",
+          "evidence_excerpt": "Wie können Unternehmen Künstliche Intelligenz zuverlässig mit ihrem eigenen Wissen arbeiten lassen? Mit dieser Frage beschäftigt sich das Startup Tentris. Das Spin-off der Universität Paderborn entwickelt eine Graphdatenbank, die komplex vernetzte Unternehmensdaten in Echtzeit nutzbar macht und damit die Grundlage für leistungsfähige und vertrauenswürdige KI-Anwendungen schafft. Die Technologie basiert auf langjähriger Forschung und ermöglicht es Unternehmen, Informationen schneller, effizienter und ressourcenscho-nender zu verarbeiten. So trägt Tentris dazu bei, die nächste Generation von Enterprise AI zu ermöglichen. Auf dem Weg von der Forschung zur Unternehmensgründung spielte der exist Forschungstransfer eine entscheidende Rolle. Wie Co-Founder Tobias Rebert berichtet, bestand die größte Herausforderung dabei weniger in der Technologie selbst als im Aufbau eines Unternehmens. Neben der Weiterentwicklung der Forschung musste das Team lernen, unternehmerisch zu denken, Strukturen aufzubauen, Mitarbeitende zu gewinnen und Entscheidungen zu treffen, die weit über die wissenschaftliche Arbeit hinausgehen. Der exist Forschungstransfer gab dem Team die notwendige Zeit und finanzielle Sicherheit, diesen Weg Schritt für Schritt zu gehen und sich auf den Unternehmensaufbau zu konzentrieren. Besonders wertvoll sei dabei die persönliche Begleitung gewesen. Der regelmäßige Austausch mit den Ansprechpartnern und dem Gründungsumfeld der Universität Paderborn habe dem Team geholfen, Her",
+          "extraction_method": "exist_success_story_html",
+          "link_confidence": null
+        }
+      ],
+      "stored_signals": [
+        {
+          "signal_id": "2e53e081-ffae-4d21-86d8-39f023bc5d36",
+          "signal_type": "NEW_FUNDING_PROJECT",
+          "description": "Tentris",
+          "source_record_id": "9dc6c932-7248-44e1-91ad-453d80efc877",
+          "published_at": "2026-07-22T13:59:24+00:00"
+        }
+      ],
+      "relationships": [
+        {
+          "relationship_id": "ffe7cd98-347c-4e08-af81-e7d4c25204a1",
+          "relationship_type": "FUNDED_BY",
+          "other_entity_id": "0844d807-c8d1-4609-94f0-2463d827fbb4",
+          "other_entity_name": "EXIST-Forschungstransfer",
+          "other_entity_type": "funding_program",
+          "verification_status": "unverified",
+          "confidence": null,
+          "source_record_id": "9dc6c932-7248-44e1-91ad-453d80efc877"
+        }
+      ],
+      "early_phase_signals": [
+        "Named startup/company in an EXIST success story.",
+        "The source explicitly connects a research/technology-transfer activity to a commercial technology or product.",
+        "EXIST public support is recorded separately from equity financing."
+      ],
+      "selection_reason": "Selected because its EXIST source record describes graph databases and enterprise ai infrastructure and a research-to-company transition; it is a named company with technology/product details. It has 1 directly linked database record(s) from 1 independent database source(s), so cross-source corroboration is absent.",
+      "confidence": "High for the source-to-entity link; medium for candidate prioritization because discovery relies on one database source.",
+      "priority_rank": 2
+    },
+    {
+      "candidate_id": "candidate-porelio",
+      "name": "Porelio",
+      "candidate_type": "technology_startup_or_research_spinout",
+      "technology_area": "Advanced materials, water treatment and resource recovery",
+      "description": "Highly porous silicate materials designed for selective PFAS removal and recovery of valuable metals from industrial process streams.",
+      "priority_score": 8,
+      "score_components": {
+        "technology_specificity": 3,
+        "research_transfer": 2,
+        "commercialization_evidence": 2,
+        "independent_database_sources": 0,
+        "recency_within_12_months": 1
+      },
+      "database_entity_ids": [
+        "7f7290ed-cd72-47bc-bb24-0e47383fcf44"
+      ],
+      "database_source_record_ids": [
+        "9a578db1-20ee-484a-a932-cb8dcbacabdd"
+      ],
+      "database_sources": [
+        "exist"
+      ],
+      "independent_database_source_count": 1,
+      "source_records": [
+        {
+          "source_name": "exist",
+          "record_id": "9a578db1-20ee-484a-a932-cb8dcbacabdd",
+          "external_id": "story:porelio",
+          "record_type": "success_story",
+          "title": "Porelio",
+          "canonical_url": "https://exist.de/success-stories/porelio/",
+          "published_at": "2026-07-08T13:07:50+00:00",
+          "first_seen_at": "2026-11-20T16:11:39.127009+00:00",
+          "evidence_excerpt": "Wie lassen sich Schadstoffe gezielt aus Wasser- und Prozessströmen entfernen? Mit die-ser Frage beschäftigt sich Porelio. Das Unternehmen entwickelt hochporöse Silikatmateria-lien, die einzelne Stoffe besonders selektiv aus komplexen Flüssigkeitsströmen binden können. Die Technologie eröffnet Anwendungen bei der Entfernung von PFAS aus Wasser sowie der Rückgewinnung wertvoller Edelmetalle aus industriellen Prozessströmen. Grund-lage dafür ist ein neu entwickeltes Herstellungsverfahren, das die wirtschaftliche und ska-lierbare Produktion dieser Materialien ermöglicht. Damit schafft Porelio die Voraussetzung, bewährte Forschung erstmals in großem Maßstab für industrielle Anwendungen nutzbar zu machen. Auf dem Weg von der Forschung zur Unternehmensgründung spielte der exist Forschungstransfer eine entscheidende Rolle. Wie Co-Founder Rhea Machado berichtet, bestand eine der größten Herausforderungen zunächst darin, von der wissenschaftlichen Forschung in die unternehmerische Praxis zu wechseln. Während die technologische Entwicklung bereits auf langjähriger Forschungsarbeit aufbaute, brachte die Gründung völlig neue Fragestellungen mit sich, von der Entwicklung eines tragfähigen Geschäftsmodells über den Aufbau von Kundenbeziehungen bis hin zur Vorbereitung auf Gespräche mit Investoren. Der exist Forschungstransfer gab dem Team dabei nicht nur die notwendige finanzielle Sicherheit, um die Technologie weiterzuentwickeln, sondern auch den Freiraum, sich Schritt für Schritt in die R",
+          "extraction_method": "exist_success_story_html",
+          "link_confidence": null
+        }
+      ],
+      "stored_signals": [
+        {
+          "signal_id": "d2a90e9b-9e90-41c0-a812-cba41ee0d258",
+          "signal_type": "NEW_FUNDING_PROJECT",
+          "description": "Porelio",
+          "source_record_id": "9a578db1-20ee-484a-a932-cb8dcbacabdd",
+          "published_at": "2026-07-08T13:07:50+00:00"
+        }
+      ],
+      "relationships": [
+        {
+          "relationship_id": "1e746200-8ca3-463d-8df8-578b63eaf533",
+          "relationship_type": "FUNDED_BY",
+          "other_entity_id": "0844d807-c8d1-4609-94f0-2463d827fbb4",
+          "other_entity_name": "EXIST-Forschungstransfer",
+          "other_entity_type": "funding_program",
+          "verification_status": "unverified",
+          "confidence": null,
+          "source_record_id": "9a578db1-20ee-484a-a932-cb8dcbacabdd"
+        }
+      ],
+      "early_phase_signals": [
+        "Named startup/company in an EXIST success story.",
+        "The source explicitly connects a research/technology-transfer activity to a commercial technology or product.",
+        "EXIST public support is recorded separately from equity financing."
+      ],
+      "selection_reason": "Selected because its EXIST source record describes advanced materials, water treatment and resource recovery and a research-to-company transition; it is a named company with technology/product details. It has 1 directly linked database record(s) from 1 independent database source(s), so cross-source corroboration is absent.",
+      "confidence": "High for the source-to-entity link; medium for candidate prioritization because discovery relies on one database source.",
+      "priority_rank": 3
+    },
+    {
+      "candidate_id": "candidate-co-reactive",
+      "name": "Co-reactive",
+      "candidate_type": "technology_startup_or_research_spinout",
+      "technology_area": "Climate tech and construction materials",
+      "description": "Continuous CO2 mineralization process converts captured CO2 and silicate or metallurgical slags into CO2-negative supplementary cementitious materials.",
+      "priority_score": 8,
+      "score_components": {
+        "technology_specificity": 3,
+        "research_transfer": 2,
+        "commercialization_evidence": 2,
+        "independent_database_sources": 0,
+        "recency_within_12_months": 1
+      },
+      "database_entity_ids": [
+        "ae45b91a-2352-42f4-8b92-f2eb05a76668"
+      ],
+      "database_source_record_ids": [
+        "e922a098-460b-4dd4-a22d-bccbea336651"
+      ],
+      "database_sources": [
+        "exist"
+      ],
+      "independent_database_source_count": 1,
+      "source_records": [
+        {
+          "source_name": "exist",
+          "record_id": "e922a098-460b-4dd4-a22d-bccbea336651",
+          "external_id": "story:co-reactive",
+          "record_type": "success_story",
+          "title": "Co-reactive",
+          "canonical_url": "https://exist.de/success-stories/co-reactive/",
+          "published_at": "2026-06-17T10:28:34+00:00",
+          "first_seen_at": "2026-11-20T16:11:49.110973+00:00",
+          "evidence_excerpt": "Wie kann CO₂ nicht nur vermieden, sondern als wertvolle Ressource genutzt werden? Mit dieser Frage beschäftigt sich das Climate-Tech-Startup Co-reactive. Das Team entwi-ckelt eine Technologie zur kontinuierlichen CO₂-Mineralisierung, bei der abgeschiede-nes CO₂ in leistungsfähige, CO₂-negative Zementersatzstoffe umgewandelt wird. Ziel ist es, die Emissionen der Baustoffindustrie zu reduzieren und gleichzeitig nachhaltige Al-ternativen zu herkömmlichen Zementbestandteilen bereitzustellen. Eine entscheidende Rolle auf dem Weg von der Forschung zur Unternehmensgründung spielte der exist Forschungstransfer. Wie CEO und Co-Founder Andreas Bremen berichtet, bestand die zentrale Herausforderung darin, die Technologie durch umfangreiche Tests zu validieren und damit die Grundlage für spätere Investitionen zu schaffen. Der exist Forschungstransfer ermöglichte es dem Team, diese entscheidende Entwicklungsphase im universitären Umfeld zu durchlaufen und die Brücke zwischen wissenschaftlichen Ergebnissen und Investitionsreife zu schaffen. Darüber hinaus schuf die Förderung die Voraussetzungen, aus einer hardwareorientierten Forschungsarbeit ein belastbares Unternehmen aufzubauen. Der Zugang zu Infrastruktur, Arbeitsräumen und einem unterstützenden wissenschaftlichen Umfeld ermöglichten es dem Team, technologische Meilensteine zu erreichen, Prozesse frühzeitig zu professionalisieren und das Risiko zentraler Entwicklungsschritte deutlich zu reduzieren. Gleichzeitig habe die Förderung wicht",
+          "extraction_method": "exist_success_story_html",
+          "link_confidence": null
+        }
+      ],
+      "stored_signals": [
+        {
+          "signal_id": "c6224c94-2745-46ad-93d0-617108c2e59d",
+          "signal_type": "NEW_FUNDING_PROJECT",
+          "description": "Co-reactive",
+          "source_record_id": "e922a098-460b-4dd4-a22d-bccbea336651",
+          "published_at": "2026-06-17T10:28:34+00:00"
+        }
+      ],
+      "relationships": [
+        {
+          "relationship_id": "9bc1c5ac-9145-47bb-b622-8b3dd503b3f6",
+          "relationship_type": "FUNDED_BY",
+          "other_entity_id": "0844d807-c8d1-4609-94f0-2463d827fbb4",
+          "other_entity_name": "EXIST-Forschungstransfer",
+          "other_entity_type": "funding_program",
+          "verification_status": "unverified",
+          "confidence": null,
+          "source_record_id": "e922a098-460b-4dd4-a22d-bccbea336651"
+        }
+      ],
+      "early_phase_signals": [
+        "Named startup/company in an EXIST success story.",
+        "The source explicitly connects a research/technology-transfer activity to a commercial technology or product.",
+        "EXIST public support is recorded separately from equity financing."
+      ],
+      "selection_reason": "Selected because its EXIST source record describes climate tech and construction materials and a research-to-company transition; it is a named company with technology/product details. It has 1 directly linked database record(s) from 1 independent database source(s), so cross-source corroboration is absent.",
+      "confidence": "High for the source-to-entity link; medium for candidate prioritization because discovery relies on one database source.",
+      "priority_rank": 4
+    },
+    {
+      "candidate_id": "candidate-inleap-photonics",
+      "name": "INLEAP Photonics",
+      "candidate_type": "technology_startup_or_research_spinout",
+      "technology_area": "Photonics and counter-drone systems",
+      "description": "Eye-safe, high-precision laser systems for counter-drone defense and critical-infrastructure protection, adapted from industrial beam-steering technology.",
+      "priority_score": 8,
+      "score_components": {
+        "technology_specificity": 3,
+        "research_transfer": 2,
+        "commercialization_evidence": 2,
+        "independent_database_sources": 0,
+        "recency_within_12_months": 1
+      },
+      "database_entity_ids": [
+        "60b90431-39df-4dc8-acf8-f9d5a456f3ea"
+      ],
+      "database_source_record_ids": [
+        "1ed0f629-c345-4b4b-abb6-ed660cfaa7e1"
+      ],
+      "database_sources": [
+        "exist"
+      ],
+      "independent_database_source_count": 1,
+      "source_records": [
+        {
+          "source_name": "exist",
+          "record_id": "1ed0f629-c345-4b4b-abb6-ed660cfaa7e1",
+          "external_id": "story:inleap-photonics",
+          "record_type": "success_story",
+          "title": "INLEAP Photonics",
+          "canonical_url": "https://exist.de/success-stories/inleap-photonics/",
+          "published_at": "2026-06-14T12:39:20+00:00",
+          "first_seen_at": "2026-11-20T16:11:35.126143+00:00",
+          "evidence_excerpt": "Wie lassen sich hochpräzise Lasersysteme für neue sicherheitsrelevante Anwendungen nutzen? Mit dieser Frage beschäftigt sich das Deep-Tech-Startup INLEAP Photonics. Das Unternehmen entwickelt Lasersysteme zur sicheren Neutralisierung von Drohnen und zum Schutz kritischer Infrastruktur. Mit dem INLEAP FASTLIGHT® SHIELD überträgt das Team industrielle Lasertechnologie auf neue Anwendungsfelder und arbeitet an Lösungen, die hohe Präzision, schnelle Reaktionszeiten und Skalierbarkeit miteinander verbinden. Auf dem Weg von der wissenschaftlichen Entwicklung zur Unternehmensgründung spielte der exist Forschungstransfer eine zentrale Rolle. Wie CFO und Co-Founder Katharina Haas berichtet, bestand eine der größten Herausforderungen darin, eine hochkomplexe Technologie aus dem Forschungsumfeld in einen industriell relevanten Anwendungskontext zu überführen. Denn für eine erfolgreiche Gründung reicht es nicht aus, dass eine Technologie unter Forschungsbedingungen funktioniert, sie muss zugleich anwendungsorientiert und für spätere Marktanforderungen geeignet sein. Die Förderung ermöglichte es, die Technologie mit der notwendigen Tiefe weiterzuentwickeln und gleichzeitig die Grundlagen des Unternehmens zu schaffen. So konnten technologische Reife, erste Strukturen und der Aufbau des Teams parallel vorangetrieben werden. Eine Kombination, die nach Einschätzung von Haas entscheidend für die weitere Entwicklung des Unternehmens war. Heute arbeitet INLEAP Photonics daran, seine Technologie ",
+          "extraction_method": "exist_success_story_html",
+          "link_confidence": null
+        }
+      ],
+      "stored_signals": [
+        {
+          "signal_id": "3816e4a2-73e8-4f56-8dad-511393f1caa4",
+          "signal_type": "NEW_FUNDING_PROJECT",
+          "description": "INLEAP Photonics",
+          "source_record_id": "1ed0f629-c345-4b4b-abb6-ed660cfaa7e1",
+          "published_at": "2026-06-14T12:39:20+00:00"
+        }
+      ],
+      "relationships": [
+        {
+          "relationship_id": "2a5198f8-d367-4d87-b3a4-82b7a91138cd",
+          "relationship_type": "FUNDED_BY",
+          "other_entity_id": "0844d807-c8d1-4609-94f0-2463d827fbb4",
+          "other_entity_name": "EXIST-Forschungstransfer",
+          "other_entity_type": "funding_program",
+          "verification_status": "unverified",
+          "confidence": null,
+          "source_record_id": "1ed0f629-c345-4b4b-abb6-ed660cfaa7e1"
+        }
+      ],
+      "early_phase_signals": [
+        "Named startup/company in an EXIST success story.",
+        "The source explicitly connects a research/technology-transfer activity to a commercial technology or product.",
+        "EXIST public support is recorded separately from equity financing."
+      ],
+      "selection_reason": "Selected because its EXIST source record describes photonics and counter-drone systems and a research-to-company transition; it is a named company with technology/product details. It has 1 directly linked database record(s) from 1 independent database source(s), so cross-source corroboration is absent.",
+      "confidence": "High for the source-to-entity link; medium for candidate prioritization because discovery relies on one database source.",
+      "priority_rank": 5
+    },
+    {
+      "candidate_id": "candidate-prime-vector-technologies",
+      "name": "Prime Vector Technologies",
+      "candidate_type": "technology_startup_or_research_spinout",
+      "technology_area": "Biotechnology, vaccines and immunotherapy",
+      "description": "Orf-virus-based viral-vector platform for vaccines and immunotherapies for human and veterinary applications.",
+      "priority_score": 7,
+      "score_components": {
+        "technology_specificity": 3,
+        "research_transfer": 2,
+        "commercialization_evidence": 1,
+        "independent_database_sources": 0,
+        "recency_within_12_months": 1
+      },
+      "database_entity_ids": [
+        "47b24940-d908-4da9-a370-3e80f64f7266"
+      ],
+      "database_source_record_ids": [
+        "3cb3514f-2c61-4a96-8e16-a15cec710ecb"
+      ],
+      "database_sources": [
+        "exist"
+      ],
+      "independent_database_source_count": 1,
+      "source_records": [
+        {
+          "source_name": "exist",
+          "record_id": "3cb3514f-2c61-4a96-8e16-a15cec710ecb",
+          "external_id": "story:prime-vector-technologies",
+          "record_type": "success_story",
+          "title": "Prime Vector Technologies",
+          "canonical_url": "https://exist.de/success-stories/prime-vector-technologies/",
+          "published_at": "2026-08-06T12:58:42+00:00",
+          "first_seen_at": "2026-11-20T16:11:43.103893+00:00",
+          "evidence_excerpt": "Wie lassen sich Impfstoffe und Immuntherapien schneller, gezielter und wirksamer entwickeln? Mit dieser Frage beschäftigt sich Prime Vector Technologies. Das Unternehmen entwickelt eine neuartige virale Vektorplattform auf Basis des Orf-Virus (ORFV), mit den Impfstoffen und Immuntherapien für Menschen und Tiere entwickelt werden können. Die Technologie soll eine starke Immunantwort auslösen, wiederholte Anwendungen ermöglichen und flexibel für unterschiedliche Krankheitsbilder, von Infektionskrankheiten bis hin zu Krebs, eingesetzt werden. Grundlage dafür ist langjährige Forschung in den Bereichen Virologie, Immunologie und translationaler Impfstoffentwicklung, die Prime Vector Technologies nun in innovative Lösungen für die medizinische Praxis überführt. Auf dem Weg von der Forschung zur Unternehmensgründung spielte der exist Forschungstransfer eine entscheidende Rolle. Wie CEO Ralf Amann berichtet, liegt die größte Herausforderung im Bereich der Impfstoff- und Therapieforschung darin, dass zwischen einer vielversprechenden wissenschaftlichen Idee und einer späteren Anwendung am Menschen zahlreiche Entwicklungs- und Validierungsschritte liegen. Gerade diese Phase sei mit hohen Kosten, langen Entwicklungszeiten und einem erheblichen Risiko verbunden. Der exist Forschungstransfer habe dem Team den notwendigen Freiraum gegeben, die Technologie gezielt weiterzuentwickeln und gleichzeitig die Grundlagen für das Unternehmen aufzubauen. Darüber hinaus hebt Amann den Mehrwert des ex",
+          "extraction_method": "exist_success_story_html",
+          "link_confidence": null
+        }
+      ],
+      "stored_signals": [
+        {
+          "signal_id": "4cd7c59b-8161-406a-8bca-d900ba640c45",
+          "signal_type": "NEW_FUNDING_PROJECT",
+          "description": "Prime Vector Technologies",
+          "source_record_id": "3cb3514f-2c61-4a96-8e16-a15cec710ecb",
+          "published_at": "2026-08-06T12:58:42+00:00"
+        }
+      ],
+      "relationships": [
+        {
+          "relationship_id": "4b140cf6-f427-4e3b-a10b-94c2f396b67e",
+          "relationship_type": "FUNDED_BY",
+          "other_entity_id": "0844d807-c8d1-4609-94f0-2463d827fbb4",
+          "other_entity_name": "EXIST-Forschungstransfer",
+          "other_entity_type": "funding_program",
+          "verification_status": "unverified",
+          "confidence": null,
+          "source_record_id": "3cb3514f-2c61-4a96-8e16-a15cec710ecb"
+        }
+      ],
+      "early_phase_signals": [
+        "Named startup/company in an EXIST success story.",
+        "The source explicitly connects a research/technology-transfer activity to a commercial technology or product.",
+        "EXIST public support is recorded separately from equity financing."
+      ],
+      "selection_reason": "Selected because its EXIST source record describes biotechnology, vaccines and immunotherapy and a research-to-company transition; it is a named company with technology/product details. It has 1 directly linked database record(s) from 1 independent database source(s), so cross-source corroboration is absent.",
+      "confidence": "High for the source-to-entity link; medium for candidate prioritization because discovery relies on one database source.",
+      "priority_rank": 6
+    },
+    {
+      "candidate_id": "candidate-noxon",
+      "name": "Noxon",
+      "candidate_type": "technology_startup_or_research_spinout",
+      "technology_area": "Neurotechnology and medical devices",
+      "description": "Wearable muscle-computer interface combining muscle diagnostics and neuromuscular stimulation for therapy and movement training.",
+      "priority_score": 7,
+      "score_components": {
+        "technology_specificity": 3,
+        "research_transfer": 2,
+        "commercialization_evidence": 1,
+        "independent_database_sources": 0,
+        "recency_within_12_months": 1
+      },
+      "database_entity_ids": [
+        "7582290b-2f25-4516-abe6-f5dc9150f5bb"
+      ],
+      "database_source_record_ids": [
+        "9e38997a-a000-46a5-974a-004685615620"
+      ],
+      "database_sources": [
+        "exist"
+      ],
+      "independent_database_source_count": 1,
+      "source_records": [
+        {
+          "source_name": "exist",
+          "record_id": "9e38997a-a000-46a5-974a-004685615620",
+          "external_id": "story:noxon",
+          "record_type": "success_story",
+          "title": "Noxon",
+          "canonical_url": "https://exist.de/success-stories/noxon/",
+          "published_at": "2026-06-14T12:50:02+00:00",
+          "first_seen_at": "2026-11-20T16:11:37.103787+00:00",
+          "evidence_excerpt": "Wie lassen sich Therapien individueller gestalten und besser in den Alltag von Patien-tinnen und Patienten integrieren? Mit dieser Frage beschäftigt sich das Münchner Star-tup Noxon. Das Team entwickelt ein tragbares Medizintechnologiesystem, das Muskelak-tivität im Alltag erfasst und gleichzeitig gezielte Stimulation ermöglicht. Auf dem Weg von der Forschung in die Unternehmensgründung spielte das exist Gründungsstipendium eine entscheidende Rolle. Wie Co-Founder und CEO Maria Neugschwender berichtet, war die frühe Gründungsphase von großer Unsicherheit geprägt, sowohl bei der technologischen Weiterentwicklung als auch beim Aufbau der notwendigen Unternehmensstrukturen. Die Förderung habe dem Team den finanziellen Freiraum gegeben, sich vollständig auf die Entwicklung des Vorhabens zu konzentrieren und gleichzeitig die organisatorischen Grundlagen des Unternehmens zu schaffen. Besonders wertvoll sei zudem die enge und partnerschaftliche Zusammenarbeit mit dem universitären Umfeld gewesen. Auch die Möglichkeit, von Beginn an über eigene Arbeits- und Entwicklungsräume zu verfügen, habe wesentlich dazu beigetragen, ein starkes Team aufzubauen und eine Unternehmenskultur zu entwickeln, die das Startup bis heute prägt. Heute arbeitet Noxon daran, die Technologie weiter in Richtung klinischer Anwendung und individualisierter Therapielösungen zu entwickeln. Seit der Gründung im Jahr 2022 hat das Unternehmen wichtige Meilensteine erreicht und konnte zuletzt eine mehrmillionenschwere",
+          "extraction_method": "exist_success_story_html",
+          "link_confidence": null
+        }
+      ],
+      "stored_signals": [
+        {
+          "signal_id": "165ba510-dc4d-47d3-87e5-67fcd8385bb8",
+          "signal_type": "NEW_FUNDING_PROJECT",
+          "description": "Noxon",
+          "source_record_id": "9e38997a-a000-46a5-974a-004685615620",
+          "published_at": "2026-06-14T12:50:02+00:00"
+        }
+      ],
+      "relationships": [
+        {
+          "relationship_id": "de00f3c9-915c-4644-a9a3-45becf4be786",
+          "relationship_type": "FUNDED_BY",
+          "other_entity_id": "3dd4f199-f9c6-40b4-a4d8-516cca6eb2b8",
+          "other_entity_name": "EXIST-Gründungsstipendium",
+          "other_entity_type": "funding_program",
+          "verification_status": "unverified",
+          "confidence": null,
+          "source_record_id": "9e38997a-a000-46a5-974a-004685615620"
+        }
+      ],
+      "early_phase_signals": [
+        "Named startup/company in an EXIST success story.",
+        "The source explicitly connects a research/technology-transfer activity to a commercial technology or product.",
+        "EXIST public support is recorded separately from equity financing."
+      ],
+      "selection_reason": "Selected because its EXIST source record describes neurotechnology and medical devices and a research-to-company transition; it is a named company with technology/product details. It has 1 directly linked database record(s) from 1 independent database source(s), so cross-source corroboration is absent.",
+      "confidence": "High for the source-to-entity link; medium for candidate prioritization because discovery relies on one database source.",
+      "priority_rank": 7
+    },
+    {
+      "candidate_id": "candidate-autonomiq",
+      "name": "AutonomIQ",
+      "candidate_type": "technology_startup_or_research_spinout",
+      "technology_area": "Industrial AI and manufacturing software",
+      "description": "AI software originating in TU Darmstadt research on autonomous machine tools; automates complex manufacturing-planning workflows.",
+      "priority_score": 7,
+      "score_components": {
+        "technology_specificity": 3,
+        "research_transfer": 2,
+        "commercialization_evidence": 1,
+        "independent_database_sources": 0,
+        "recency_within_12_months": 1
+      },
+      "database_entity_ids": [
+        "02340542-8e8e-4be7-aaab-8d83bfe6a290"
+      ],
+      "database_source_record_ids": [
+        "529afe27-d8dc-4b7d-9a2f-2f06f23e7878"
+      ],
+      "database_sources": [
+        "exist"
+      ],
+      "independent_database_source_count": 1,
+      "source_records": [
+        {
+          "source_name": "exist",
+          "record_id": "529afe27-d8dc-4b7d-9a2f-2f06f23e7878",
+          "external_id": "story:autonomiq",
+          "record_type": "success_story",
+          "title": "AutonomIQ",
+          "canonical_url": "https://exist.de/success-stories/autonomiq/",
+          "published_at": "2026-06-14T12:01:35+00:00",
+          "first_seen_at": "2026-11-20T16:11:47.132658+00:00",
+          "evidence_excerpt": "Wie können Werkzeugmaschinen intelligenter, effizienter und autonomer arbeiten? Mit dieser Frage beschäftigten sich die Gründer von AutonomIQ bereits während ihrer Forschungsarbeit an der Technischen Universität Darmstadt. Aus einem Forschungsprojekt zur autonomen Werkzeugmaschine entstand die Idee, KI-gestützte Software zu entwickeln, die komplexe Planungsprozesse in der Fertigung automatisiert und Unternehmen dabei unterstützt, Produktionsabläufe effizienter zu gestalten. Mit der Gründung von AutonomIQ entschied sich das Team, den Schritt in die Selbstständigkeit zu gehen und die Forschungsergebnisse in eine praxisnahe Lösung für die Industrie zu überführen. Eine entscheidende Rolle auf diesem Weg spielte die Förderung durch den exist Forschungstransfer. Für Mitgründer und COO Felix Hoffmann war sie der Türöffner, um den Schritt aus der Forschung in die Unternehmensgründung tatsächlich zu wagen. Gerade bei technologieorientierten Ausgründungen sei das Risiko zu Beginn hoch und der Weg zur Marktreife oft lang. Die Förderung habe dem Team die notwendige Sicherheit gegeben, sich auf die Weiterentwicklung der Technologie zu konzentrieren und den nächsten Entwicklungsschritt zu gehen. Darüber hinaus habe sich die exist Förderung als wichtiges Gütesiegel erwiesen. Sie signalisiere potenziellen Partnerinnen und Partnern sowie Investierenden, dass hinter dem Vorhaben technologische Substanz steckt und die Idee bereits erfolgreich geprüft wurde. Für AutonomIQ habe dies wichtige Türe",
+          "extraction_method": "exist_success_story_html",
+          "link_confidence": null
+        }
+      ],
+      "stored_signals": [
+        {
+          "signal_id": "f27e65b5-26a7-46a8-a788-ae4c2c6f959e",
+          "signal_type": "NEW_FUNDING_PROJECT",
+          "description": "AutonomIQ",
+          "source_record_id": "529afe27-d8dc-4b7d-9a2f-2f06f23e7878",
+          "published_at": "2026-06-14T12:01:35+00:00"
+        }
+      ],
+      "relationships": [
+        {
+          "relationship_id": "7c4f7e13-39cc-436a-972d-b11e1ecf3d34",
+          "relationship_type": "FUNDED_BY",
+          "other_entity_id": "0844d807-c8d1-4609-94f0-2463d827fbb4",
+          "other_entity_name": "EXIST-Forschungstransfer",
+          "other_entity_type": "funding_program",
+          "verification_status": "unverified",
+          "confidence": null,
+          "source_record_id": "529afe27-d8dc-4b7d-9a2f-2f06f23e7878"
+        }
+      ],
+      "early_phase_signals": [
+        "Named startup/company in an EXIST success story.",
+        "The source explicitly connects a research/technology-transfer activity to a commercial technology or product.",
+        "EXIST public support is recorded separately from equity financing."
+      ],
+      "selection_reason": "Selected because its EXIST source record describes industrial ai and manufacturing software and a research-to-company transition; it is a named company with technology/product details. It has 1 directly linked database record(s) from 1 independent database source(s), so cross-source corroboration is absent.",
+      "confidence": "High for the source-to-entity link; medium for candidate prioritization because discovery relies on one database source.",
+      "priority_rank": 8
+    }
+  ],
+  "excluded_items": [
+    {
+      "name": "KATAPULT",
+      "reason": "EXIST story identifies a media company rather than a research/technology commercialization candidate; excluded from the technology-startup shortlist."
+    },
+    {
+      "name": "Other CORDIS and university records",
+      "reason": "Stored as projects or general university news; the snapshot did not provide an explicit named spinout/company or sufficiently linked commercialization signal."
+    },
+    {
+      "name": "Standalone GitHub repositories and publications",
+      "reason": "Individual repositories or papers lacked a verified connection to a company or a second independent signal."
+    }
+  ]
+}

@@ -1,0 +1,450 @@
+{
+  "schema_version": "1.0",
+  "candidates": [
+    {
+      "candidate_id": "candidate-additive-drives",
+      "name": "Additive Drives",
+      "assessment_date": "2026-11-20",
+      "technology": {
+        "tech_startup_status": "unclear",
+        "fields": [
+          "industrial"
+        ],
+        "rationale": "The stored research-to-company profile describes a specific technology. The field mapping is provisional; the available reviewed excerpts do not establish the full business model and current commercial activity sufficiently to confirm the HTGF tech-startup criterion.",
+        "evidence": [
+          {
+            "title": "EXIST success story: Additive Drives",
+            "url": "https://exist.de/success-stories/additive-drives/",
+            "publisher": "EXIST",
+            "source_type": "official_program",
+            "published_at": "2026-08-06",
+            "accessed_on": "2026-11-20",
+            "claim": "High-performance, lightweight electric motors and control electronics using proprietary 3D-printing and conventional manufacturing processes.",
+            "reliability": "high",
+            "contradictions": []
+          }
+        ],
+        "uncertainties": [
+          "Verify the current product, business model and actual commercial activity against an accessible official company source."
+        ],
+        "contradictions": []
+      },
+      "company_age": {
+        "registration_status": "unclear",
+        "legal_entity_name": null,
+        "incorporation_date": null,
+        "registration_country": null,
+        "registry_name": null,
+        "registry_id": null,
+        "pre_company_candidate": false,
+        "pre_company_description": null,
+        "rationale": "The existing assessment does not contain an official register entry tied to an unambiguously identified legal entity. A reported founding year is not a registry date.",
+        "evidence": [],
+        "uncertainties": [
+          "Identify the legal entity and obtain its official register, registration date and public registry ID."
+        ],
+        "contradictions": []
+      },
+      "germany": {
+        "status": "unclear",
+        "concrete_plan": false,
+        "rationale": "The reviewed material does not independently establish a registered seat in Germany or a concrete plan to relocate or open a German permanent establishment.",
+        "evidence": [],
+        "uncertainties": [
+          "Obtain official registered-seat evidence or a reliable concrete relocation or German-establishment announcement."
+        ],
+        "contradictions": []
+      }
+    },
+    {
+      "candidate_id": "candidate-tentris",
+      "name": "Tentris",
+      "assessment_date": "2026-11-20",
+      "technology": {
+        "tech_startup_status": "unclear",
+        "fields": [
+          "digital_tech"
+        ],
+        "rationale": "The stored research-to-company profile describes a specific technology. The field mapping is provisional; the available reviewed excerpts do not establish the full business model and current commercial activity sufficiently to confirm the HTGF tech-startup criterion.",
+        "evidence": [
+          {
+            "title": "EXIST success story: Tentris",
+            "url": "https://exist.de/success-stories/tentris/",
+            "publisher": "EXIST",
+            "source_type": "official_program",
+            "published_at": "2026-07-22",
+            "accessed_on": "2026-11-20",
+            "claim": "University of Paderborn spinout developing a graph database for connected enterprise data and AI applications.",
+            "reliability": "high",
+            "contradictions": []
+          }
+        ],
+        "uncertainties": [
+          "Verify the current product, business model and actual commercial activity against an accessible official company source."
+        ],
+        "contradictions": []
+      },
+      "company_age": {
+        "registration_status": "unclear",
+        "legal_entity_name": null,
+        "incorporation_date": null,
+        "registration_country": null,
+        "registry_name": null,
+        "registry_id": null,
+        "pre_company_candidate": false,
+        "pre_company_description": null,
+        "rationale": "The existing assessment does not contain an official register entry tied to an unambiguously identified legal entity. A reported founding year is not a registry date.",
+        "evidence": [],
+        "uncertainties": [
+          "Identify the legal entity and obtain its official register, registration date and public registry ID."
+        ],
+        "contradictions": []
+      },
+      "germany": {
+        "status": "unclear",
+        "concrete_plan": false,
+        "rationale": "The reviewed material does not independently establish a registered seat in Germany or a concrete plan to relocate or open a German permanent establishment.",
+        "evidence": [],
+        "uncertainties": [
+          "Obtain official registered-seat evidence or a reliable concrete relocation or German-establishment announcement."
+        ],
+        "contradictions": []
+      }
+    },
+    {
+      "candidate_id": "candidate-porelio",
+      "name": "Porelio",
+      "assessment_date": "2026-11-20",
+      "technology": {
+        "tech_startup_status": "unclear",
+        "fields": [
+          "chemistry",
+          "climate_deeptech",
+          "industrial"
+        ],
+        "rationale": "The stored research-to-company profile describes a specific technology. The field mapping is provisional; the available reviewed excerpts do not establish the full business model and current commercial activity sufficiently to confirm the HTGF tech-startup criterion.",
+        "evidence": [
+          {
+            "title": "EXIST success story: Porelio",
+            "url": "https://exist.de/success-stories/porelio/",
+            "publisher": "EXIST",
+            "source_type": "official_program",
+            "published_at": "2026-07-08",
+            "accessed_on": "2026-11-20",
+            "claim": "Highly porous silicate materials designed for selective PFAS removal and recovery of valuable metals from industrial process streams.",
+            "reliability": "high",
+            "contradictions": []
+          }
+        ],
+        "uncertainties": [
+          "Verify the current product, business model and actual commercial activity against an accessible official company source."
+        ],
+        "contradictions": []
+      },
+      "company_age": {
+        "registration_status": "unclear",
+        "legal_entity_name": null,
+        "incorporation_date": null,
+        "registration_country": null,
+        "registry_name": null,
+        "registry_id": null,
+        "pre_company_candidate": false,
+        "pre_company_description": null,
+        "rationale": "The existing assessment does not contain an official register entry tied to an unambiguously identified legal entity. A reported founding year is not a registry date.",
+        "evidence": [],
+        "uncertainties": [
+          "Identify the legal entity and obtain its official register, registration date and public registry ID."
+        ],
+        "contradictions": []
+      },
+      "germany": {
+        "status": "unclear",
+        "concrete_plan": false,
+        "rationale": "The reviewed material does not independently establish a registered seat in Germany or a concrete plan to relocate or open a German permanent establishment.",
+        "evidence": [],
+        "uncertainties": [
+          "Obtain official registered-seat evidence or a reliable concrete relocation or German-establishment announcement."
+        ],
+        "contradictions": []
+      }
+    },
+    {
+      "candidate_id": "candidate-co-reactive",
+      "name": "Co-reactive",
+      "assessment_date": "2026-11-20",
+      "technology": {
+        "tech_startup_status": "unclear",
+        "fields": [
+          "climate_deeptech",
+          "industrial"
+        ],
+        "rationale": "The stored research-to-company profile describes a specific technology. The field mapping is provisional; the available reviewed excerpts do not establish the full business model and current commercial activity sufficiently to confirm the HTGF tech-startup criterion.",
+        "evidence": [
+          {
+            "title": "EXIST success story: Co-reactive",
+            "url": "https://exist.de/success-stories/co-reactive/",
+            "publisher": "EXIST",
+            "source_type": "official_program",
+            "published_at": "2026-06-17",
+            "accessed_on": "2026-11-20",
+            "claim": "Continuous CO2 mineralization process converts captured CO2 and silicate or metallurgical slags into CO2-negative supplementary cementitious materials.",
+            "reliability": "high",
+            "contradictions": []
+          }
+        ],
+        "uncertainties": [
+          "Verify the current product, business model and actual commercial activity against an accessible official company source."
+        ],
+        "contradictions": []
+      },
+      "company_age": {
+        "registration_status": "unclear",
+        "legal_entity_name": null,
+        "incorporation_date": null,
+        "registration_country": null,
+        "registry_name": null,
+        "registry_id": null,
+        "pre_company_candidate": false,
+        "pre_company_description": null,
+        "rationale": "The existing assessment does not contain an official register entry tied to an unambiguously identified legal entity. A reported founding year is not a registry date.",
+        "evidence": [],
+        "uncertainties": [
+          "Identify the legal entity and obtain its official register, registration date and public registry ID."
+        ],
+        "contradictions": []
+      },
+      "germany": {
+        "status": "unclear",
+        "concrete_plan": false,
+        "rationale": "The reviewed material does not independently establish a registered seat in Germany or a concrete plan to relocate or open a German permanent establishment.",
+        "evidence": [],
+        "uncertainties": [
+          "Obtain official registered-seat evidence or a reliable concrete relocation or German-establishment announcement."
+        ],
+        "contradictions": []
+      }
+    },
+    {
+      "candidate_id": "candidate-inleap-photonics",
+      "name": "INLEAP Photonics",
+      "assessment_date": "2026-11-20",
+      "technology": {
+        "tech_startup_status": "unclear",
+        "fields": [
+          "climate_deeptech",
+          "industrial"
+        ],
+        "rationale": "The stored research-to-company profile describes a specific technology. The field mapping is provisional; the available reviewed excerpts do not establish the full business model and current commercial activity sufficiently to confirm the HTGF tech-startup criterion.",
+        "evidence": [
+          {
+            "title": "EXIST success story: INLEAP Photonics",
+            "url": "https://exist.de/success-stories/inleap-photonics/",
+            "publisher": "EXIST",
+            "source_type": "official_program",
+            "published_at": "2026-06-14",
+            "accessed_on": "2026-11-20",
+            "claim": "Eye-safe, high-precision laser systems for counter-drone defense and critical-infrastructure protection, adapted from industrial beam-steering technology.",
+            "reliability": "high",
+            "contradictions": []
+          }
+        ],
+        "uncertainties": [
+          "Verify the current product, business model and actual commercial activity against an accessible official company source."
+        ],
+        "contradictions": []
+      },
+      "company_age": {
+        "registration_status": "unclear",
+        "legal_entity_name": null,
+        "incorporation_date": null,
+        "registration_country": null,
+        "registry_name": null,
+        "registry_id": null,
+        "pre_company_candidate": false,
+        "pre_company_description": null,
+        "rationale": "The existing assessment does not contain an official register entry tied to an unambiguously identified legal entity. A reported founding year is not a registry date.",
+        "evidence": [],
+        "uncertainties": [
+          "Identify the legal entity and obtain its official register, registration date and public registry ID."
+        ],
+        "contradictions": []
+      },
+      "germany": {
+        "status": "unclear",
+        "concrete_plan": false,
+        "rationale": "The reviewed material does not independently establish a registered seat in Germany or a concrete plan to relocate or open a German permanent establishment.",
+        "evidence": [],
+        "uncertainties": [
+          "Obtain official registered-seat evidence or a reliable concrete relocation or German-establishment announcement."
+        ],
+        "contradictions": []
+      }
+    },
+    {
+      "candidate_id": "candidate-prime-vector-technologies",
+      "name": "Prime Vector Technologies",
+      "assessment_date": "2026-11-20",
+      "technology": {
+        "tech_startup_status": "unclear",
+        "fields": [
+          "life_sciences"
+        ],
+        "rationale": "The stored research-to-company profile describes a specific technology. The field mapping is provisional; the available reviewed excerpts do not establish the full business model and current commercial activity sufficiently to confirm the HTGF tech-startup criterion.",
+        "evidence": [
+          {
+            "title": "EXIST success story: Prime Vector Technologies",
+            "url": "https://exist.de/success-stories/prime-vector-technologies/",
+            "publisher": "EXIST",
+            "source_type": "official_program",
+            "published_at": "2026-08-06",
+            "accessed_on": "2026-11-20",
+            "claim": "Orf-virus-based viral-vector platform for vaccines and immunotherapies for human and veterinary applications.",
+            "reliability": "high",
+            "contradictions": []
+          }
+        ],
+        "uncertainties": [
+          "Verify the current product, business model and actual commercial activity against an accessible official company source."
+        ],
+        "contradictions": []
+      },
+      "company_age": {
+        "registration_status": "unclear",
+        "legal_entity_name": null,
+        "incorporation_date": null,
+        "registration_country": null,
+        "registry_name": null,
+        "registry_id": null,
+        "pre_company_candidate": false,
+        "pre_company_description": null,
+        "rationale": "The existing assessment does not contain an official register entry tied to an unambiguously identified legal entity. A reported founding year is not a registry date.",
+        "evidence": [],
+        "uncertainties": [
+          "Identify the legal entity and obtain its official register, registration date and public registry ID."
+        ],
+        "contradictions": []
+      },
+      "germany": {
+        "status": "unclear",
+        "concrete_plan": false,
+        "rationale": "The reviewed material does not independently establish a registered seat in Germany or a concrete plan to relocate or open a German permanent establishment.",
+        "evidence": [],
+        "uncertainties": [
+          "Obtain official registered-seat evidence or a reliable concrete relocation or German-establishment announcement."
+        ],
+        "contradictions": []
+      }
+    },
+    {
+      "candidate_id": "candidate-noxon",
+      "name": "Noxon",
+      "assessment_date": "2026-11-20",
+      "technology": {
+        "tech_startup_status": "unclear",
+        "fields": [
+          "life_sciences"
+        ],
+        "rationale": "The stored research-to-company profile describes a specific technology. The field mapping is provisional; the available reviewed excerpts do not establish the full business model and current commercial activity sufficiently to confirm the HTGF tech-startup criterion.",
+        "evidence": [
+          {
+            "title": "EXIST success story: Noxon",
+            "url": "https://exist.de/success-stories/noxon/",
+            "publisher": "EXIST",
+            "source_type": "official_program",
+            "published_at": "2026-06-14",
+            "accessed_on": "2026-11-20",
+            "claim": "Wearable muscle-computer interface combining muscle diagnostics and neuromuscular stimulation for therapy and movement training.",
+            "reliability": "high",
+            "contradictions": []
+          }
+        ],
+        "uncertainties": [
+          "Verify the current product, business model and actual commercial activity against an accessible official company source."
+        ],
+        "contradictions": []
+      },
+      "company_age": {
+        "registration_status": "unclear",
+        "legal_entity_name": null,
+        "incorporation_date": null,
+        "registration_country": null,
+        "registry_name": null,
+        "registry_id": null,
+        "pre_company_candidate": false,
+        "pre_company_description": null,
+        "rationale": "The existing assessment does not contain an official register entry tied to an unambiguously identified legal entity. A reported founding year is not a registry date.",
+        "evidence": [],
+        "uncertainties": [
+          "Identify the legal entity and obtain its official register, registration date and public registry ID."
+        ],
+        "contradictions": []
+      },
+      "germany": {
+        "status": "unclear",
+        "concrete_plan": false,
+        "rationale": "The reviewed material does not independently establish a registered seat in Germany or a concrete plan to relocate or open a German permanent establishment.",
+        "evidence": [],
+        "uncertainties": [
+          "Obtain official registered-seat evidence or a reliable concrete relocation or German-establishment announcement."
+        ],
+        "contradictions": []
+      }
+    },
+    {
+      "candidate_id": "candidate-autonomiq",
+      "name": "AutonomIQ",
+      "assessment_date": "2026-11-20",
+      "technology": {
+        "tech_startup_status": "unclear",
+        "fields": [
+          "digital_tech",
+          "industrial"
+        ],
+        "rationale": "The stored research-to-company profile describes a specific technology. The field mapping is provisional; the available reviewed excerpts do not establish the full business model and current commercial activity sufficiently to confirm the HTGF tech-startup criterion.",
+        "evidence": [
+          {
+            "title": "EXIST success story: AutonomIQ",
+            "url": "https://exist.de/success-stories/autonomiq/",
+            "publisher": "EXIST",
+            "source_type": "official_program",
+            "published_at": "2026-06-14",
+            "accessed_on": "2026-11-20",
+            "claim": "AI software originating in TU Darmstadt research on autonomous machine tools; automates complex manufacturing-planning workflows.",
+            "reliability": "high",
+            "contradictions": []
+          }
+        ],
+        "uncertainties": [
+          "Verify the current product, business model and actual commercial activity against an accessible official company source."
+        ],
+        "contradictions": []
+      },
+      "company_age": {
+        "registration_status": "unclear",
+        "legal_entity_name": null,
+        "incorporation_date": null,
+        "registration_country": null,
+        "registry_name": null,
+        "registry_id": null,
+        "pre_company_candidate": false,
+        "pre_company_description": null,
+        "rationale": "The existing assessment does not contain an official register entry tied to an unambiguously identified legal entity. A reported founding year is not a registry date.",
+        "evidence": [],
+        "uncertainties": [
+          "Identify the legal entity and obtain its official register, registration date and public registry ID."
+        ],
+        "contradictions": []
+      },
+      "germany": {
+        "status": "unclear",
+        "concrete_plan": false,
+        "rationale": "The reviewed material does not independently establish a registered seat in Germany or a concrete plan to relocate or open a German permanent establishment.",
+        "evidence": [],
+        "uncertainties": [
+          "Obtain official registered-seat evidence or a reliable concrete relocation or German-establishment announcement."
+        ],
+        "contradictions": []
+      }
+    }
+  ]
+}

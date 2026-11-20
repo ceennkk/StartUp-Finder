@@ -19,6 +19,15 @@ StartUp-Finder is meant to discover emerging startups and founding projects from
 * **Current limitation:** the present data collection gives **no guarantee** that only not-yet-funded startups are captured. Stored organisations may already be funded and are not classified as startups.
 * Startup selection and funding verification are documented future tasks; they are not implemented and need explicit approval before work starts (see `AGENTS.md`, section 1.1).
 
+## Offline HTGF assessment
+
+The separate, file-based HTGF assessment evaluates manually curated candidate
+evidence against the three supplied HTGF questions. It does not discover
+candidates, verify funding, access the database or make an HTGF investment
+decision. Funding and HTGF fit remain independent. See
+[HTGF assessment](docs/htgf-assessment.md) for the evidence format, history,
+commands and tests.
+
 ## Contents
 1. [Architecture](#architecture)
 2. [Setup](#setup)
