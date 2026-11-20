@@ -33,6 +33,48 @@ The content hash is calculated from the canonical representation of the exact
 source scope, record type, and field values selected for the provider. Original
 records are not modified.
 
+## Phase 1: authorization at the provider boundary
+
+The analyzer sends requests through `app/llm/authorization.py`. The boundary
+accepts only the built-in local `FakeLLMProvider`, a `synthetic_*` source with
+matching scope, and an active explicit field, provider and purpose approval.
+Real providers remain disabled even if a policy entry were added. The fake
+provider itself checks authorization too, including for direct `complete` calls.
+The checked-in allowlist still contains no entries. Existing approvals default
+to the `early_signal` purpose and the `fake` provider; `claim_extraction` must
+be explicitly added to an in-memory synthetic test approval.
+
+The builder issues a process-local integrity seal over the selected fields,
+source metadata and complete policy. The analyzer and provider re-read the
+current policy and check the seal, input hash, source, fields, provider and
+purpose. Directly constructed inputs, mutations, policy changes and revoked
+approvals fail closed. Inputs are copied before use; object-valued fields,
+selected sensitive field paths, oversized values and recognizable
+credential-like text are rejected. This is data minimization, not a guarantee
+that every possible secret or personal datum can be recognized automatically.
+
+These are application-level controls against accidental or improperly routed
+calls, not a security sandbox: arbitrary code executing in the same Python
+process can modify policy or internals, and a synthetic source label alone
+cannot prove data is synthetic. Test approvals must only be used with synthetic
+fixtures. A real-provider integration would need separate implementation,
+source/field/purpose and provider approval, deployment isolation and network
+controls. An old sealed input cannot be reused after a process restart or policy
+change; re-create it through the authorized builder instead.
+
+`app/evidence/` defines versioned source, document, evidence, claim and
+unresolved-conflict models. `ClaimLLMAnalyzer` accepts only an explicitly
+approved synthetic `claim_extraction` input. It validates structured claims
+against the exact transmitted document, field and verbatim text. Claim kinds
+distinguish fact candidates, hypotheses and classification proposals; none is
+a final HTGF or funding decision. Referential validity and an exact quote do
+not prove the semantic accuracy of a claim or the identity of a company.
+Output errors use safe categories and do not expose rejected provider text.
+`app/evidence/identifiers.py` provides deterministic IDs from an explicitly
+chosen identity. The claim analyzer replaces model-proposed IDs with
+content-based claim, evidence and conflict IDs after successful validation,
+and rewrites their references. Duplicate content identities fail closed.
+
 ## Runtime and persistence safeguards
 
 The checked-in production allowlist has no entries and there is no CLI or

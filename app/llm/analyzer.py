@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from app.llm.allowlist import CuratedLLMInput
+from app.llm.authorization import authorized_complete, authorize_provider_input
 from app.llm.provider import LLMProvider, LLMRequest, LLMUsage
 
 ANALYZER_VERSION = "early-signal-analyzer-v1"
@@ -147,6 +148,7 @@ class EarlySignalLLMAnalyzer:
         return self.analyze_with_metadata(curated_input).analysis
 
     def analyze_with_metadata(self, curated_input: CuratedLLMInput) -> EarlySignalAnalysisRun:
+        curated_input = authorize_provider_input(self.provider, curated_input, purpose="early_signal")
         request = LLMRequest(
             curated_input=curated_input,
             output_schema=EarlySignalAnalysis,
@@ -154,7 +156,7 @@ class EarlySignalLLMAnalyzer:
             schema_version=self.schema_version,
             instructions=ANALYSIS_INSTRUCTIONS,
         )
-        response = self.provider.complete(request)
+        response = authorized_complete(self.provider, request)
         try:
             result = EarlySignalAnalysis.model_validate(response.structured_output)
         except ValidationError as exc:
@@ -163,7 +165,7 @@ class EarlySignalLLMAnalyzer:
                 provider_name=response.provider_name,
                 model_version=response.model_version,
                 usage=response.usage,
-            ) from exc
+            ) from None
         from app.llm.validation import EvidenceValidationError, validate_analysis_evidence
 
         try:
@@ -174,7 +176,7 @@ class EarlySignalLLMAnalyzer:
                 provider_name=response.provider_name,
                 model_version=response.model_version,
                 usage=response.usage,
-            ) from exc
+            ) from None
         return EarlySignalAnalysisRun(
             analysis=result,
             analyzer_version=self.analyzer_version,

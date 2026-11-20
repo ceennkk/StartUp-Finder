@@ -30,6 +30,11 @@ class FakeLLMProvider:
         return self._model_version
 
     def complete(self, request: LLMRequest) -> LLMProviderResponse:
+        from app.llm.allowlist import authorize_curated_input
+
+        authorize_curated_input(
+            request.curated_input, provider_name=self.provider_name, purpose=request.purpose
+        )
         self.requests.append(request)
         output = self._output(request) if callable(self._output) else self._output
         return LLMProviderResponse(

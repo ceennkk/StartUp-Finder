@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.llm.allowlist import CuratedLLMInput
+from app.llm.allowlist import CuratedLLMInput, LLMAllowlistConfig, SourceFieldApproval, build_curated_input
 from app.llm.analyzer import (
     ANALYZER_VERSION,
     PROMPT_VERSION,
@@ -18,16 +18,27 @@ from app.llm.provider import LLMUsage
 
 
 def _curated_input() -> CuratedLLMInput:
-    return CuratedLLMInput(
-        source_name="synthetic",
-        source_scope="synthetic",
+    return build_curated_input(
+        source_name="synthetic_test",
         record_type="fixture",
-        fields={
+        raw_payload={
             "title": "Synthetic research prototype",
             "abstract": "The project has plans to found a company.",
         },
-        input_hash="b" * 64,
     )
+
+
+@pytest.fixture(autouse=True)
+def _approved_synthetic_data(monkeypatch) -> None:
+    config = LLMAllowlistConfig(
+        version=1, default_policy="deny",
+        sources={"synthetic_test": SourceFieldApproval(
+            fields=("title", "abstract"), approved=True, purpose="synthetic test",
+            reviewed_at="2026-11-20", reviewed_by="test", terms_reference="test",
+            review_summary="synthetic fixture only",
+        )},
+    )
+    monkeypatch.setattr("app.llm.allowlist.load_llm_allowlist", lambda: config)
 
 
 def test_analyzer_validates_structured_output_and_passes_versions() -> None:

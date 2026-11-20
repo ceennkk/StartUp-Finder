@@ -69,8 +69,8 @@ def preview_llm_records(records: list[tuple[SourceRecord, str]]) -> LLMRunSummar
                 record_type=record.record_type,
                 raw_payload=record.raw_payload,
             )
-        except LLMInputBlocked as exc:
-            outcomes.append(LLMRecordOutcome(record.id, source_name, "blocked", str(exc)))
+        except LLMInputBlocked:
+            outcomes.append(LLMRecordOutcome(record.id, source_name, "blocked", "source not approved"))
             continue
         if not source_name.startswith(SYNTHETIC_SOURCE_PREFIX):
             outcomes.append(
@@ -103,8 +103,8 @@ def run_llm_records(
                 record_type=record.record_type,
                 raw_payload=record.raw_payload,
             )
-        except LLMInputBlocked as exc:
-            outcomes.append(LLMRecordOutcome(record.id, source_name, "blocked", str(exc)))
+        except LLMInputBlocked:
+            outcomes.append(LLMRecordOutcome(record.id, source_name, "blocked", "source not approved"))
             continue
         if not source_name.startswith(SYNTHETIC_SOURCE_PREFIX):
             outcomes.append(
@@ -131,6 +131,8 @@ def run_llm_records(
 
         try:
             analysis_run = analyzer.analyze_with_metadata(curated_input)
+        except LLMInputBlocked:
+            outcomes.append(LLMRecordOutcome(record.id, source_name, "blocked", "LLM input authorization failed"))
         except LLMAnalysisValidationError as exc:
             repository.record_failure(
                 record.id,

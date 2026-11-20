@@ -30,6 +30,7 @@ class LLMRequest:
     prompt_version: str
     schema_version: str
     instructions: str
+    purpose: str = "early_signal"
 
 
 class LLMProvider(Protocol):
