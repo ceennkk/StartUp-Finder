@@ -15,10 +15,10 @@ import type {
   Source,
 } from "../types";
 
-/** One method per endpoint of docs/frontend-contract.md. Mock and HTTP implement the same interface. */
+/** Production HTTP client for the endpoints in docs/frontend-contract.md. */
 export interface FinderApi {
-  readonly kind: "mock" | "http";
-  readonly baseUrl: string | null;
+  readonly kind: "http";
+  readonly baseUrl: string;
   health(): Promise<Health>;
   capabilities(): Promise<Capabilities>;
   listSources(p?: Page): Promise<ListResponse<Source>>;
@@ -44,7 +44,6 @@ export interface FinderApi {
   runSearch(id: string): Promise<{ job: Job }>;
   graph(): Promise<Graph>;
   events(p?: Page & { entity_id?: string }): Promise<ListResponse<FinderEvent>>;
-  seedDemo(): Promise<unknown>;
 }
 
 export interface Page {
@@ -133,24 +132,21 @@ export function createHttpApi(baseUrl: string, token?: string): FinderApi {
     runSearch: (i) => req("POST", `/searches/${id(i)}/run`, {}),
     graph: () => req("GET", "/graph"),
     events: (p) => req("GET", `/events${qs(p)}`),
-    seedDemo: () => req("POST", "/demo/seed", {}),
   };
 }
 
-/** Configuration: env first, then a per-browser override from the Systemstatus view. */
+/** Production API configuration: env first, then an optional per-browser override. */
 export const DEFAULT_BASE_URL = process.env.NEXT_PUBLIC_FINDER_API_URL || "http://localhost:8000";
-export const DEFAULT_MODE: "mock" | "http" = process.env.NEXT_PUBLIC_FINDER_API_MODE === "mock" ? "mock" : "http";
 const KEY = "finder-api-config";
 
 export interface ApiConfig {
-  mode: "mock" | "http";
   baseUrl: string;
   /** Team API token (live mode). Not a model key. Kept in this browser only. */
   token: string;
 }
 
 export function loadConfig(): ApiConfig {
-  const fallback: ApiConfig = { mode: DEFAULT_MODE, baseUrl: DEFAULT_BASE_URL, token: "" };
+  const fallback: ApiConfig = { baseUrl: DEFAULT_BASE_URL, token: "" };
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) return { ...fallback, ...(JSON.parse(raw) as Partial<ApiConfig>) };

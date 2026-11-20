@@ -15,9 +15,8 @@ import {
   loadConfig,
   saveConfig,
   type ApiConfig,
-  type FinderApi,
 } from "./api/client";
-import { createMockApi } from "./api/mock";
+import type { FinderApi } from "./api/client";
 import type { Job } from "./types";
 
 interface ApiCtx {
@@ -28,10 +27,6 @@ interface ApiCtx {
 }
 const Ctx = createContext<ApiCtx | null>(null);
 
-// one mock instance per page load so mock state survives view changes
-let mockSingleton: FinderApi | null = null;
-const getMock = () => (mockSingleton ??= createMockApi());
-
 export function ApiProvider({
   children,
   onToast,
@@ -40,7 +35,6 @@ export function ApiProvider({
   onToast: (m: string, t?: "ok" | "error") => void;
 }) {
   const [config, setConfigState] = useState<ApiConfig>({
-    mode: "http",
     baseUrl: "http://localhost:8000",
     token: "",
   });
@@ -50,10 +44,7 @@ export function ApiProvider({
     setConfigState(loadConfig());
     setReady(true);
   }, []);
-  const api = useMemo(
-    () => (config.mode === "http" ? createHttpApi(config.baseUrl, config.token) : getMock()),
-    [config.mode, config.baseUrl, config.token],
-  );
+  const api = useMemo(() => createHttpApi(config.baseUrl, config.token), [config.baseUrl, config.token]);
   const setConfig = useCallback((c: ApiConfig) => {
     saveConfig(c);
     setConfigState(c);

@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "../finder/htgf-base.css";
 import "../finder/finder-app.css";
+import "../collector/collector-dashboard.css";
 
 export const metadata: Metadata = {
-  title: "Startup Finder",
-  description: "Arbeitsoberfläche für VC-Sourcing in Deutschland.",
+  title: "StartUp Finder",
+  description: "Kandidaten entdecken, prüfen und priorisieren.",
   robots: { index: false, follow: false },
 };
 

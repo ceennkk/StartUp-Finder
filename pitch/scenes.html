@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<title>Startup Finder Pitch</title>
+<style>
+  /* Same brand base as frontend/src/finder/htgf-base.css */
+  @font-face { font-family: "ESFace"; font-weight: 400; src: url("../frontend/public/htgf/fonts/ESFace-Regular.woff2") format("woff2"); }
+  @font-face { font-family: "ESFace"; font-weight: 400; font-style: italic; src: url("../frontend/public/htgf/fonts/ESFace-Italic.woff2") format("woff2"); }
+  @font-face { font-family: "ESFace"; font-weight: 500; src: url("../frontend/public/htgf/fonts/ESFace-Medium.woff2") format("woff2"); }
+  @font-face { font-family: "AvantGarde"; font-weight: 400; src: url("../frontend/public/htgf/fonts/ITCAvantGardeGothic-Book.woff2") format("woff2"); }
+  @font-face { font-family: "AvantGarde"; font-weight: 500; src: url("../frontend/public/htgf/fonts/ITCAvantGardeGothic-Medium.woff2") format("woff2"); }
+  @font-face { font-family: "AvantGarde"; font-weight: 700; src: url("../frontend/public/htgf/fonts/ITCAvantGardeGothic-Bold.woff2") format("woff2"); }
+
+  :root { --face: "ESFace", Palatino, serif; --ag: "AvantGarde", "Century Gothic", sans-serif; --fond: #f0eeeb; --line: rgba(0,0,0,.14); }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--fond); color: #000; font-family: var(--face); -webkit-font-smoothing: antialiased; }
+
+  .scene { position: absolute; inset: 0; padding: 150px 160px 120px; opacity: 0; }
+  [data-in] { opacity: 0; will-change: transform, opacity; }
+
+  .bar { position: absolute; top: 56px; left: 160px; right: 160px; display: flex; align-items: center; justify-content: space-between; z-index: 5; }
+  .logo { display: flex; align-items: center; gap: 22px; font-family: var(--ag); font-weight: 500; font-size: 22px; }
+  .logo img { height: 34px; }
+  .logo span { padding-left: 22px; border-left: 1.5px solid #000; }
+  .demo { font-family: var(--ag); font-size: 17px; padding: 11px 20px 8px; border-radius: 999px; box-shadow: inset 0 0 0 1.25px #000; }
+
+  h1 { font-family: var(--ag); font-weight: 700; font-size: 128px; line-height: 1.02; letter-spacing: -.02em; }
+  h1 em, h2 em { font-family: var(--face); font-weight: 400; font-style: normal; }
+  h2 { font-family: var(--ag); font-weight: 700; font-size: 84px; line-height: 1.05; letter-spacing: -.015em; }
+  .kicker { font-family: var(--ag); font-weight: 500; font-size: 22px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 36px; }
+
+  .pill { display: inline-flex; align-items: center; font-family: var(--ag); font-weight: 500; font-size: 30px; padding: 22px 36px 17px; border-radius: 999px; background: #32373c; color: #fff; white-space: nowrap; }
+  .pill--o { background: transparent; color: #000; box-shadow: inset 0 0 0 1.5px #000; }
+  .pill--w { background: #fff; color: #000; }
+
+  /* hook */
+  .hook { display: flex; flex-direction: column; justify-content: center; }
+  .hook h1 { max-width: 1500px; }
+
+  /* sources */
+  .src-wrap { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 70px; max-width: 1500px; }
+
+  /* candidate card (mirrors frontend list row + panel) */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; margin-top: 64px; }
+  .card { background: #fff; border-radius: 32px; padding: 44px 48px; }
+  .row { display: flex; justify-content: space-between; align-items: baseline; padding: 26px 0; border-bottom: 1px solid var(--line); }
+  .row:last-child { border-bottom: 0; }
+  .name { font-family: var(--ag); font-weight: 700; font-size: 40px; }
+  .meta { font-family: var(--ag); font-size: 22px; color: rgba(0,0,0,.6); }
+  .sig { display: flex; gap: 18px; align-items: baseline; padding: 20px 0; border-bottom: 1px solid var(--line); font-size: 28px; line-height: 1.3; }
+  .sig:last-child { border-bottom: 0; }
+  .ref { flex: none; font-family: var(--ag); font-size: 17px; padding: 8px 14px 5px; border-radius: 999px; box-shadow: inset 0 0 0 1.25px #000; }
+  .lbl { font-family: var(--ag); font-weight: 500; font-size: 18px; letter-spacing: .08em; text-transform: uppercase; color: rgba(0,0,0,.55); margin-bottom: 14px; }
+
+  /* ai split */
+  .ai-card { border-radius: 32px; padding: 44px 48px; color: #fff; background: #111 url("../frontend/public/htgf/images/HTGF-Mastergradient.webp") center / cover; }
+  .ai-card .lbl { color: rgba(255,255,255,.75); }
+  .crit { display: flex; justify-content: space-between; padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,.25); font-size: 28px; }
+  .crit:last-child { border-bottom: 0; }
+  .crit b { font-family: var(--ag); font-weight: 500; font-size: 22px; padding: 8px 16px 5px; border-radius: 999px; box-shadow: inset 0 0 0 1.25px #fff; }
+  .quote { font-size: 30px; line-height: 1.35; padding: 18px 0 22px; border-bottom: 1px solid var(--line); }
+  .quote:last-child { border-bottom: 0; }
+  .quote small { display: block; font-family: var(--ag); font-size: 17px; color: rgba(0,0,0,.55); margin-top: 10px; }
+
+  /* workflow */
+  .nav { display: flex; gap: 16px; margin-top: 64px; }
+  .graph { position: relative; height: 420px; margin-top: 56px; }
+  .graph svg { position: absolute; inset: 0; }
+  .node { position: absolute; transform: translate(-50%, -50%); }
+
+  /* end */
+  .end { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; background: #fff url("../frontend/public/htgf/images/HTGF-Mastergradient.webp") center / cover; color: #fff; }
+  .end img { height: 64px; filter: invert(1); margin-bottom: 70px; }
+  .end h1 { font-size: 150px; }
+  .end p { font-family: var(--ag); font-size: 40px; margin-top: 40px; }
+</style>
+</head>
+<body>
+  <div class="bar" id="bar">
+    <div class="logo"><img src="../frontend/public/htgf/images/htgf-logo--black.svg" alt="HTGF" /><span>Startup Finder</span></div>
+    <div class="demo" id="demo">Demodaten · synthetisch</div>
+  </div>
+
+  <section class="scene hook" data-scene="hook">
+    <div class="kicker" data-in="0.05">Find the Founders Before Everyone Else</div>
+    <h1 data-in="0.12">Die besten Gründer:innen sind schon da. <em data-in="0.5">Lange bevor es jemand merkt.</em></h1>
+  </section>
+
+  <section class="scene" data-scene="sources">
+    <div class="kicker" data-in="0.02">Frühe Signale</div>
+    <h2 data-in="0.05">Verstreut über hunderte Quellen.</h2>
+    <div class="src-wrap">
+      <span class="pill pill--o" data-in="0.12">Pressemitteilungen</span>
+      <span class="pill pill--o" data-in="0.2">Förderlisten</span>
+      <span class="pill pill--o" data-in="0.28">Uni-Spin-offs</span>
+      <span class="pill pill--o" data-in="0.38">Hochschul-News</span>
+      <span class="pill pill--o" data-in="0.46">Gründerwettbewerbe</span>
+      <span class="pill pill--o" data-in="0.54">Fachmedien</span>
+      <span class="pill pill--o" data-in="0.62">RSS-Feeds</span>
+    </div>
+  </section>
+
+  <section class="scene" data-scene="signals">
+    <div class="kicker" data-in="0.02">Entdecken</div>
+    <h2 data-in="0.05">Signale werden zu Profilen. <em>Mit Fundstelle.</em></h2>
+    <div class="grid2">
+      <div class="card" data-in="0.15">
+        <div class="lbl">Kandidaten</div>
+        <div class="row" data-in="0.2"><span class="name">DemoRobotics</span><span class="meta">Aachen · Robotik</span></div>
+        <div class="row" data-in="0.26"><span class="name">DemoEnergy</span><span class="meta">München · Energie</span></div>
+        <div class="row" data-in="0.32"><span class="name">DemoBio</span><span class="meta">Heidelberg · Biotech</span></div>
+      </div>
+      <div class="card" data-in="0.4">
+        <div class="lbl">Signale · DemoRobotics</div>
+        <div class="sig" data-in="0.48"><span class="ref">Q1</span><span>EXIST-Gründungsstipendium bewilligt</span></div>
+        <div class="sig" data-in="0.56"><span class="ref">Q2</span><span>Ausgründung aus Lehrstuhl für Robotik angekündigt</span></div>
+        <div class="sig" data-in="0.64"><span class="ref">Q3</span><span>Erster Pilotkunde aus der Logistik genannt</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene" data-scene="ai">
+    <div class="kicker" data-in="0.02">Transparent</div>
+    <h2 data-in="0.05">Die KI schlägt vor. <em>Ihr entscheidet.</em></h2>
+    <div class="grid2">
+      <div class="card" data-in="0.18">
+        <div class="lbl">Quelldaten</div>
+        <div class="quote" data-in="0.24">„Das Team plant die Ausgründung im kommenden Frühjahr.“<small>Q2 · Pressemitteilung · wörtliches Zitat</small></div>
+        <div class="quote" data-in="0.32">„Gefördert im Rahmen von EXIST.“<small>Q1 · Förderliste · Auszug</small></div>
+      </div>
+      <div class="ai-card" data-in="0.42">
+        <div class="lbl">KI-Einschätzung · keine Erfolgswahrscheinlichkeit</div>
+        <div class="crit" data-in="0.5"><span>Gründungsabsicht</span><b>stark</b></div>
+        <div class="crit" data-in="0.56"><span>Technische Substanz</span><b>stark</b></div>
+        <div class="crit" data-in="0.62"><span>Kundenproblem</span><b>mittel</b></div>
+        <div class="crit" data-in="0.68"><span>Nachfrage</span><b>offen</b></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene" data-scene="workflow">
+    <div class="kicker" data-in="0.02">Ein Arbeitsplatz</div>
+    <h2 data-in="0.05">Entdecken. Merken. <em>Recherchieren.</em></h2>
+    <div class="nav">
+      <span class="pill pill--o" data-in="0.12" data-hl="0.12,0.35">Entdecken</span>
+      <span class="pill pill--o" data-in="0.16" data-hl="0.35,0.58">Shortlist</span>
+      <span class="pill pill--o" data-in="0.2" data-hl="0.58,1">Graph</span>
+      <span class="pill pill--o" data-in="0.24">Suchaufträge</span>
+      <span class="pill pill--o" data-in="0.28">Quellen</span>
+    </div>
+    <div class="graph">
+      <svg width="1600" height="420" data-in="0.36">
+        <g stroke="#000" stroke-width="1.5" fill="none">
+          <path d="M300 110 C 600 110, 600 210, 800 210" /><path d="M300 310 C 600 310, 600 210, 800 210" />
+          <path d="M800 210 C 1000 210, 1000 110, 1300 110" /><path d="M800 210 C 1000 210, 1000 310, 1300 310" />
+        </g>
+      </svg>
+      <span class="node pill pill--w" style="left:300px;top:110px" data-in="0.36">Dr. Demo Person</span>
+      <span class="node pill pill--w" style="left:300px;top:310px" data-in="0.4">Demo Mitgründerin</span>
+      <span class="node pill" style="left:800px;top:210px" data-in="0.44">DemoRobotics</span>
+      <span class="node pill pill--w" style="left:1300px;top:110px" data-in="0.48">Demo-Universität</span>
+      <span class="node pill pill--w" style="left:1300px;top:310px" data-in="0.52">EXIST</span>
+    </div>
+  </section>
+
+  <section class="scene end" data-scene="end">
+    <img src="../frontend/public/htgf/images/htgf-logo--black.svg" alt="HTGF" data-in="0.05" />
+    <h1 data-in="0.12">Startup Finder</h1>
+    <p data-in="0.35">Find the founders before everyone else.</p>
+  </section>
+
+<script>
+  // Deterministic renderer: render(t) draws the frame at time t (seconds). No CSS animations.
+  const FADE = 0.55, RISE = 18, XF = 0.5;
+  const ease = (x) => 1 - Math.pow(1 - Math.min(Math.max(x, 0), 1), 3);
+  let TL = null;
+
+  window.setup = (timeline) => { TL = timeline; };
+
+  window.render = (t) => {
+    let barVis = 0, demoVis = 0;
+    for (const s of TL.scenes) {
+      const el = document.querySelector(`[data-scene="${s.scene}"]`);
+      const local = t - s.start, end = s.duration;
+      const isLast = s === TL.scenes[TL.scenes.length - 1];
+      let a = ease(local / XF) * (isLast ? 1 : 1 - ease((local - end) / XF));
+      if (local < 0) a = 0;
+      el.style.opacity = a;
+      if (s.scene !== "end") barVis = Math.max(barVis, a);
+      if (["signals", "ai", "workflow"].includes(s.scene)) demoVis = Math.max(demoVis, a);
+      el.querySelectorAll("[data-in]").forEach((n) => {
+        const at = parseFloat(n.dataset.in) * end;
+        const p = ease((local - at) / FADE);
+        n.style.opacity = p;
+        n.style.transform = (n.classList.contains("node") ? "translate(-50%,-50%) " : "") + `translateY(${(1 - p) * RISE}px)`;
+      });
+      el.querySelectorAll("[data-hl]").forEach((n) => {
+        const [f, g] = n.dataset.hl.split(",").map((v) => parseFloat(v) * end);
+        const on = local >= f && local < g;
+        n.classList.toggle("pill--o", !on);
+      });
+    }
+    document.getElementById("bar").style.opacity = barVis;
+    document.getElementById("demo").style.opacity = demoVis;
+  };
+</script>
+</body>
+</html>

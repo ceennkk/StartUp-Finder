@@ -1,7 +1,7 @@
 import asyncio
 from dataclasses import replace
 from datetime import datetime, timezone
-from types import SimpleNamespace
+from types import ModuleType, SimpleNamespace
 import sys
 import unittest
 from unittest.mock import AsyncMock, patch
@@ -25,19 +25,23 @@ class GraphTests(unittest.TestCase):
 
     def test_ingestion_and_repeat(self):
         client = SimpleNamespace(driver=SimpleNamespace(execute_query=AsyncMock(return_value=([], None, None))),
-                                 add_episode=AsyncMock(return_value=SimpleNamespace(
-                                     episode=SimpleNamespace(uuid="episode"), nodes=[], edges=[])))
+                                 add_episode_bulk=AsyncMock(return_value=SimpleNamespace(
+                                     episodes=[SimpleNamespace(uuid="episode")], nodes=[], edges=[])))
         nodes = SimpleNamespace(EpisodeType=SimpleNamespace(text="text"))
-        with patch.dict(sys.modules, {"graphiti_core.nodes": nodes}):
+        raw_episode = ModuleType("graphiti_core.utils.bulk_utils")
+        raw_episode.RawEpisode = lambda **kwargs: SimpleNamespace(**kwargs)
+        with patch.dict(sys.modules, {"graphiti_core.nodes": nodes,
+                                      "graphiti_core.utils.bulk_utils": raw_episode}):
             result = asyncio.run(GraphService(client).ingest(self.finding))
             self.assertEqual(result["status"], "processed")
-            kwargs = client.add_episode.call_args.kwargs
-            self.assertEqual(kwargs["reference_time"], self.finding.fetched_at)
-            self.assertIn(self.finding.url, kwargs["source_description"])
+            kwargs = client.add_episode_bulk.call_args.kwargs
+            self.assertEqual(kwargs["bulk_episodes"][0].reference_time, self.finding.fetched_at)
+            self.assertIn(self.finding.url, kwargs["bulk_episodes"][0].source_description)
+            self.assertTrue(kwargs["strict_edge_types"])
             client.driver.execute_query.return_value = ([{"uuid": "existing"}], None, None)
             result = asyncio.run(GraphService(client).ingest(self.finding))
             self.assertEqual(result["status"], "unchanged")
-            self.assertEqual(client.add_episode.await_count, 1)
+            self.assertEqual(client.add_episode_bulk.await_count, 1)
 
     def test_failure_is_propagated(self):
         client = SimpleNamespace(driver=SimpleNamespace(execute_query=AsyncMock(side_effect=RuntimeError("offline"))))

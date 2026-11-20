@@ -4,7 +4,7 @@ Diese Datei beschreibt den aktuellen Stand des Repositorys und dient als Kontext
 
 ## 1. Zweck und aktueller Umfang
 
-Das Python-Paket `ventureradar-ingestion` sammelt öffentliche Daten aus mehreren externen Quellen, bewahrt die Quelldatensätze auf, normalisiert sie in ein gemeinsames Entitäts- und Beziehungsmodell und schreibt alles nach PostgreSQL. Die Daten sollen Signale zu Forschung, Technologie und möglichen Start-ups auffindbar machen.
+Das Python-Paket `ventureradar-ingestion` sammelt öffentliche Daten aus mehreren externen Quellen und speichert zunächst ausschließlich Originaldatensätze in PostgreSQL. Entitäten, Beziehungen und Kandidaten werden nachgelagert durch Graphiti/LLM und optionale Decision-Routen gebildet. Die Daten sollen Signale zu Forschung, Technologie und möglichen Start-ups auffindbar machen.
 
 Der Repository-Name lautet `StartUp-Finder`, der Paket- und CLI-Name ist `ventureradar-ingestion` beziehungsweise `ventureradar`. Es handelt sich derzeit primär um einen Collector und eine Persistenzschicht, nicht um eine Webanwendung oder ein UI.
 
@@ -27,13 +27,13 @@ Die zentrale Pipeline ist in [`app/adapters/base.py`](app/adapters/base.py) impl
 
 1. `fetch()` liest Quelleinträge mit Pagination, Zeitfenstern und gegebenenfalls einem gespeicherten Sync-Cursor.
 2. Jeder Eintrag wird als `RawRecord` mit stabiler quellspezifischer `external_id`, Typ, Original-Payload, kanonischer URL und optionalem Veröffentlichungszeitpunkt abgebildet.
-3. Die Rohdaten werden zuerst als `source_records` upserted. Dadurch bleiben sie auch erhalten, wenn die anschließende Normalisierung dieses Eintrags fehlschlägt.
-4. `normalize(raw)` erzeugt ein `NormalizedBundle` aus Entities, Relationships, Signals und Observations.
-5. `validate(bundle)` prüft, dass ein Bundle mindestens eine Entity enthält und alle lokalen Referenzen auf existierende Entity-Keys zeigen.
-6. Das Bundle wird über [`app/database/repositories.py`](app/database/repositories.py) idempotent persistiert.
+3. Die Originaldaten werden als `source_records` upserted und bleiben unabhängig von der späteren Modellverarbeitung erhalten.
+4. Der Finder-Worker übernimmt neue oder geänderte Rohdatensätze in seine persistente Job-Queue.
+5. Die Adapter-Bridge ergänzt die Original-Payload um alle über `source_record_id` verknüpften fachlichen Neon-Daten (Quellmetadaten, Lauf, Revisionen, Entities/Aliase, Beziehungen, Beobachtungen und Signale). Graphiti verarbeitet diesen Kontext mit generativem LLM und optionalen Decision-Routen; Neo4j speichert den Knowledge Graph. Queue-/Lease-Daten und materialisierte Graph-Ausgaben werden nicht als Quellen eingespeist.
+6. Die Finder-Materialisierung bildet Venture-Knoten zu Kandidatenprofilen und Belegen in PostgreSQL ab.
 7. Am Ende werden der `IngestionRun` abgeschlossen und – nur bei erfolgreichem Lauf – die vorgemerkten Sync-Cursor gespeichert.
 
-`--dry-run` ruft weiterhin Quelle und Normalisierung auf und validiert die Bundles, schreibt aber weder Daten noch Sync-Cursor. `--limit` begrenzt die Zahl der verarbeiteten Quelldatensätze eines Laufs.
+`--dry-run` ruft die Quelle ab, schreibt aber weder Rohdaten noch Sync-Cursor und bildet keine Entities. `--limit` begrenzt die Zahl der verarbeiteten Quelldatensätze eines Laufs. Adapter-`normalize()`-Helfer bleiben für bestehende Offline-Tests erhalten, gehören aber nicht zum Produktivpfad.
 
 Einzelne fehlerhafte Datensätze werden gezählt und geloggt; übrige Datensätze können weiterlaufen. Ein Fehler beim Abruf kann den Lauf als fehlgeschlagen beenden, bereits verarbeitete Datensätze bleiben aber erhalten. Die Verarbeitung committet spätestens alle 50 Einträge. Sync-Cursor werden bei einem fehlgeschlagenen oder partiellen Lauf nicht fortgeschrieben, damit fehlende Daten später erneut abgerufen werden können.
 
@@ -48,7 +48,7 @@ Die Typen und erlaubten Enum-Werte sind in [`app/domain.py`](app/domain.py) fest
 - **Observation**: numerischer Messwert zu einer Entity, z. B. Sterne, Downloads, Zitationen oder Follower zu einem Messzeitpunkt.
 - **SourceRecord**: Originaldatensatz einer konkreten Quelle; er ist die Provenienz für die daraus extrahierten Entities, Beziehungen und Signale.
 
-Die SQLAlchemy-Modelle sind in [`app/database/models.py`](app/database/models.py), das initiale Schema in [`app/database/migrations/versions/20261120_0001_initial_schema.py`](app/database/migrations/versions/20261120_0001_initial_schema.py) definiert. Kern-Tabellen:
+Die SQLAlchemy-Modelle sind in [`app/database/models.py`](app/database/models.py), das initiale Schema in [`app/database/migrations/versions/20261120_0001_initial_schema.py`](app/database/migrations/versions/20261120_0001_initial_schema.py) definiert. Die Graphiti-Bridge liest die quellverknüpften Fachtabellen gemeinsam pro `source_record`; sie liest keine Job- oder Graph-Projektionstabellen als neue Quellbelege. Kern-Tabellen:
 
 | Tabelle | Zweck |
 | --- | --- |
@@ -75,7 +75,7 @@ Die SQLAlchemy-Modelle sind in [`app/database/models.py`](app/database/models.py
 
 ## 4. Collector und Quellenverhalten
 
-Alle Adapter erben von `BaseAdapter` und implementieren mindestens `fetch()` und `normalize()`. Die gemeinsame HTTP-Infrastruktur liegt in [`app/http/client.py`](app/http/client.py): `PoliteHttpClient` bietet Timeouts, User-Agent, Abstände pro Host, Retry bei Transportfehlern und ausgewählten HTTP-Statuscodes sowie optional `robots.txt`-Prüfung. Bei nicht erreichbarer `robots.txt` wird für entsprechende Prüfungen fail-closed verfahren.
+Alle Adapter erben von `BaseAdapter` und implementieren `fetch()`. Die gemeinsame HTTP-Infrastruktur liegt in [`app/http/client.py`](app/http/client.py): `PoliteHttpClient` bietet Timeouts, User-Agent, Abstände pro Host, Retry bei Transportfehlern und ausgewählten HTTP-Statuscodes sowie optional `robots.txt`-Prüfung. Bei nicht erreichbarer `robots.txt` wird für entsprechende Prüfungen fail-closed verfahren.
 
 ### OpenAlex
 

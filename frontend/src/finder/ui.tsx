@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import type {
+  Assessment,
   CandidateStatus,
   GermanyStatus,
   JobStatus,
@@ -105,18 +106,6 @@ export function Empty({
   );
 }
 
-export function Demo({ show }: { show?: boolean }) {
-  if (!show) return null;
-  return (
-    <span
-      className="fa-demo"
-      title="Synthetische Demodaten – keine echten Personen oder Unternehmen"
-    >
-      Demo
-    </span>
-  );
-}
-
 export function Unknown({ children = "Unbekannt" }: { children?: ReactNode }) {
   return <span className="fa-unknown">{children}</span>;
 }
@@ -130,6 +119,15 @@ export function PriorityPill({ p }: { p?: Priority | null }) {
         : `Priorität ${PRIORITY_LABEL[v].toLowerCase()}`}
     </span>
   );
+}
+
+export function RankDisplay({ assessment, current }: { assessment?: Assessment | null; current?: boolean }) {
+  if (!assessment) return <span className="fa-rank fa-rank--empty">Noch nicht bewertet</span>;
+  if (!current) return <span className="fa-rank fa-rank--empty">Neu bewerten für aktuellen Score</span>;
+  if (assessment.score == null) return <span className="fa-rank fa-rank--empty">Zu wenig Belege · {assessment.scored_criteria ?? 0}/4</span>;
+  return <span className={`fa-rank fa-rank--${assessment.priority}`}>
+    <b>{assessment.score}</b><span>/100</span><small>{PRIORITY_LABEL[assessment.priority]} · {assessment.scored_criteria ?? 0}/4 Kriterien belegt</small>
+  </span>;
 }
 
 export function JobBadge({ s }: { s: JobStatus }) {

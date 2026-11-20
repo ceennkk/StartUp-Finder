@@ -1,46 +1,17 @@
 # Startup Finder
 
-Modulares Backend für deutsches VC-Sourcing mit Graphiti. Enthält Fundstellen,
-Jobs, Kandidatenbildung, Recherche, Bewertung, Shortlist und eine funktionale
-API-Vorschau. Das separate Produktfrontend kann parallel gegen die API entstehen.
+Produktionsworkflow für VC-Sourcing: Quellenadapter speichern Originalfundstellen
+in PostgreSQL. Ein Worker bereitet Änderungen auf und verarbeitet sie über
+Graphiti und LLM-Routen zum Knowledge Graph in Neo4j. Daraus entstehen
+Kandidatenprofile, Recherchen und Bewertungen in PostgreSQL, die Backend-API und
+Frontend bereitstellen.
 
-## Sofortige Offline-Vorschau
+## Produktionsbetrieb
 
-Python 3.11+; keine Installation, Datenbankserver oder Modellschlüssel erforderlich:
-
-```sh
-cd StartUp-Finder
-python3 -m startup_finder demo
-```
-
-Öffnen: http://localhost:8000/preview
-
-Der Befehl startet API und Worker, legt SQLite unter `data/demo.sqlite3` an und
-verarbeitet drei explizit synthetische Teams. Alle Demo-Ergebnisse sind entsprechend
-gekennzeichnet. Hier laufen keine echten Graphiti-/Modellaufrufe. Arbiträre Texte
-werden im Demo-Modus nicht als vermeintlich echte AI-Ergebnisse verarbeitet.
-
-Port ändern: `python3 -m startup_finder demo --port 8001`.
-
-## Was funktioniert?
-
-| Baustein | Umsetzung |
-|---|---|
-| PostgreSQL | persistente Fundstellen, Jobs, Profile, Bewertungen und Nutzeraktionen; SQLite nur offline |
-| Worker | Jobs claimen, Heartbeats, Backoff/Retry, serialisierte Graphschreibzugriffe, Scheduler |
-| Graphiti | Episodenimport, eigene StartupVenture/Person/Institution-Typen und Graphpflege |
-| Modell-Clients | OpenAI Responses für Recherche/Bewertung, Graphiti-LLM und optionale Decision-Routen |
-| Graphdatenbank | Neo4j; API liest daraus materialisierte Resultate in PostgreSQL |
-| Kandidatenmodul | Profile aus aufgelösten Graphknoten, Belege, Konflikte, Versionen |
-| Recherche/Bewertung | zitierte Webrecherche, Originalseitenimport, Kriterien, Gegenargumente, Profilsnapshot |
-| Backend-API | Quellen, Fundstellen, Kandidaten, Shortlist/Notizen, Jobs, Graph und Systemstatus |
-
-Aktuelle Suchaufträge sammeln konfigurierte HTML-/RSS-/manuelle Quellen. Ihr
-Freitext ist gespeicherter Auftragskontext; offene semantische Quellenentdeckung
-ist noch keine implementierte Funktion. Eigene GitHub/Hugging-Face-Adapter können
-über `Application.import_finding` dasselbe Fundstellenformat einspeisen.
-
-## Live lokal
+Der Finder unterstützt ausschließlich den Produktivbetrieb. Es gibt keinen
+Demo-Server, keine synthetischen Produktdaten und keine Laufzeit-Mock-API. Ohne
+gültige PostgreSQL-, Neo4j-, OpenAI- und API-Token-Konfiguration startet der
+Backend-Prozess nicht. `.env.example` enthält nur Platzhalter.
 
 ```sh
 python3 -m venv .venv
@@ -49,68 +20,96 @@ pip install -e '.[live]'
 cp .env.example .env
 ```
 
-In `.env` setzen:
-
-- `APP_MODE=live`
-- `DATABASE_URL=postgresql://startup:DEIN_PASSWORT@localhost:5432/startup`
-- `POSTGRES_PASSWORD` passend zur URL, `NEO4J_PASSWORD`
-- `OPENAI_API_KEY`, ein verfügbarer `OPENAI_MODEL`, `API_TOKEN`
+In `.env` produktive Zugangsdaten setzen, einschließlich `DATABASE_URL` für
+PostgreSQL/Neon, `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`, `OPENAI_API_KEY`
+und eines starken `API_TOKEN`. `APP_MODE` muss `live` sein oder entfallen.
 
 ```sh
-docker compose up -d
 python3 -m startup_finder init-db
 python3 -m startup_finder serve
-# Zweites Terminal, gleiche .env und Umgebung:
+# Zweites Terminal, gleiche Umgebung:
 python3 -m startup_finder worker
 ```
 
-Für Aura `NEO4J_URI`, Benutzer und Passwort ersetzen. Neo4j Browser lokal:
-http://localhost:7474. Neo4j und PostgreSQL haben persistente Docker-Volumes.
-Alle Container inklusive API/Worker: `docker compose -f compose.yml -f compose.app.yml up --build`.
-Für das Compose-URL-Beispiel keine reservierten URL-Zeichen im Passwort verwenden
-oder DATABASE_URL korrekt URL-escapen/als Secret konfigurieren.
+Für Aura `NEO4J_URI`, Benutzer und Passwort setzen. Modellaufrufe für Graphiti,
+Recherche und Bewertung können Kosten verursachen. Vor einem produktiven Lauf
+die konfigurierten Quellen, Datenbankzugänge und Providerkosten prüfen. Das
+generative Modell ist standardmäßig `gpt-6-luna` (`OPENAI_MODEL`).
 
-Live-Fundstellen über POST /api/findings importieren und POST
-/api/findings/{id}/process starten. Frontend/API-Aufrufe benötigen den Bearer-Token.
-Recherche und Bewertung sowie Graphiti-Ingestion können Modellkosten verursachen.
+## Architektur
 
-## Jev / OpenAI Decisions
+| Baustein | Aufgabe |
+|---|---|
+| Quellenadapter | Originalfundstellen und Adapterdaten aufnehmen |
+| PostgreSQL | Fundstellen, Jobs, Profile, Bewertungen und Nutzeraktionen persistieren |
+| Worker | Änderungen prüfen, Jobs verarbeiten, Recherche und Bewertung ausführen |
+| Graphiti + generatives LLM | Fundstellen als Episoden verarbeiten und den Knowledge Graph pflegen |
+| Decision-Routen | Optional Identitätsabgleich und Deduplizierung routen |
+| Neo4j | Knowledge Graph speichern |
+| Kandidatenmodul | Aufgelöste Venture-Knoten mit Belegen zu Profilen materialisieren |
+| Backend-API | Produktfunktionen und gespeicherte Daten bereitstellen |
+| Frontend | Kandidaten, Quellen, Graph, Recherche, Bewertung und Shortlists anzeigen |
 
-Standard: `DECISION_PROVIDER=off`, generatives Modell übernimmt Graphiti-Aufgaben.
-Optional `jev` mit `JEV_API_KEY` oder `openai` mit `OPENAI_DECISIONS_MODEL` und
-entsprechendem Providerzugriff. Nur Node-Deduplizierung/Edge-Auflösung werden
-umgeroutet; Extraktion/Summaries bleiben generativ. Integration folgt Graphitis
-aktueller LLMRuntime-API. Fehlt diese in der installierten Veröffentlichung,
-meldet der Worker einen Fehler; kein stiller Fallback.
+Die Ontologie für Graphiti-Entitäten und gerichtete Beziehungen steht als RDF/Turtle
+in `docs/startup-sourcing-ontology.ttl`; die Graphiti-Extraktion verwendet die
+passenden Pydantic-Typen und strikten Relationship-Signaturen aus
+`startup_finder/ontology.py`.
 
-Alternativ `GRAPHITI_CLIENT_FACTORY=mein_modul:create_client` konfigurieren; die
-Funktion erhält Settings und liefert eine fertig konfigurierte Graphiti-Instanz.
-Die tatsächlichen Provideraufrufe sind ohne Zugangsdaten noch nicht verifiziert.
+Recherche- und Bewertungsstände referenzieren einen gespeicherten Profilstand.
+Originalseiten werden als neue Fundstellen zurück in die Verarbeitung gegeben.
+Die API liest eine materialisierte Graphansicht in PostgreSQL, nicht alle
+Graphiti-internen Daten direkt aus Neo4j.
 
-## Frontend und Architektur
-
-- [API-Vertrag](docs/frontend-contract.md): Routen, Requests, Objekte, Polling und Grenzen.
-- [Architektur](docs/architecture.md): Bausteine, Datenfluss, Recovery und Sicherheit.
-- Funktionsvorschau: Entdecken, Shortlist, Suchaufträge, Quellen/Fundstellen,
-  Jobs/Retry, Graph und Systemstatus.
-
-## Tests
+## Frontend
 
 ```sh
-python3 -m unittest discover -s tests -v
-PYTHONPATH=. python3 scripts/smoke_demo.py
-node --check startup_finder/static/preview.js
+cd frontend
+npm ci
+npm run dev
 ```
 
-Offline-Tests prüfen unter anderem kompletten Demo-Durchlauf, Duplikatvermeidung,
-Profilupdates, Nutzeraktionen, Graph-Receipt-Recovery, Job-Leases, API-Auth,
-CORS, ungültige Beleg-IDs und Netzwerkziel-Validierung.
+Die Produktoberfläche spricht über `frontend/src/finder/api/client.ts` mit dem
+Backend. Basis-URL ist standardmäßig `http://localhost:8000`; die API muss
+`http://localhost:3000` in `CORS_ORIGINS` erlauben. Zugangsdaten gehören in
+Backend-Secrets, nicht in den Browser. Auf Loopback (`127.0.0.1`/`localhost`)
+ist kein zusätzlicher API-Token nötig; bei Netzwerkbindung verlangt das Backend
+weiterhin `API_TOKEN`. `/datenbestand` ist eine separate technische, schreibgeschützte
+Ansicht des Adapterdatenbestands in Neon.
 
-Nicht live verifiziert: PostgreSQL, Neo4j/Graphiti sowie externe Modell- und
-Decision-Aufrufe. Docker und Providerzugänge werden dafür benötigt. Live-Abhängigkeiten
-haben noch keinen geprüften Lockfile. Vor Deployment Versionen pinnen und echte
-Integrationsläufe ausführen.
+## Adapterdaten in die Finder-Pipeline übernehmen
 
-HTTP-Server und Datenschema sind für einen lokalen/team-internen Prototyp gedacht,
-nicht als fertig abgesicherte öffentliche Mehrbenutzerplattform. Keine automatische
-Bestätigung von Startup-Qualität, deutschen Unternehmenssitzen oder Finanzierungsfreiheit.
+Collector-Fundstellen (`source_records`) werden mit dem Bridge-Befehl in Finder-
+Fundstellen überführt und als process-Jobs eingereiht. Ein laufender Worker
+verarbeitet sie anschließend mit Graphiti, LLM und Decision-Routen. Stabile
+Adapter-IDs machen die Übernahme wiederholbar.
+
+```sh
+# Feldmapping prüfen; schreibt keine Finder-Daten und reiht keine Jobs ein.
+python3 -m startup_finder sync-adapters --source exist --record-type success_story --limit 1 --dry-run
+# Gezielte reale Fundstelle importieren und einen Worker-Job einreihen.
+python3 -m startup_finder sync-adapters --source exist --record-type success_story --limit 1
+```
+
+Nur Zeilen mit HTTP(S)-URL, Titel und verwertbarem Text werden übernommen. Die
+Bridge verändert keine Collector-Originale. Der Worker übernimmt neue und
+geänderte Datensätze automatisch in die Graphiti-Pipeline. Diese kann Graphiti-,
+Embedding-, Decision- und Modellaufrufe auslösen.
+
+## Decision-Routen
+
+`DECISION_PROVIDER=openai` routet Graphitis Node-Deduplizierung und Edge-Auflösung
+über die OpenAI Decisions API (`OPENAI_DECISIONS_MODEL`, Standard `gpt-6-luna`).
+Extraktion und Zusammenfassung bleiben beim generativen Modell `OPENAI_MODEL`
+(Standard `gpt-6-luna`).
+Fehlende Providerunterstützung führt zu einem Fehler, nicht zu einem stillen Fallback.
+
+## Dokumentation und Grenzen
+
+- [API-Vertrag](docs/frontend-contract.md)
+- [Architektur, Datenfluss und Betriebsgrenzen](docs/architecture.md)
+
+Der aktuelle Suchauftrag sammelt konfigurierte HTML-, RSS- und manuelle Quellen;
+der Prompt ist gespeicherter Auftragskontext. Semantische Quellenauswahl und
+offene Discovery anhand des Prompts sind nicht implementiert. Das System ist ein
+Team-Prototyp, keine fertige öffentliche Mehrbenutzerplattform. Bewertungen sind
+keine automatische Bestätigung der Startup-Qualität oder Anlageempfehlung.

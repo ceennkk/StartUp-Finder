@@ -1,0 +1,60 @@
+@prefix sso:  <urn:startup-finder:ontology:sourcing#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+
+<urn:startup-finder:ontology:sourcing> a owl:Ontology ;
+  rdfs:label "Startup Finder Sourcing Ontology"@en ;
+  rdfs:comment "A source-grounded vocabulary for ventures, people, products, markets, financing and traction."@en .
+
+sso:StartupVenture a owl:Class ; rdfs:subClassOf sso:Organization ; rdfs:label "Startup venture"@en ;
+  rdfs:comment "A commercial venture with explicit product or market intent."@en .
+sso:Person a owl:Class ; rdfs:label "Person"@en .
+sso:Organization a owl:Class ; rdfs:label "Organization"@en .
+sso:University a owl:Class ; rdfs:subClassOf sso:Organization ; rdfs:label "University"@en .
+sso:Publication a owl:Class ; rdfs:label "Publication or preprint"@en .
+sso:Repository a owl:Class ; rdfs:label "Code or data repository"@en .
+sso:ResearchProject a owl:Class ; rdfs:label "Research project"@en .
+sso:Dataset a owl:Class ; rdfs:label "Dataset"@en .
+sso:AIModel a owl:Class ; rdfs:label "Machine-learning model"@en .
+sso:Space a owl:Class ; rdfs:label "Hosted application or demo"@en .
+sso:Product a owl:Class ; rdfs:label "Product or service"@en .
+sso:Technology a owl:Class ; rdfs:label "Technology"@en .
+sso:Problem a owl:Class ; rdfs:label "Customer problem"@en .
+sso:CustomerSegment a owl:Class ; rdfs:label "Customer segment"@en .
+sso:Market a owl:Class ; rdfs:label "Market"@en .
+sso:Investor a owl:Class ; rdfs:subClassOf sso:Organization ; rdfs:label "Investor"@en .
+sso:FundingRound a owl:Class ; rdfs:label "Funding round"@en .
+sso:Program a owl:Class ; rdfs:label "Accelerator or support program"@en .
+sso:Location a owl:Class ; rdfs:label "Location"@en ;
+  rdfs:comment "Geographic fact only; location does not determine candidate quality."@en .
+sso:Metric a owl:Class ; rdfs:label "Reported metric"@en ;
+  rdfs:comment "A source-attributed customer, revenue, deployment or product metric."@en .
+sso:SourceEpisode a owl:Class ; rdfs:label "Source episode"@en ;
+  rdfs:comment "An original, time-stamped source document represented by a Graphiti episode."@en .
+
+sso:founds a owl:ObjectProperty ; rdfs:domain sso:Person ; rdfs:range sso:StartupVenture ;
+  owl:inverseOf sso:hasFounder ; rdfs:label "founds"@en .
+sso:hasFounder a owl:ObjectProperty ; rdfs:domain sso:StartupVenture ; rdfs:range sso:Person .
+sso:worksAt a owl:ObjectProperty ; rdfs:domain sso:Person ; rdfs:range sso:Organization .
+sso:builds a owl:ObjectProperty ; rdfs:domain sso:StartupVenture ; rdfs:range sso:Product .
+sso:usesTechnology a owl:ObjectProperty ; rdfs:domain sso:StartupVenture ; rdfs:range sso:Technology .
+sso:addresses a owl:ObjectProperty ; rdfs:domain sso:StartupVenture ; rdfs:range sso:Problem .
+sso:targets a owl:ObjectProperty ; rdfs:domain sso:StartupVenture ; rdfs:range sso:CustomerSegment .
+sso:operatesIn a owl:ObjectProperty ; rdfs:domain sso:StartupVenture ; rdfs:range sso:Market .
+sso:locatedIn a owl:ObjectProperty ; rdfs:domain sso:Organization ; rdfs:range sso:Location .
+sso:fundedBy a owl:ObjectProperty ; rdfs:domain sso:StartupVenture ; rdfs:range sso:Investor ;
+  owl:inverseOf sso:investedIn .
+sso:investedIn a owl:ObjectProperty ; rdfs:domain sso:Investor ; rdfs:range sso:StartupVenture .
+sso:participatesIn a owl:ObjectProperty ; rdfs:domain sso:StartupVenture ; rdfs:range sso:Program .
+sso:hasFundingRound a owl:ObjectProperty ; rdfs:domain sso:StartupVenture ; rdfs:range sso:FundingRound .
+sso:hasMetric a owl:ObjectProperty ; rdfs:domain sso:StartupVenture ; rdfs:range sso:Metric .
+sso:acquiredBy a owl:ObjectProperty ; rdfs:domain sso:StartupVenture ; rdfs:range sso:Organization .
+sso:authored a owl:ObjectProperty ; rdfs:domain sso:Person ; rdfs:range sso:Publication .
+sso:memberOf a owl:ObjectProperty ; rdfs:domain sso:Person ; rdfs:range sso:Organization .
+sso:publishedBy a owl:ObjectProperty ; rdfs:domain sso:Publication ; rdfs:range sso:Organization .
+sso:contributedTo a owl:ObjectProperty ; rdfs:domain sso:Person ; rdfs:range sso:Repository .
+sso:ownedBy a owl:ObjectProperty ; rdfs:domain sso:Repository ; rdfs:range sso:Organization .
+
+sso:evidenceEpisode a owl:ObjectProperty ; rdfs:range sso:SourceEpisode ; rdfs:label "supported by source episode"@en ;
+  rdfs:comment "Graphiti episode/source provenance is retained for every extracted fact."@en .

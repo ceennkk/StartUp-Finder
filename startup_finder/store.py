@@ -1,4 +1,4 @@
-"""Transactional PostgreSQL store; SQLite is an explicit offline demo backend.
+"""Transactional PostgreSQL store; SQLite is supported for isolated unit tests.
 
 JSON documents keep frontend payloads stable. Separate indexed fields serve job
 claiming, idempotency and graph identity. Each transaction uses its own connection.

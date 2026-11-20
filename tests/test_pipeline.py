@@ -1,33 +1,66 @@
 from dataclasses import replace
-from datetime import datetime, timezone
 import json
-from pathlib import Path
 import tempfile
 import threading
-import time
 import unittest
 import urllib.error
 import urllib.request
 from unittest.mock import patch
 
 from startup_finder.api import dispatch, make_server
-from startup_finder.clients import GraphBridge, OpenAIModels
+from startup_finder.clients import OpenAIModels
 from startup_finder.config import Settings
-from startup_finder.demo import seed, TEAMS
 from startup_finder.domain import Application
 from startup_finder.fetching import validate_public_url, text_from_html
 from startup_finder.store import Store, now
+from startup_finder.ranking import score_assessment
 from startup_finder.worker import Worker
+
+
+class TestGraphBridge:
+    def __init__(self, settings):
+        self.settings = settings
+
+    def ingest(self, finding):
+        return {
+            'episode_id': finding.episode_id(self.settings.group_id),
+            'nodes': [{
+                'id': 'venture:example', 'name': 'Example Ventures',
+                'labels': ['StartupVenture'], 'attributes': {
+                    'description': 'Industrial energy monitoring', 'country': 'DE',
+                    'people': ['Alex Example'],
+                },
+            }],
+            'edges': [{
+                'id': 'edge:example', 'source': 'person:alex', 'target': 'venture:example',
+                'fact': 'Alex Example arbeitet an Example Ventures', 'episode_ids': [finding.episode_id(self.settings.group_id)],
+            }],
+        }
+
+
+class TestModels:
+    def evaluate(self, profile):
+        evidence_ids = [e['id'] for e in profile['evidence']]
+        criteria = [dict(key=key, label=key, rating='unknown', rationale='Nicht belegt.', evidence_ids=[])
+                    for key in ('founding_intent', 'technical_substance', 'customer_problem', 'demand')]
+        return dict(summary='Review erforderlich.', strengths=[], concerns=[],
+                    open_questions=profile['open_questions'], evidence_ids=evidence_ids, criteria=criteria,
+                    model='isolated-test-double')
+
+    def research(self, candidate):
+        return {'summary': 'Keine zusätzlichen Quellen gefunden.', 'sources': []}
 
 
 class PipelineTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
-        self.settings = Settings(database_url='sqlite:///'+self.temp.name+'/demo.db')
+        self.settings = Settings(database_url='sqlite:///'+self.temp.name+'/pipeline-test.db', group_id='pipeline-test')
         self.store = Store(self.settings.database_url)
         self.store.initialize()
         self.app = Application(self.store, self.settings)
-        self.worker = Worker(self.app)
+        self.bridge = TestGraphBridge(self.settings)
+        self.worker = Worker(self.app, bridge=self.bridge, models=TestModels())
+        self.source = self.app.create_source({'name': 'Research feed', 'url': 'https://example.org/feed', 'kind': 'manual'})
 
     def tearDown(self):
         self.temp.cleanup()
@@ -38,31 +71,35 @@ class PipelineTests(unittest.TestCase):
                 return
         self.fail('Queue did not drain')
 
-    def test_end_to_end_and_reseed_idempotency(self):
-        seed(self.app)
+    def add_finding(self, external_id='example-1', title='Example venture update', text='The team develops an industrial energy monitoring product.'):
+        return self.app.import_finding(dict(source_id=self.source['id'], external_id=external_id,
+            url=f'https://example.org/{external_id}', title=title, text=text))
+
+    def queue_processing(self, finding):
+        self.app.queue('process', finding['id'])
         self.drain()
+
+    def test_end_to_end_and_ingestion_idempotency(self):
+        finding = self.add_finding()
+        self.queue_processing(finding)
         candidates = self.store.list('candidates')
-        self.assertEqual(len(candidates), 3)
-        self.assertEqual(len(self.store.list('assessments')), 3)
+        self.assertEqual(len(candidates), 1)
+        self.assertEqual(len(self.store.list('assessments')), 1)
         self.assertTrue(all('assessment' not in a['profile_snapshot'] for a in self.store.list('assessments')))
         self.assertTrue(all(job['status'] == 'succeeded' for job in self.store.jobs()))
-        self.assertTrue(all(c['is_demo'] for c in candidates))
-        seed(self.app)
-        self.drain()
-        self.assertEqual(len(self.store.list('candidates')), 3)
-        self.assertEqual(len(self.store.list('evidence')), 3)
-        self.assertTrue(all(c['profile_version'] == 1 for c in self.store.list('candidates')))
+        self.assertNotIn('is_demo', candidates[0])
+        self.app.import_finding(dict(source_id=self.source['id'], external_id='example-1',
+            url='https://example.org/example-1', title='Example venture update',
+            text='The team develops an industrial energy monitoring product.'))
+        self.assertEqual(len(self.store.list('findings')), 1)
+        self.assertEqual(len(self.store.list('evidence')), 1)
 
     def test_changed_source_updates_identity_preserves_user_actions(self):
-        seed(self.app)
-        self.drain()
-        candidate = next(c for c in self.store.list('candidates') if c['name'] == 'DemoRobot')
+        self.queue_processing(self.add_finding())
+        candidate = self.store.list('candidates')[0]
         self.app.patch_candidate(candidate['id'], {'status': 'shortlisted'})
         self.app.add_note(candidate['id'], {'text': 'Prüfen'})
-        finding = self.app.import_finding(dict(source_id='demo-source', external_id='robot',
-            url=TEAMS[0]['website'], title='Neue Meldung', text=TEAMS[0]['evidence_quote']+' Weitere Entwicklung.'))
-        finding.update(is_demo=True, demo_entities=[TEAMS[0]])
-        self.store.put('findings', finding)
+        finding = self.add_finding('example-2', 'New update', 'The team added a pilot customer and product update.')
         self.app.queue('process', finding['id'])
         self.worker.run_once()
         detail = self.app.candidate_detail(candidate['id'])
@@ -76,8 +113,9 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(len(detail['evidence']), 2)
 
     def test_retry_reuses_successful_graph_receipt(self):
-        seed(self.app)
-        with patch.object(self.worker.bridge, 'ingest', wraps=self.worker.bridge.ingest) as ingest:
+        finding = self.add_finding()
+        self.app.queue('process', finding['id'])
+        with patch.object(self.bridge, 'ingest', wraps=self.bridge.ingest) as ingest:
             with patch('startup_finder.worker.materialize', side_effect=ValueError('temporary')):
                 self.worker.run_once()
             receipt_finding = next(f for f in self.store.list('findings') if f['graph_receipt'])
@@ -85,8 +123,8 @@ class PipelineTests(unittest.TestCase):
             with self.store.transaction() as c:
                 self.store.sql(c, "UPDATE jobs SET available_at=0 WHERE status='queued'")
             self.drain()
-            self.assertEqual(ingest.call_count, 3)  # once per original finding, not once per attempt
-        self.assertEqual(len(self.store.list('candidates')), 3)
+            self.assertEqual(ingest.call_count, 1)  # once per source finding, not once per retry
+        self.assertEqual(len(self.store.list('candidates')), 1)
 
     def test_job_claim_is_exclusive_and_lease_can_recover(self):
         self.store.enqueue('evaluate', {'id': 'candidate'})
@@ -107,40 +145,33 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(self.store.jobs(recovered['id'])['status'], 'running')
 
     def test_source_collection_and_search_jobs(self):
-        seed(self.app)
-        self.drain()
-        search = self.app.create_search({'prompt': 'Technische Teams in Deutschland', 'interval_minutes': 15})
+        self.add_finding()
+        search = self.app.create_search({'prompt': 'Industrial energy monitoring', 'source_ids': [self.source['id']], 'interval_minutes': 15})
+        self.assertNotIn('region', search)
+        self.app.queue('search', search['id'])
         self.drain()
         updated = self.store.get('searches', search['id'])
-        self.assertEqual(len(updated['finding_ids']), 3)
+        self.assertEqual(len(updated['finding_ids']), 1)
         self.assertIsNotNone(updated['next_run_at'])
         self.assertEqual(self.store.jobs(updated['last_job_id'])['status'], 'succeeded')
 
-    def test_arbitrary_text_never_silently_gets_demo_ai_results(self):
-        seed(self.app)
-        self.drain()
-        finding = self.app.import_finding(dict(source_id='demo-source', url='https://example.org/unknown', title='Unbekannt', text='Random text'))
-        with self.assertRaises(ValueError):
-            self.worker.process(finding['id'])
-
     def test_research_and_notes(self):
-        seed(self.app)
-        self.drain()
+        self.queue_processing(self.add_finding())
         candidate = self.store.list('candidates')[0]
         job = self.app.queue('research', candidate['id'])
         self.drain()
         self.assertEqual(self.store.jobs(job['id'])['status'], 'succeeded')
         detail = self.app.candidate_detail(candidate['id'])
         self.assertEqual(len(detail['research_runs']), 1)
-        self.assertTrue(detail['research_runs'][0]['is_demo'])
+        self.assertNotIn('is_demo', detail['research_runs'][0])
 
     def test_api_validation_and_pagination(self):
-        seed(self.app)
-        self.drain()
+        self.queue_processing(self.add_finding('example-1'))
+        self.queue_processing(self.add_finding('example-2', 'Second update', 'A second team update.'))
         status, result = dispatch(self.app, 'GET', '/api/candidates', {'limit': '2'}, {})
         self.assertEqual(status, 200)
-        self.assertEqual(len(result['items']), 2)
-        self.assertEqual(result['total'], 3)
+        self.assertEqual(len(result['items']), 1)
+        self.assertEqual(result['total'], 1)
         with self.assertRaises(ValueError):
             dispatch(self.app, 'GET', '/api/candidates', {'limit': '9999'}, {})
         with self.assertRaises(ValueError):
@@ -149,8 +180,7 @@ class PipelineTests(unittest.TestCase):
             self.app.create_search({'prompt':'test', 'interval_minutes':1})
 
     def test_model_cannot_cite_unknown_evidence(self):
-        seed(self.app)
-        self.drain()
+        self.queue_processing(self.add_finding())
         profile = self.app.candidate_detail(self.store.list('candidates')[0]['id'])
         valid = self.worker.models.evaluate(profile)
         valid['evidence_ids'] = ['fabricated']
@@ -163,33 +193,61 @@ class PipelineTests(unittest.TestCase):
         status, result = dispatch(self.app, 'GET', '/api/health', {}, {})
         self.assertEqual(result['graph_status'], 'not_probed')
 
-    def test_outside_germany_is_not_in_default_feed(self):
-        seed(self.app)
-        self.drain()
+    def test_outside_germany_is_in_default_feed(self):
+        self.queue_processing(self.add_finding())
         candidate = self.store.list('candidates')[0]
         candidate['germany_status'] = 'outside_germany'
         self.store.put('candidates', candidate)
-        self.assertEqual(len(self.app.list_candidates({})), 2)
+        self.assertEqual(len(self.app.list_candidates({})), 1)
         self.assertEqual(len(self.app.list_candidates({'germany_status':'outside_germany'})), 1)
 
-    def test_http_auth_static_preview_and_cors(self):
+    def test_assessment_score_is_deterministic_and_requires_evidence_coverage(self):
+        criteria = [dict(key=key, rating=rating, evidence_ids=['e1'] if rating != 'unknown' else [])
+                    for key, rating in [('founding_intent', 'strong'), ('technical_substance', 'moderate'),
+                                        ('customer_problem', 'strong'), ('demand', 'unknown')]]
+        scored = score_assessment({'criteria': criteria})
+        self.assertEqual(scored['score'], 89)
+        self.assertEqual(scored['scored_criteria'], 3)
+        self.assertEqual(scored['priority'], 'high')
+        sparse = score_assessment({'criteria': [dict(c, rating='unknown', evidence_ids=[]) for c in criteria]})
+        self.assertIsNone(sparse['score'])
+        self.assertEqual(sparse['priority'], 'insufficient_data')
+
+    def test_list_uses_current_numeric_score_and_puts_unscored_last(self):
+        self.queue_processing(self.add_finding())
+        candidate = self.store.list('candidates')[0]
+        other = dict(candidate, id='venture:scored', graph_node_id='venture:scored', name='A scored venture')
+        self.store.put('candidates', other)
+        self.store.put('assessments', dict(id='assessment:scored', candidate_id=other['id'],
+            profile_version=other['profile_version'], criteria_version='sourcing-rank-v1',
+            score=89, scored_criteria=3, priority='high', created_at=now()))
+        rows = self.app.list_candidates({})
+        self.assertTrue(rows[0]['assessment_rankable'])
+        self.assertEqual(rows[0]['id'], other['id'])
+        self.assertFalse(rows[1]['assessment_rankable'])
+        self.assertEqual(rows[1]['assessment']['priority'], 'insufficient_data')
+
+    def test_http_auth_production_capabilities_and_cors(self):
         settings = replace(self.settings, port=0, api_token='test-secret')
         server = make_server(Application(self.store, settings))
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
         base = 'http://127.0.0.1:'+str(server.server_port)
         try:
-            with urllib.request.urlopen(base+'/preview') as response:
-                self.assertIn(b'STARTUP FINDER', response.read())
             with self.assertRaises(urllib.error.HTTPError) as failure:
                 urllib.request.urlopen(base+'/api/candidates')
             self.assertEqual(failure.exception.code, 401)
-            req = urllib.request.Request(base+'/api/demo/seed', data=b'{}', headers={
-                'Authorization':'Bearer test-secret', 'Content-Type':'application/json', 'Origin':'http://localhost:5173'})
+            req = urllib.request.Request(base+'/api/capabilities', headers={
+                'Authorization':'Bearer test-secret', 'Origin':'http://localhost:3000'})
             with urllib.request.urlopen(req) as response:
-                self.assertEqual(response.status, 201)
-                self.assertEqual(response.headers['Access-Control-Allow-Origin'], 'http://localhost:5173')
-                self.assertEqual(len(json.load(response)['jobs']), 3)
+                self.assertEqual(response.status, 200)
+                self.assertEqual(response.headers['Access-Control-Allow-Origin'], 'http://localhost:3000')
+                capabilities = json.load(response)
+                self.assertEqual(capabilities['mode'], 'live')
+            with self.assertRaises(urllib.error.HTTPError) as removed:
+                urllib.request.urlopen(urllib.request.Request(base+'/api/demo/seed', data=b'{}', headers={
+                    'Authorization':'Bearer test-secret', 'Content-Type':'application/json'}))
+            self.assertEqual(removed.exception.code, 404)
         finally:
             server.shutdown()
             server.server_close()

@@ -1,51 +1,45 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import { useCallback, useEffect, useState } from "react";
-import { ApiProvider, useApi, useLoad } from "./hooks";
-import { GraphView } from "./GraphView";
-import { Discover, Pipeline, Searches, Shortlist, Sources, SystemStatus } from "./views";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { ApiProvider, useLoad } from "./hooks";
+import { PotentialMap } from "./PotentialMap";
+import { Shortlist } from "./views";
 
-type View = "entdecken" | "shortlist" | "suchen" | "quellen" | "graph" | "pipeline" | "system";
+type View = "entdecken" | "shortlist";
 const NAV: { id: View; label: string }[] = [
   { id: "entdecken", label: "Entdecken" },
   { id: "shortlist", label: "Shortlist" },
-  { id: "suchen", label: "Suchaufträge" },
-  { id: "quellen", label: "Quellen" },
-  { id: "graph", label: "Graph" },
-  { id: "pipeline", label: "Pipeline" },
-  { id: "system", label: "Systemstatus" },
 ];
 
-/** Hash routes: #/entdecken, #/entdecken/<candidateId>, #/pipeline … */
+/** Hash routes: #/entdecken, #/entdecken/<candidateId>, #/shortlist. */
 function parseHash(): { view: View; id: string | null } {
   const [, v, id] = window.location.hash.replace(/^#/, "").split("/");
   return { view: NAV.find((n) => n.id === v)?.id ?? "entdecken", id: id ? decodeURIComponent(id) : null };
 }
 
-/** Synthetic data is always labelled: mock mode, or backend reports synthetic / demo mode. */
-function Banner() {
-  const { api } = useApi();
+/** Product data remains hidden unless the API explicitly confirms production mode. */
+function ProductionGate({ children }: { children: ReactNode }) {
   const { data, error } = useLoad((a) => a.capabilities(), []);
-  if (api.kind === "mock")
-    return (
-      <div className="fa-banner" role="note">
-        <b>Demodaten.</b> Mock-API im Browser – alle Einträge sind synthetisch. Backend unter Systemstatus verbinden.
-      </div>
-    );
   if (error)
     return (
       <div className="fa-banner fa-banner--warn" role="alert">
-        <b>Keine Verbindung</b> zu {api.baseUrl}. {error}
+        <b>Produktivbackend nicht verfügbar.</b> {error}
       </div>
     );
-  if (data?.synthetic || data?.mode === "demo")
+  if (!data)
     return (
-      <div className="fa-banner" role="note">
-        <b>Demomodus.</b> Das Backend liefert synthetische Testdaten – keine realen Teams oder Personen.
+      <div className="fa-banner" role="status">
+        Produktivstatus der API wird geprüft …
       </div>
     );
-  return null;
+  if (data.mode !== "live")
+    return (
+      <div className="fa-banner fa-banner--warn" role="alert">
+        <b>Produktivzugriff gesperrt.</b> Die API bestätigt keinen Livebetrieb. Kandidatenprofile werden nicht angezeigt.
+      </div>
+    );
+  return <>{children}</>;
 }
 
 function Shell() {
@@ -57,7 +51,9 @@ function Shell() {
     return () => window.removeEventListener("hashchange", sync);
   }, []);
   const go = useCallback((view: View, id: string | null = null) => {
-    window.location.hash = `/${view}${id ? `/${encodeURIComponent(id)}` : ""}`;
+    const hash = `#/${view}${id ? `/${encodeURIComponent(id)}` : ""}`;
+    if (window.location.hash !== hash) window.location.hash = hash;
+    setRoute({ view, id });
   }, []);
 
   return (
@@ -75,15 +71,11 @@ function Shell() {
           ))}
         </nav>
       </header>
-      <Banner />
       <main className="fa-main">
-        {route.view === "entdecken" && <Discover selected={route.id} onSelect={(id) => go("entdecken", id)} />}
-        {route.view === "shortlist" && <Shortlist onOpen={(id) => go("entdecken", id)} />}
-        {route.view === "suchen" && <Searches onFindings={() => go("quellen")} />}
-        {route.view === "quellen" && <Sources />}
-        {route.view === "graph" && <GraphView onOpen={(id) => go("entdecken", id)} />}
-        {route.view === "pipeline" && <Pipeline />}
-        {route.view === "system" && <SystemStatus />}
+        <ProductionGate>
+          {route.view === "entdecken" && <PotentialMap selectedId={route.id} onSelect={(id) => go("entdecken", id)} />}
+          {route.view === "shortlist" && <Shortlist onOpen={(id) => go("entdecken", id)} />}
+        </ProductionGate>
       </main>
     </div>
   );

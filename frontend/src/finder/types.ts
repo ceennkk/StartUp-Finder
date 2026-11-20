@@ -1,4 +1,4 @@
-// Types per docs/frontend-contract.md (v1), checked against the backend demo responses.
+// Types per docs/frontend-contract.md (v1), consumed from the production backend API.
 
 export interface ListResponse<T> {
   items: T[];
@@ -19,7 +19,6 @@ export interface Signal {
   label: string;
   evidence_id: string;
   date: string | null;
-  is_demo: boolean;
   verification?: string;
 }
 
@@ -31,7 +30,7 @@ export interface Conflict {
 }
 
 export interface Criterion {
-  key: string; // founding_intent | technical_substance | customer_problem | demand | germany_fit
+  key: string; // founding_intent | technical_substance | customer_problem | demand
   label: string;
   rating: Rating;
   rationale: string;
@@ -48,11 +47,12 @@ export interface Assessment {
   open_questions: string[];
   evidence_ids: string[];
   criteria: Criterion[];
+  score?: number | null;
+  scored_criteria?: number;
   model?: string;
   profile_version?: number;
   criteria_version?: string | number;
   created_at?: string;
-  is_demo?: boolean;
   profile_snapshot?: unknown;
 }
 
@@ -69,7 +69,6 @@ export interface Candidate {
   signals: Signal[];
   open_questions: string[];
   status: CandidateStatus;
-  is_demo: boolean;
   profile_version: number;
   finding_ids: string[];
   created_at: string;
@@ -78,6 +77,15 @@ export interface Candidate {
   /** list + detail */
   assessment?: Assessment | null;
   assessment_stale?: boolean;
+  assessment_current?: boolean;
+  assessment_rankable?: boolean;
+  funding_status?: "confirmed" | "not_found" | "unclear" | "not_researched" | string;
+  funding_summary?: string;
+  funding_evidence_ids?: string[];
+  enrichment_status?: string;
+  research_profile?: {
+    claims?: { field: string; value: string; evidence_id?: string; finding_id?: string }[];
+  };
 }
 
 export interface Evidence {
@@ -93,7 +101,6 @@ export interface Evidence {
   published_at: string | null;
   fetched_at: string | null;
   created_at?: string;
-  is_demo: boolean;
 }
 
 export interface Note {
@@ -111,7 +118,6 @@ export interface ResearchRun {
   imported_finding_ids: string[];
   fetch_errors: unknown[];
   created_at: string;
-  is_demo: boolean;
 }
 
 export interface CandidateDetail extends Candidate {
@@ -144,7 +150,6 @@ export interface Source {
   kind: SourceKind | string;
   allowed_hosts?: string[];
   enabled: boolean;
-  is_demo?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -160,7 +165,6 @@ export interface Finding {
   published_at?: string | null;
   fetched_at?: string | null;
   status: string;
-  is_demo?: boolean;
   graph_receipt?: unknown;
   error?: string | null;
 }
@@ -190,7 +194,6 @@ export interface Health {
 
 export interface Capabilities {
   mode?: string;
-  synthetic?: boolean;
   database?: string;
   graph_provider?: string;
   decision_provider?: string;
@@ -213,7 +216,6 @@ export interface GraphNode {
   id: string;
   name: string;
   labels: string[]; // e.g. StartupVenture | Person | Institution
-  is_demo?: boolean;
   location?: string;
   [k: string]: unknown;
 }
@@ -225,7 +227,6 @@ export interface GraphEdge {
   relation: string;
   fact?: string;
   episode_ids?: string[];
-  is_demo?: boolean;
 }
 
 export interface Graph {

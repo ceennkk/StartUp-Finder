@@ -1,22 +1,17 @@
 import argparse
 import asyncio
 import json
-import os
 from pathlib import Path
 from .graph import Finding, GraphService
+from .config import Settings
+from .model_factory import create_graphiti
 
 
 async def run(args):
     from dotenv import load_dotenv
-    from graphiti_core import Graphiti
     load_dotenv()
-    required = ("OPENAI_API_KEY", "NEO4J_URI", "NEO4J_USER", "NEO4J_PASSWORD")
-    missing = [key for key in required if not os.getenv(key)]
-    if missing:
-        raise ValueError("Missing environment variables: " + ", ".join(missing))
-    service = GraphService(Graphiti(os.environ["NEO4J_URI"], os.environ["NEO4J_USER"],
-                                   os.environ["NEO4J_PASSWORD"]),
-                           os.getenv("GRAPHITI_GROUP_ID", "startup_finder_de"))
+    settings = Settings.from_env()
+    service = GraphService(create_graphiti(settings), settings.group_id)
     try:
         if args.command == "init":
             await service.initialize()

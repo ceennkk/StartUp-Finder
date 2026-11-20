@@ -2,11 +2,15 @@
 import json
 from urllib.parse import urlparse
 from .graph import Finding
+from .ranking import is_current_assessment, is_current_rank
 from .store import now, uid
 
 
 class NotFound(Exception):
     pass
+
+
+LEGACY_GRAPH_GROUP = 'startup_finder_de'
 
 
 def text(data, key, maximum=10000):
@@ -34,14 +38,13 @@ class Application:
         return record
 
     def capabilities(self):
-        return dict(mode=self.settings.mode, synthetic=self.settings.mode == 'demo',
-            database='postgresql' if self.store.postgres else 'sqlite-demo',
-            graph_provider='graphiti' if self.settings.mode == 'live' else 'synthetic-fixtures',
+        return dict(mode='live',
+            database='postgresql', graph_provider='graphiti',
             decision_provider=self.settings.decision_provider,
             features=['sources', 'findings', 'graph', 'candidates', 'research', 'assessments',
                       'shortlist', 'notes', 'searches', 'jobs', 'retry', 'events', 'scheduling'],
-            adapters=['html', 'rss', 'manual'], live_research=self.settings.mode == 'live',
-            deployment_note='Team prototype; bearer token in live mode, no multi-tenant authorization.')
+            adapters=['html', 'rss', 'manual'], live_research=True,
+            deployment_note='Loopback development may omit API token; remote binds require one. No multi-tenant authorization.')
 
     def create_source(self, data):
         url = http_url(text(data, 'url', 2000))
@@ -50,7 +53,7 @@ class Application:
             raise ValueError('kind must be html, rss or manual')
         return self.store.put('sources', dict(id=uid(), name=text(data, 'name', 200), url=url,
             kind=kind, enabled=True, allowed_hosts=[urlparse(url).hostname.lower()],
-            is_demo=False, created_at=now(), updated_at=now()))
+            created_at=now(), updated_at=now()))
 
     def import_finding(self, data, connection=None):
         if connection is None:
@@ -67,7 +70,11 @@ class Application:
         if existing:
             return existing
         record = dict(payload, id=record_id, external_id=payload['id'], source_id=source['id'],
-            status='new', is_demo=False, graph_receipt=None, created_at=now(), updated_at=now())
+            status='new', graph_receipt=None, created_at=now(), updated_at=now())
+        if isinstance(data.get('decision_context'), str):
+            record['decision_context'] = data['decision_context']
+        if isinstance(data.get('relevance_context'), dict):
+            record['relevance_context'] = data['relevance_context']
         self.store.put('findings', record, connection)
         self.store.event('finding.imported', record_id, connection=connection)
         return record
@@ -89,6 +96,10 @@ class Application:
         assessments = sorted([a for a in self.store.list('assessments') if a['candidate_id'] == record_id], key=lambda a:a['created_at'], reverse=True)
         candidate['assessment'] = assessments[0] if assessments else None
         candidate['assessment_stale'] = bool(assessments and assessments[0]['profile_version'] != candidate['profile_version'])
+        candidate['assessment_current'] = is_current_assessment(candidate['assessment'], candidate['profile_version'])
+        candidate['assessment_rankable'] = is_current_rank(candidate['assessment'],
+            candidate['assessment'].get('profile_version') if candidate['assessment'] else None,
+            candidate['profile_version'])
         candidate['research_runs'] = sorted([r for r in self.store.list('research_runs') if r['candidate_id'] == record_id], key=lambda r:r['created_at'], reverse=True)
         return candidate
 
@@ -119,13 +130,12 @@ class Application:
         interval = data.get('interval_minutes')
         if interval is not None and (type(interval) is not int or interval < 15):
             raise ValueError('interval_minutes must be >= 15 or null')
-        return self.store.put('searches', dict(id=uid(), prompt=prompt, source_ids=ids, region='DE',
+        return self.store.put('searches', dict(id=uid(), prompt=prompt, source_ids=ids,
             interval_minutes=interval, next_run_at=None, last_job_id=None, created_at=now(), updated_at=now()))
 
     def list_candidates(self, query):
-        rows = self.store.list('candidates')
-        if not query.get('germany_status'):
-            rows = [r for r in rows if r['germany_status'] != 'outside_germany']
+        rows = [candidate for candidate in self.store.list('candidates')
+                if candidate.get('graph_group_id', LEGACY_GRAPH_GROUP) == self.settings.group_id]
         for key in ('status', 'germany_status'):
             if query.get(key):
                 rows = [r for r in rows if r[key] == query[key]]
@@ -137,12 +147,21 @@ class Application:
         for row in rows:
             row['assessment'] = latest.get(row['id'])
             row['assessment_stale'] = bool(row['assessment'] and row['assessment']['profile_version'] != row['profile_version'])
+            row['assessment_current'] = is_current_assessment(row['assessment'], row['profile_version'])
+            row['assessment_rankable'] = is_current_rank(row['assessment'],
+                row['assessment'].get('profile_version') if row['assessment'] else None,
+                row['profile_version'])
         if query.get('priority'):
-            rows = [r for r in rows if r['assessment'] and r['assessment']['priority'] == query['priority']]
-        rank = {'high': 0, 'medium': 1, 'low': 2, 'insufficient_data': 3}
-        rows.sort(key=lambda r: (rank.get((r.get('assessment') or {}).get('priority'), 4), r['name'].casefold()))
+            rows = [r for r in rows if r['assessment_current'] and r['assessment']['priority'] == query['priority']]
+        rows.sort(key=lambda r: (0 if r['assessment_rankable'] else 1 if r['assessment_current'] else 2,
+            -(r['assessment']['score'] or 0) if r['assessment_rankable'] else 0,
+            r['name'].casefold()))
         return rows
 
     def graph(self):
-        return dict(nodes=self.store.list('graph_nodes'), edges=self.store.list('graph_edges'),
-                    mode=self.settings.mode, is_materialized_view=True)
+        nodes = [node for node in self.store.list('graph_nodes')
+                 if node.get('group_id', LEGACY_GRAPH_GROUP) == self.settings.group_id]
+        edges = [edge for edge in self.store.list('graph_edges')
+                 if edge.get('group_id', LEGACY_GRAPH_GROUP) == self.settings.group_id]
+        return dict(nodes=nodes, edges=edges, mode='live', is_materialized_view=True,
+                    source='graphiti_projection')

@@ -53,19 +53,22 @@ class GraphService:
 
     async def ingest(self, finding):
         from graphiti_core.nodes import EpisodeType
-        episode_id = finding.episode_id(self.group_id)
         records, _, _ = await self.client.driver.execute_query(
-            "MATCH (e:Episodic {uuid: $uuid, group_id: $group_id}) RETURN e.uuid AS uuid",
-            uuid=episode_id, group_id=self.group_id)
+            'MATCH (e:Episodic {group_id: $group_id}) WHERE e.source_description CONTAINS $finding_id RETURN e.uuid AS uuid',
+            group_id=self.group_id, finding_id=f'"finding_id": "{finding.id}"')
         if records:
-            return {"finding_id": finding.id, "episode_id": episode_id, "status": "unchanged"}
-        result = await self.client.add_episode(
-            name=finding.title, episode_body=finding.text, source=EpisodeType.text,
-            source_description=json.dumps({"finding_id": finding.id, "url": finding.url,
-                                           "source": finding.source, "fetched_at": finding.fetched_at.isoformat()}),
-            reference_time=finding.published_at or finding.fetched_at,
-            group_id=self.group_id, uuid=episode_id)
-        return {"finding_id": finding.id, "episode_id": result.episode.uuid,
+            return {"finding_id": finding.id, "episode_id": records[0]["uuid"], "status": "unchanged"}
+        from graphiti_core.utils.bulk_utils import RawEpisode
+        from .ontology import EDGE_TYPES, EDGE_TYPE_MAP, ENTITY_TYPES, EXTRACTION_INSTRUCTIONS
+        result = await self.client.add_episode_bulk(
+            bulk_episodes=[RawEpisode(name=finding.title, content=finding.text, source=EpisodeType.text,
+                source_description=json.dumps({"finding_id": finding.id, "url": finding.url,
+                                               "source": finding.source, "fetched_at": finding.fetched_at.isoformat()}),
+                reference_time=finding.published_at or finding.fetched_at)],
+            group_id=self.group_id, entity_types=ENTITY_TYPES, edge_types=EDGE_TYPES,
+            edge_type_map=EDGE_TYPE_MAP, strict_edge_types=True,
+            custom_extraction_instructions=EXTRACTION_INSTRUCTIONS)
+        return {"finding_id": finding.id, "episode_id": result.episodes[0].uuid, "group_id": self.group_id,
                 "status": "processed", "node_ids": [n.uuid for n in result.nodes],
                 "edge_ids": [e.uuid for e in result.edges]}
 

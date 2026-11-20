@@ -1,20 +1,17 @@
-"""Small JSON HTTP API. No dependencies required for offline preview.
+"""Small JSON HTTP API for the production workflow.
 
 For public deployments put a TLS reverse proxy in front; this is a team prototype,
-not a multi-tenant application server. All live API routes require a bearer token.
+not a multi-tenant application server. Non-loopback bindings require a bearer token.
 """
 import hmac
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import logging
-from pathlib import Path
 from urllib.parse import parse_qs, urlparse
-from .demo import seed
 from .domain import NotFound
 from .store import now
 
 log = logging.getLogger(__name__)
-STATIC = Path(__file__).parent / 'static'
 
 
 def page(items, query):
@@ -30,13 +27,17 @@ def dispatch(app, method, path, query, data):
     if method == 'GET' and path == '/api/health':
         store.list('runtime')
         worker = store.get('runtime', 'worker')
-        return 200, dict(status='ok', mode=app.settings.mode, database='ok', worker=worker,
+        return 200, dict(status='ok', mode='live', database='ok', worker=worker,
                          graph_status='not_probed', model_status='not_probed')
     if method == 'GET' and path == '/api/capabilities':
         return 200, app.capabilities()
     list_kinds = {'sources', 'findings', 'searches', 'events'}
     if len(parts) == 2 and parts[0] == 'api' and parts[1] in list_kinds and method == 'GET':
         rows = store.list(parts[1])
+        if parts[1] == 'findings':
+            rows = [row for row in rows if not str(row.get('status', '')).startswith('excluded_')]
+            rows = [{key: value for key, value in row.items()
+                     if key not in ('decision_context', 'relevance_context')} for row in rows]
         for key in ('source_id', 'status', 'entity_id'):
             if query.get(key):
                 rows = [r for r in rows if r.get(key) == query[key]]
@@ -51,8 +52,6 @@ def dispatch(app, method, path, query, data):
         return 201, app.import_finding(data)
     if path == '/api/searches' and method == 'POST':
         return 201, app.create_search(data)
-    if path == '/api/demo/seed' and method == 'POST':
-        return 201, seed(app)
     if path == '/api/candidates' and method == 'GET':
         return 200, page(app.list_candidates(query), query)
     if path == '/api/jobs' and method == 'GET':
@@ -74,7 +73,11 @@ def dispatch(app, method, path, query, data):
             if method == 'POST' and parts[3:] == ['retry']:
                 return 202, {'job': store.retry(record_id)}
         if kind in ('findings', 'sources', 'searches') and method == 'GET' and len(parts) == 3:
-            return 200, app.require(kind, record_id)
+            record = app.require(kind, record_id)
+            if kind == 'findings':
+                record = {key: value for key, value in record.items()
+                          if key not in ('decision_context', 'relevance_context')}
+            return 200, record
         if kind == 'sources' and method == 'PATCH' and len(parts) == 3:
             if set(data) != {'enabled'} or type(data['enabled']) is not bool:
                 raise ValueError('Only boolean enabled can be patched')
@@ -124,10 +127,6 @@ def make_server(app):
             parsed = urlparse(self.path)
             if self.command == 'OPTIONS':
                 return self.send(200, {})
-            if self.command == 'GET' and parsed.path in ('/', '/preview', '/preview.js'):
-                filename = 'preview.js' if parsed.path == '/preview.js' else 'preview.html'
-                mime = 'application/javascript; charset=utf-8' if filename.endswith('.js') else 'text/html; charset=utf-8'
-                return self.send(200, (STATIC / filename).read_bytes(), mime)
             expected = app.settings.api_token
             if expected and not hmac.compare_digest(self.headers.get('Authorization', ''), 'Bearer '+expected):
                 return self.send(401, {'detail': 'Bearer token required'})

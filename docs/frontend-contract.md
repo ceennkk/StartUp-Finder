@@ -1,19 +1,21 @@
-# Frontend-Vertrag · v1
+# Frontend-Vertrag · v2
 
 Basis: `http://localhost:8000/api`. JSON. Listen: `{items: [...], total: number}`.
 Details direkt als Objekt, Jobs als `{job: {...}}`, Fehler als `{detail: string}`.
 Alle Zeitangaben ISO 8601 mit Zeitzone. Leere/unbekannte Fakten bleiben leer.
 
-Live: `Authorization: Bearer <API_TOKEN>` für alle API-Routen. Modellschlüssel
-bleiben im Worker. CORS_ORIGINS enthält die erlaubten Frontend-Origins. Ein
-Team-Token ersetzt kein späteres Benutzer-/Mandanten-Rechtesystem.
+Bei Loopback-Bindung (`127.0.0.1`/`localhost`) ist kein API-Token nötig; bei
+Netzwerkbindung verlangt das Backend `Authorization: Bearer <API_TOKEN>` für alle
+API-Routen. Modellschlüssel bleiben im Worker. CORS_ORIGINS enthält die erlaubten
+Frontend-Origins. Ein Team-Token ersetzt kein späteres Benutzer-/Mandanten-Rechtesystem. Das Frontend
+zeigt Produktdaten nur, wenn `/capabilities` `mode: "live"` meldet.
 
 ## Endpunkte
 
 | Methode | Route | Request / Ergebnis |
 |---|---|---|
-| GET | /health | DB-Status, Modus, Worker-Zeitstempel. Modell/Graph: `not_probed` |
-| GET | /capabilities | Modus, Adapter, Funktionsumfang und Grenzen |
+| GET | /health | DB-Status, Modus `live`, Worker-Zeitstempel. Modell/Graph: `not_probed` |
+| GET | /capabilities | Modus `live`, Adapter, Funktionsumfang und Grenzen |
 | GET / POST | /sources | Liste / `{name,url,kind:html\|rss\|manual}` |
 | GET / PATCH | /sources/{id} | Quelle / `{enabled:boolean}` |
 | GET / POST | /findings | Liste / `{source_id,url,title,text,external_id?,published_at?,fetched_at?}` |
@@ -33,7 +35,6 @@ Team-Token ersetzt kein späteres Benutzer-/Mandanten-Rechtesystem.
 | POST | /searches/{id}/run | `{}` → 202 + Job |
 | GET | /graph | `{nodes,edges,mode,is_materialized_view:true}` |
 | GET | /events | Ereignisse; Filter entity_id |
-| POST | /demo/seed | Nur demo; synthetische Fundstellen + Jobs |
 
 Alle Listen: `limit` 1–200 (Standard 50), `offset` >= 0. Fundstellen zusätzlich
 `source_id`, `status`, `q`. HTTP: 201 erzeugt, 202 Job, 401 Token fehlt,
@@ -53,10 +54,9 @@ interface Candidate {
   entity_type: 'venture';
   people: string[];
   signals: {id:string; kind:string; label:string; evidence_id:string;
-            date:string|null; is_demo:boolean; verification?:string}[];
+            date:string|null; verification?:string}[];
   open_questions: string[];
   status: 'new' | 'shortlisted' | 'rejected';
-  is_demo: boolean;
   profile_version: number;
   finding_ids: string[];
   created_at: string;
@@ -65,14 +65,15 @@ interface Candidate {
 }
 ```
 
-Listen ergänzen `assessment` und `assessment_stale`. Detail ergänzt:
+Listen ergänzen `assessment`, `assessment_stale`, `assessment_current` und
+`assessment_rankable`. Detail ergänzt:
 
 - `evidence`: id, candidate_id, finding_id, episode_id, url, title, quote,
   kind (`exact_quote` oder `source_excerpt`), attribution, published_at, fetched_at,
-  created_at, is_demo.
+  created_at.
 - `notes`: id, candidate_id, text, created_at.
 - `research_runs`: id, candidate_id, summary, sources, imported_finding_ids,
-  fetch_errors, created_at, is_demo.
+  fetch_errors, created_at.
 - `assessment`: null oder gespeicherte Bewertung.
 
 `source_excerpt` ist ein Dokumentausschnitt, keine verifizierte Textspanne für
@@ -81,13 +82,22 @@ Widersprüche bleiben in `conflicts`; sie werden nicht still überschrieben.
 
 ## Bewertung
 
-Felder: id, candidate_id, priority (`high|medium|low|insufficient_data`), summary,
+Felder: id, candidate_id, score (0–100 oder null), scored_criteria (0–4),
+priority (`high|medium|low|insufficient_data`), summary,
 strengths[], concerns[], open_questions[], evidence_ids[], criteria[], model,
-profile_version, criteria_version, created_at, is_demo, profile_snapshot.
+profile_version, criteria_version, created_at, profile_snapshot.
 
 Kriterium: key, label, rating (`strong|moderate|weak|unknown`), rationale,
 evidence_ids[]. Kriterien: founding_intent, technical_substance, customer_problem,
-demand, germany_fit. Keine Erfolgswahrscheinlichkeiten. `assessment_stale` zeigt,
+demand. Alle vier Kriterien sind gleich gewichtet: `strong`=100, `moderate`=67,
+`weak`=33. `unknown` wird nicht in den Mittelwert eingerechnet. Ein Score wird
+erst ab drei Kriterien mit Belegreferenzen berechnet. `high` beginnt bei 75,
+`medium` bei 50, darunter `low`; bei zu wenigen bewertbaren Kriterien gilt
+`insufficient_data`. Sortiert wird nach numerischem Score absteigend. Fehlende,
+veraltete und alte Kriterienversionen stehen danach und zählen nicht für
+Prioritätsfilter. Standort und Deutschlandbezug sind Profilmetadaten und keine
+Bewertungskriterien oder Standardfilter. Keine Erfolgswahrscheinlichkeiten.
+`assessment_stale` zeigt,
 dass das aktuelle Profil neuer als die Bewertung ist.
 
 ## Jobs
@@ -108,9 +118,9 @@ Suchaufträge sammeln konfigurierte Quellen; der Prompt wird als Auftragstext
 gespeichert. Semantische Quellenauswahl und offene Discovery anhand des Prompts
 sind noch nicht implementiert. Keine entsprechende UI-Funktion vortäuschen.
 
-## Demo
+## Betriebsmodus
 
-`python3 -m startup_finder demo` startet API, Worker und vorbefüllte Vorschau.
-Demo extrahiert ausschließlich die expliziten synthetischen Fixtures, keine
-beliebigen Texte. Recherche erzeugt einen gekennzeichneten Demo-Recherchelauf;
-keine Internetabfrage. Live-Modus nutzt Graphiti und OpenAI tatsächlich.
+Es gibt ausschließlich Produktivbetrieb. `APP_MODE` darf fehlen oder muss `live`
+sein. Die Backend-Konfiguration verlangt PostgreSQL, Neo4j, OpenAI und einen
+API-Token; bei fehlender Konfiguration startet der Prozess nicht. Es gibt weder
+einen Demo-Endpunkt noch eine Mock-API im Frontend.
