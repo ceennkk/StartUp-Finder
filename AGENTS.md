@@ -1,317 +1,393 @@
-# StartUp-Finder / VentureRadar Ingestion – Projektwissen für KI-Agenten
+# StartUp-Finder – Projektwissen und verbindliche Hinweise für Coding-Agenten
 
-Diese Datei beschreibt den aktuellen Stand des Repositorys und dient als Kontext für Coding-Agenten. Lies vor einer Änderung zusätzlich die betroffenen Implementierungen, Tests und Konfigurationen; diese Datei ist eine Orientierung, kein Ersatz für den Quellcode.
+Diese Datei beschreibt den Produktkontext, den verifizierten Stand des Repositories und die Regeln für Änderungen. Sie ist Orientierung, aber nie Ersatz für den aktuellen Code, Tests, Konfigurationen und Migrationen. Behaupte keine Funktion als implementiert, wenn Code und gegebenenfalls Tests sie nicht belegen.
 
-## 1. Zweck und aktueller Umfang
+## 1. Produktidentität und Vision
 
-Das Python-Paket `ventureradar-ingestion` sammelt öffentliche Daten aus mehreren externen Quellen, bewahrt die Quelldatensätze auf, normalisiert sie in ein gemeinsames Entitäts- und Beziehungsmodell und schreibt alles nach PostgreSQL. Die Daten sollen Signale zu Forschung, Technologie und möglichen Start-ups auffindbar machen.
+**Produktname: StartUp-Finder**
 
-Der Repository-Name lautet `StartUp-Finder`, der Paket- und CLI-Name ist `ventureradar-ingestion` beziehungsweise `ventureradar`. Es handelt sich derzeit primär um einen Collector und eine Persistenzschicht, nicht um eine Webanwendung oder ein UI.
+> Build a sourcing engine that spots upcoming startups from the traces they leave long before their funding round.
 
-Technischer Kern: Python 3.12+, Typer für die CLI, Pydantic Settings und Modelle, SQLAlchemy 2 für den Datenzugriff, PostgreSQL mit JSONB, Alembic für Schema-Migrationen, HTTPX und Tenacity für HTTP/Retry sowie BeautifulSoup/feedparser für HTML- und Feed-Verarbeitung. Die Abhängigkeiten und das Console-Script sind in [`pyproject.toml`](pyproject.toml) deklariert.
+StartUp-Finder soll potenzielle Start-ups und frühe Gründungsvorhaben anhand öffentlicher Spuren früh erkennen und nachvollziehbar prüfen. Im Mittelpunkt steht nicht die größtmögliche Sammlung von Datensätzen, sondern die spätere Identifikation und Validierung aussichtsreicher Kandidaten.
 
-Aktuell registrierte Collector-Namen:
+Relevante Spuren können aus Forschung und Publikationen, Hochschulen und Forschungsgruppen, Technologietransfer und Spin-offs, Entwickler- und Open-Source-Ökosystemen, Forschungs- und Förderprojekten, frühen Unternehmensaktivitäten sowie öffentlich dokumentierten Finanzierungsereignissen stammen.
 
-- `openalex` – wissenschaftliche Arbeiten und Forschungsinstitutionen
-- `github` – öffentliche Repositories, Contributors und Aktivitätskennzahlen
-- `arxiv` – Preprints und Metadaten
-- `huggingface` – Modelle, Datensätze, Spaces und Organisationen
-- `exist` – EXIST-Erfolgsgeschichten und Förderprogramme
-- `university` – ausgewählte Hochschulmeldungen und Forschungsprojekte
-- `cordis` – EU-geförderte Forschungsprojekte (CORDIS/EURIO-SPARQL) mit Teilnehmern aus konfigurierten Ländern (Standard `DE`)
-- `manual_import` – lokale CSV/JSON-Referenzlisten (Personen und Unternehmen), kein Netzwerkzugriff
+`ventureradar-ingestion`, `ventureradar`, `VentureRadar-Ingestion`, Modul-, Tabellen- und Datenbanknamen sind derzeit technische Bezeichnungen im Code. Nicht eigenmächtig umbenennen. VentureRadar ist hier ein historischer technischer Paket-/CLI-Name; **StartUp-Finder** ist die Produktidentität. Der aktuelle Code implementiert eine Ingestion- und frühe Signalverarbeitung, keine vollständige Startup-Sourcing-Plattform.
 
-Die Collector-Registrierung steht in [`app/adapters/registry.py`](app/adapters/registry.py). Laufzeitparameter und Suchbereiche liegen in [`app/config/search_terms.yaml`](app/config/search_terms.yaml) und [`app/config/sources.yaml`](app/config/sources.yaml).
+## 2. Umsetzungsstand und Produktphasen
 
-**Projektumfang:** Umgesetzt sind Phase 1 (Datenbasis und Ingestion) sowie die begrenzten Phasen 2A/2B (Signaldefinition und deterministische Early-Signal-Discovery). Die Discovery klassifiziert Quellsignale und einzelne Beobachtungen und erkennt begrenzte Text-Erwähnungen; sie klassifiziert keine Start-ups. Nicht Teil davon und nur auf ausdrückliche Freigabe zu beginnen: Candidate Resolution, Entity Resolution/Merging, Funding-Verification, Start-up-Scoring/-Klassifikation, Team-Erkennung, Marktanalyse, KI-Analyse, Rankings, Dashboard/Frontend und FastAPI.
+Die folgende Matrix trennt belegte Funktionalität von freigegebenen Entwicklungszielen:
 
-### 1.1 Produktziel und Funding-Anforderung (verbindlich, noch nicht umgesetzt)
+| Stufe | Inhalt | Stand im Repository |
+|---|---|---|
+| 1. Data Ingestion | Öffentliche bzw. manuell bereitgestellte Quelldaten erfassen, normalisieren, mit Provenienz speichern | Implementiert für `openalex`, `arxiv`, `github`, `huggingface`, `exist`, `university`, `cordis` und `manual_import`; Umfang und Live-Verifizierungsgrad sind quellenabhängig. |
+| 2. Early-Signal Discovery | Deterministische Einordnung vorhandener Signals/Observations und begrenzte Text-Erwähnungsregeln | Implementiert und durch Unit-/CLI-/SQL-Tests abgedeckt; keine Kandidatenerkennung, Startup-Klassifikation oder Finanzierungsaussage. |
+| 3. Candidate Discovery | Vorläufige Kandidaten aus zusammenhängenden Hinweisen und mehreren Quelldatensätzen bilden | **Als Entwicklungsziel freigegeben, noch nicht implementiert.** |
+| 4. Candidate Validation | Unternehmensidentität und externe Finanzierungsrunden unabhängig recherchieren | **Als Entwicklungsziel freigegeben, noch nicht implementiert.** Keine Rechercheausführung oder Validierung in diesem Auftrag. |
+| 5. Knowledge Graph | Beziehungen zwischen Unternehmen, Personen, Forschung, Projekten, Organisationen, Repositories und Signalen auswerten | Relationales, quellenbelegtes Entity-/Relationship-Modell vorhanden; kein vollständiger Knowledge-Graph-Dienst, keine globale Entity Resolution und keine Graph-Oberfläche. |
+| 6. Startup Discovery Engine | Kandidaten anhand zeitlicher Signale und validierter Fakten transparent priorisieren | Langfristiges Produktziel; Klassifikation, Trendanalyse, Ranking, Dashboard und UI sind nicht implementiert. |
 
-**Produktziel:** „Build a sourcing engine that spots upcoming startups from the traces they leave long before their funding round.“ StartUp-Finder soll aufkommende Start-ups und Gründungsvorhaben anhand ihrer frühen öffentlichen Spuren entdecken, möglichst lange vor ihrer ersten externen Start-up-Finanzierungsrunde. Dieses Ziel ist für die weitere Produktentwicklung verbindlich.
+Weitere Abgrenzungen:
 
-**Drei getrennte Stufen:**
+- Es gibt keine Candidate- oder Funding-Validation-Module, Datenbanktabellen, CLI-Befehle, Exporte oder Candidate-Artefakte im Repository. Die vorgesehenen Dateinamen stehen in [Abschnitt 7](#7-candidate-discovery--freigegebenes-entwicklungsziel-noch-nicht-implementiert).
+- `EntityType.STARTUP` und die LLM-Kategorie `startup_activity` sind lediglich vorhandene Typ-/Schemawerte. Sie implementieren **keine** Startup-Klassifikation.
+- `NEW_FUNDING_PROJECT` und `FUNDED_BY` stehen im aktuellen Modell für Förder- bzw. Projektkontext, nicht für eine externe Equity-Finanzierungsrunde.
+- Die Erlaubnis, Candidate Discovery und Candidate Validation künftig zu entwickeln, macht sie nicht zu vorhandenem Funktionsumfang. Dafür keine Tabellen, Felder, Enums oder Funktionen als bereits implementiert dokumentieren.
 
-1. **Datensammlung und begrenzte Early-Signal-Discovery (heutiger Stand, Phase 1 und 2A/2B):** Die Collectors erfassen öffentliche Spuren (Publikationen, Repositories, Modelle, Förderprojekte, Erfolgsgeschichten, manuelle Referenzlisten). Deterministische Regeln klassifizieren Quellsignale und einzelne Beobachtungen; textbasierte Ableitungen bleiben als Erwähnungen gekennzeichnet und quellenbelegt. Die Software prüft und speichert **keine** Finanzierungsrunden und trifft keine Aussage darüber, ob ein Unternehmen oder Vorhaben finanziert ist.
-2. **Funding-Verification (zukünftig):** Eine eigene, spätere Stufe soll pro Kandidat prüfen, ob eine externe Finanzierungsrunde belegt ist, und das Ergebnis nachvollziehbar dokumentieren.
-3. **Start-up-Auswahl (zukünftig):** Erst auf Basis der Verification wird das primäre Suchprofil gebildet.
+## 3. Produktbegriffe und Finanzierungsregeln
 
-**Begriffsabgrenzung:**
+### 3.1 Unternehmen und Finanzierung getrennt bewerten
 
-- Forschungsförderungen (EXIST, CORDIS-Zuschüsse, andere öffentliche Fördermittel), Forschungsbudgets, Stipendien, Förderprogramme und Wettbewerbspreise sind **keine** Start-up-Finanzierungsrunden und dürfen nicht als solche behandelt oder benannt werden. Der Signal-Typ `NEW_FUNDING_PROJECT` und die Beziehung `FUNDED_BY` beschreiben Förderung, nicht Funding Rounds.
-- Als Finanzierungsereignis (Funding Round) gelten externe Eigenkapitalfinanzierungen wie Pre-Seed, Seed, Series A und spätere Runden.
-- Ein Finanzierungsereignis muss später mit Quelle, Datum, Art und – sofern öffentlich verfügbar – Betrag nachvollziehbar dokumentiert werden.
-- Eine fehlende Information über eine Runde bedeutet nicht, dass nachweislich keine Finanzierung erfolgt ist.
+Ein späterer Kandidatenprozess muss unabhängig voneinander beantworten:
 
-**Geplante Funding-Zustände (nur Konzept, nicht im Code, nicht in der Datenbank, nicht in `app/domain.py`):**
+1. Ist ein eigenständiges Unternehmen bestätigt?
+2. Ist eine externe Finanzierungsrunde öffentlich belegt?
 
-| Zustand | Bedeutung |
-| --- | --- |
-| `funding_round_found` | Eine externe Finanzierungsrunde wurde durch eine belastbare Quelle nachgewiesen. |
-| `no_funding_round_found` | Bei der Recherche wurde keine Finanzierungsrunde gefunden. Das ist keine Garantie für fehlende Finanzierung. |
-| `funding_status_unknown` | Eine zuverlässige Prüfung war nicht möglich oder die Datenlage ist unzureichend. |
+Die folgenden Werte sind **fachliches Zielvokabular**, keine Enums oder Datenbankwerte im aktuellen Code.
 
-**Primäres Suchprofil (Zielbild):** Es soll Unternehmen ohne nachgewiesene erste externe Finanzierungsrunde enthalten. Unternehmen mit belegter Finanzierungsrunde (`funding_round_found`) sollen separat gekennzeichnet und aus diesem Profil ausgeschlossen werden. Ob `no_funding_round_found` und `funding_status_unknown` in das Profil gehören und wie sie sichtbar getrennt werden, ist bei der Umsetzung zu entscheiden.
+#### Vorgesehener Company Status
 
-**Aktueller Stand und Einschränkung:** Die heutige Datenaufnahme bietet **keine Garantie**, ausschließlich noch nicht finanzierte Start-ups zu erfassen. Sie ist quellen- und keyword-getrieben: Gespeicherte Entities (auch Organisationen aus EXIST, CORDIS oder dem manuellen Import) können bereits extern finanziert sein, und ob sie Start-ups sind, ist nicht klassifiziert. Datensätze dürfen daher weder als „unfinanziert“ noch als „Start-up ohne Finanzierung“ dargestellt werden.
+| Zielwert | Bedeutung |
+|---|---|
+| `company_confirmed` | Unternehmen ist durch belastbare Informationen bestätigt. |
+| `pre_company_project` | Konkretes Gründungs-/Ausgründungsvorhaben erkennbar, aber kein Unternehmen bestätigt. |
+| `research_project_only` | Bisher ausschließlich ein Forschungs- oder Technologieprojekt erkennbar. |
+| `company_not_found` | Trotz dokumentierter Recherche wurde kein Unternehmen identifiziert. |
+| `company_unclear` | Unternehmensidentität oder Zuordnung ist nicht ausreichend geklärt. |
 
-**Zukünftige Entwicklungsaufgabe (nicht Teil des aktuellen Auftrags):** Konzeption und Umsetzung der Funding-Verification und der Start-up-Auswahl einschließlich der drei Zustände, der Dokumentation von Finanzierungsereignissen (Quelle, Datum, Art, Betrag) und des Ausschlusses im primären Suchprofil. Das betrifft voraussichtlich Datenmodell, geeignete Quellen und deren Nutzungsbedingungen sowie Entity Resolution (Zuordnung von Kandidaten zu Finanzierungsdaten). Beginn nur nach ausdrücklicher Freigabe; vorher keine entsprechenden Tabellen, Spalten, Enums, Adapter oder Logik anlegen.
+#### Vorgesehener Funding Status
 
-## 2. Architektur und Datenfluss
+| Zielwert | Bedeutung |
+|---|---|
+| `funding_round_confirmed` | Mindestens eine externe Finanzierungsrunde ist öffentlich belegt. |
+| `no_public_round_found` | Bei dokumentierter Recherche wurde keine öffentliche Runde gefunden; das beweist nicht, dass keine Finanzierung stattgefunden hat. |
+| `grant_only_no_public_round_found` | Öffentliche Förderung gefunden, aber keine öffentliche Equity-Runde gefunden. |
+| `funding_unclear` | Hinweise vorhanden, die Finanzierungssituation ist aber nicht ausreichend geklärt. |
+| `not_applicable` | Es gibt noch kein eindeutig identifizierbares Unternehmen, dessen Finanzierung geprüft werden kann. |
 
-Die zentrale Pipeline ist in [`app/adapters/base.py`](app/adapters/base.py) implementiert. Jeder Adapter liefert Quelldaten, die gemeinsame Basisklasse übernimmt Orchestrierung und Persistenz:
+Unternehmens- und Finanzierungsstatus dürfen nicht zu einem einzigen Feld oder einer einzigen Schlussfolgerung verschmolzen werden. Ein Unternehmen kann bestätigt sein, obwohl sein Funding-Status unklar ist.
 
-1. `fetch()` liest Quelleinträge mit Pagination, Zeitfenstern und gegebenenfalls einem gespeicherten Sync-Cursor.
-2. Jeder Eintrag wird als `RawRecord` mit stabiler quellspezifischer `external_id`, Typ, Original-Payload, kanonischer URL und optionalem Veröffentlichungszeitpunkt abgebildet.
-3. Die Rohdaten werden zuerst als `source_records` upserted. Dadurch bleiben sie auch erhalten, wenn die anschließende Normalisierung dieses Eintrags fehlschlägt.
-4. `normalize(raw)` erzeugt ein `NormalizedBundle` aus Entities, Relationships, Signals und Observations.
-5. `validate(bundle)` prüft, dass ein Bundle mindestens eine Entity enthält und alle lokalen Referenzen auf existierende Entity-Keys zeigen.
-6. Das Bundle wird über [`app/database/repositories.py`](app/database/repositories.py) idempotent persistiert.
-7. Am Ende werden der `IngestionRun` abgeschlossen und – nur bei erfolgreichem Lauf – die vorgemerkten Sync-Cursor gespeichert.
+### 3.2 Was eine Finanzierungsrunde ist – und was nicht
 
-`--dry-run` ruft weiterhin Quelle und Normalisierung auf und validiert die Bundles, schreibt aber weder Daten noch Sync-Cursor. `--limit` begrenzt die Zahl der verarbeiteten Quelldatensätze eines Laufs.
+**Nicht automatisch als Startup-Finanzierungsrunde behandeln:**
 
-Einzelne fehlerhafte Datensätze werden gezählt und geloggt; übrige Datensätze können weiterlaufen. Ein Fehler beim Abruf kann den Lauf als fehlgeschlagen beenden, bereits verarbeitete Datensätze bleiben aber erhalten. Die Verarbeitung committet spätestens alle 50 Einträge. Sync-Cursor werden bei einem fehlgeschlagenen oder partiellen Lauf nicht fortgeschrieben, damit fehlende Daten später erneut abgerufen werden können.
+- EXIST-Förderungen und andere Förderprogramme;
+- CORDIS-Projektzuschüsse;
+- öffentliche Zuschüsse und Forschungsbudgets;
+- Stipendien und Wettbewerbspreise.
 
-## 3. Gemeinsames Datenmodell
+Diese können wertvolle Frühphasensignale sein, belegen aber für sich allein keine Equity-Finanzierung. `NEW_FUNDING_PROJECT`, Förderprogramme und `FUNDED_BY` bleiben daher klar von einer Venture-Finanzierungsrunde getrennt.
 
-Die Typen und erlaubten Enum-Werte sind in [`app/domain.py`](app/domain.py) festgelegt. Die Eingabe- und Zwischenmodelle mit Pydantic stehen in [`app/ingestion/types.py`](app/ingestion/types.py).
+Mögliche externe Eigenkapitalfinanzierungen umfassen Angel Investments, Pre-Seed, Seed, Series A und spätere Runden sowie Corporate-Venture-Capital-Investments. Wandeldarlehen und SAFE-Instrumente sind als eigene Finanzierungsinstrumente zu dokumentieren; ohne Quellenbeleg nicht als klassische Runde bezeichnen.
 
-- **Entity**: normalisierte Person, Organisation, Universität, Forschungsprojekt, Publikation, Repository, Modell, Datensatz, Space, Startup, Event, Förderprogramm oder Technologie.
-- **Alias**: zusätzlicher Name oder Identifier einer Entity, etwa DOI, ORCID, ROR, URL oder Login.
-- **Relationship**: gerichtete und quellenbelegte Beziehung zwischen zwei Entities, z. B. `AUTHORED`, `MEMBER_OF`, `OWNED_BY`, `FUNDED_BY` oder `PUBLISHED_BY`.
-- **Signal**: zeitlicher Hinweis wie neue Publikation, neues Repository, neues Modell oder neue Pressemitteilung.
-- **Observation**: numerischer Messwert zu einer Entity, z. B. Sterne, Downloads, Zitationen oder Follower zu einem Messzeitpunkt.
-- **SourceRecord**: Originaldatensatz einer konkreten Quelle; er ist die Provenienz für die daraus extrahierten Entities, Beziehungen und Signale.
+`no_public_round_found` bedeutet ausschließlich: Die dokumentierte Recherche hat keine öffentliche Runde ergeben. Es beweist **nicht**, dass nie Kapital aufgenommen wurde. Nicht öffentliche Angel-Investments, private Beteiligungen und vertrauliche Finanzierungsinstrumente lassen sich dadurch nicht ausschließen.
 
-Die SQLAlchemy-Modelle sind in [`app/database/models.py`](app/database/models.py), das initiale Schema in [`app/database/migrations/versions/20261120_0001_initial_schema.py`](app/database/migrations/versions/20261120_0001_initial_schema.py) definiert. Kern-Tabellen:
+## 4. Bestehende Architektur und Datenfluss
 
-| Tabelle | Zweck |
-| --- | --- |
-| `sources` | Metadaten der externen Quellen |
+Technischer Kern ist Python 3.12+, Typer, Pydantic/Pydantic Settings, SQLAlchemy 2, PostgreSQL/JSONB, Alembic, HTTPX, Tenacity, BeautifulSoup und feedparser. Abhängigkeiten und CLI-Entry-Point stehen in [`pyproject.toml`](pyproject.toml).
+
+Die Pipeline wird von [`app/adapters/base.py`](app/adapters/base.py) orchestriert:
+
+1. Ein Adapter liest Rohdaten in `fetch()` mit quellenabhängiger Pagination, Zeitfenstern und optionalen Sync-Cursorn.
+2. Jeder Datensatz wird als `RawRecord` mit stabiler quellenbezogener `external_id`, Record-Typ, Original-Payload, optionaler URL und Datumsangaben abgebildet.
+3. Der Rohdatensatz wird zuerst in `source_records` upserted. Ein Fehler bei Normalisierung oder Validierung soll so die Quelldaten nicht verwerfen.
+4. `normalize()` erzeugt ein `NormalizedBundle` aus Entities, Relationships, Signals und Observations.
+5. `validate()` kontrolliert Bundle-Referenzen und Mindestinhalte; lokale Relationship-/Signal-/Observation-Keys müssen auf Entities des Bundles zeigen.
+6. [`app/database/repositories.py`](app/database/repositories.py) persistiert mit Upserts und Provenienz.
+7. Ein Lauf wird als `IngestionRun` abgeschlossen. Vorgemerkte Sync-Cursor werden nur bei vollständig erfolgreichem Lauf fortgeschrieben.
+
+Ein Datensatzfehler wird gezählt und kann übersprungen werden; ein Fetch-Fehler beendet den Lauf. Bereits committete Daten bleiben erhalten. Die Verarbeitung committet spätestens nach jeweils 50 Datensätzen. `--dry-run` ruft Quelle und Normalisierung auf, schreibt aber keine Roh- oder normalisierten Daten und keine Cursor. Ein limitierter Lauf schreitet den Cursor nicht fort.
+
+`PoliteHttpClient` in [`app/http/client.py`](app/http/client.py) implementiert Timeout, User-Agent, Host-Drosselung, Retry für Transportfehler und ausgewählte HTTP-Fehler sowie optionale `robots.txt`-Prüfung. Bei aktivierter Robots-Prüfung schlägt ein nicht erreichbares `robots.txt` fail-closed fehl. Quelleigene Raten, Lizenzbedingungen und Inhaltsgrenzen gelten zusätzlich.
+
+## 5. Gemeinsames Datenmodell, Provenienz und Graph-Abgrenzung
+
+Typen und erlaubte Domainwerte stehen in [`app/domain.py`](app/domain.py), Pydantic-Modelle in [`app/ingestion/types.py`](app/ingestion/types.py), SQLAlchemy-Modelle in [`app/database/models.py`](app/database/models.py).
+
+| Konzept/Tabelle | Zweck |
+|---|---|
+| `sources` | Quellmetadaten (`source_name`, Typ, URL und Terms-URL). Der Primärschlüssel ist eine beim Einfügen erzeugte UUID, kein festes Collector-Kürzel. |
 | `ingestion_runs` | Status, Zeitpunkte, Zähler und Fehler eines Collector-Laufs |
-| `source_records` | Aktueller Rohdatensatz mit Hash und „first/last seen“-Zeit |
-| `source_record_revisions` | Vorherige Roh-Payloads nach inhaltlichen Änderungen |
-| `entities` | Gemeinsame normalisierte Objekte |
-| `entity_aliases` | Namen und source-scoped externe Identifiers |
-| `entity_source_records` | Provenienz: welche Quelle und welcher Datensatz eine Entity geliefert hat |
-| `relationships` | Gerichtete, quellenbelegte Entity-Kanten |
+| `source_records` | Original-Payload, externe ID, Hash, URL und „first/last seen“-Zeit |
+| `source_record_revisions` | Vorherige Roh-Payload bei inhaltlicher Änderung |
+| `entities` | Normalisierte Personen, Organisationen, Universitäten, Forschungsprojekte, Publikationen, Repositories, Modelle, Datensätze, Spaces, Startups, Events, Förderprogramme und Technologien |
+| `entity_aliases` | Namen sowie source-scoped Identifier wie DOI, ORCID, ROR, URL oder Login |
+| `entity_source_records` | Provenienz zwischen normalisierter Entity und Quell-Datensatz |
+| `relationships` | Gerichtete, typisierte und quellbelegte Beziehungen |
 | `signals` | Signale mit Quelle und Zeitbezug |
 | `observations` | Zeitreihe numerischer Kennzahlen |
-| `sync_state` | Inkrementelle Cursor je Quelle und Abfragebereich |
+| `sync_state` | Cursor/Watermark je Quelle und Abfragebereich |
+| `llm_analyses` | Versionierte, validierte LLM-Analyseversuche; erst durch Migration `0002` ergänzt |
 
-### Identität, Änderungsverfolgung und Provenienz
+Wichtige Regeln:
 
-- Entities werden anhand eines quellenbezogenen `SOURCE_IDENTIFIER`-Alias gefunden. Derzeit werden Entities **nicht automatisch zwischen unterschiedlichen Quellen zusammengeführt**; gleiche Namen allein sind kein Merge-Schlüssel.
-- `EntityDraft.is_primary=True` kennzeichnet die Entity, deren Quelldatensatz maßgeblich für normalisierte Felder ist. Bei referenzierten Entities werden eher fehlende Informationen ergänzt, statt ihre bestehenden Werte zu überschreiben.
-- Payloads werden deterministisch gehasht. Ein Adapter kann volatile Felder aus dem Hash ausschließen oder über `hash_basis` nur stabile Felder berücksichtigen. Reine volatile Änderungen aktualisieren den Rohdatensatz, erzeugen aber keine Revision; fachliche Änderungen sichern vorherige Roh-Payloads in `source_record_revisions`.
-- Veränderungen an Kennzahlen gehören in `Observation`, nicht in eine künstliche Entity-Revision. Beobachtungen werden je Entity und Kennzahl nach Stunde oder Tag gebucktet (Einstellung `OBSERVATION_BUCKET`).
-- Beziehungen haben einen `verification_status`. Aus bloßen Keyword-Treffern abgeleitete Aussagen müssen als `UNVERIFIED` markiert bleiben und dürfen nicht als bestätigte Fakten dargestellt werden.
-- Beziehungen und Signals behalten die Quelle beziehungsweise den `source_record_id` als Provenienz; diese Verbindung nicht entfernen.
+- Eine `Source` wird im Ingestion-Code über ihren Namen (`source_name`, z. B. `university`) identifiziert. Source-UUIDs entstehen zur Laufzeit in der Datenbank. Einzelne Hochschul-Feed-Keys wie `ude_forschung` sind Konfigurations-/Record-Identitäten; sie erzeugen keine eigenen Source-Zeilen. Erfinde keine festen Source-UUIDs.
+- Entities werden anhand eines quellenbezogenen `SOURCE_IDENTIFIER`-Alias gefunden. Gleiche Namen oder externe Aliaswerte führen nicht automatisch zu einem quellenübergreifenden Merge.
+- `EntityDraft.is_primary=True` kennzeichnet die führende Beschreibung aus dem Datensatz. Referenzierte Entities füllen eher Lücken, statt vorhandene Primärdaten zu überschreiben.
+- Roh-Payload und normalisierte Daten bleiben getrennt. Beziehungen, Signale und Messwerte müssen zu ihrem `source_record_id` zurückverfolgbar sein.
+- Ein Adapter kann volatile Felder aus dem Content-Hash ausnehmen oder mit `hash_basis` nur stabile Felder hashen. Änderungen an solchen Messwerten gehören in Observations; inhaltliche Änderungen sichern den vorherigen Rohdatensatz als Revision.
+- Observations werden je Entity/Kennzahl nach UTC-Stunde oder -Tag gebucktet (`OBSERVATION_BUCKET`).
+- Unbekannte Werte bleiben `NULL`; Daten und Ereignisdaten nicht aus Veröffentlichungsdaten ableiten. Beziehungen mit unsicherer Grundlage als `UNVERIFIED` markieren.
 
-## 4. Collector und Quellenverhalten
+Das relationale Modell stellt eine graphartige Basis mit Entities, Kanten und Provenienz bereit. Es gibt jedoch keinen separaten Graph-Store, keine globale Entity Resolution, keine Candidate-Knoten/-Tabellen, keine vollständige Graphanalyse und keine UI. Nicht aus der Existenz von `relationships` auf eine implementierte Knowledge-Graph-Anwendung schließen.
 
-Alle Adapter erben von `BaseAdapter` und implementieren mindestens `fetch()` und `normalize()`. Die gemeinsame HTTP-Infrastruktur liegt in [`app/http/client.py`](app/http/client.py): `PoliteHttpClient` bietet Timeouts, User-Agent, Abstände pro Host, Retry bei Transportfehlern und ausgewählten HTTP-Statuscodes sowie optional `robots.txt`-Prüfung. Bei nicht erreichbarer `robots.txt` wird für entsprechende Prüfungen fail-closed verfahren; der `robots.txt`-Abruf selbst läuft durch die Host-Drosselung. Der User-Agent enthält `CONTACT_EMAIL`, falls gesetzt (`VentureRadar-Ingestion/0.1 (research collector for public sources; contact: <E-Mail>)`).
+Migrationen:
 
-### OpenAlex
+- [`app/database/migrations/versions/20261120_0001_initial_schema.py`](app/database/migrations/versions/20261120_0001_initial_schema.py) legt die Basis- und Graph-Grundlagentabellen für Ingestion an.
+- [`app/database/migrations/versions/20261120_0002_llm_analyses.py`](app/database/migrations/versions/20261120_0002_llm_analyses.py) ergänzt ausschließlich `llm_analyses`; sie enthält keine Candidate- oder Funding-Validation-Tabellen.
+- Normale Ingestion und Early-Signal-Discovery verwenden keine LLM-Analysen und erfordern fachlich keine LLM-Ausführung. `database init` führt allerdings technisch `alembic upgrade head` aus und würde alle vorhandenen Migrationen einschließlich `0002` anwenden.
 
-Liest Werke über die OpenAlex-API. Themenbegriffe, Länderfilter, Startzeitraum, Überlappungszeitraum und Autorenlimit stehen unter `openalex` in `search_terms.yaml`. Standardmäßig wird auf Institutionen mit Ländercode `DE` gefiltert. Mit API-Key wird Cursor-Pagination verwendet; ohne Key ist der Abruf auf Basic-Pagination und maximal 10.000 Treffer pro Abfrage begrenzt. Normalisiert Werke, Autor:innen und Institutionen und erzeugt Publikationssignale, Autorenschafts-/Mitgliedschaftsbeziehungen sowie Zitationsbeobachtungen.
+## 6. Ingestion-Collector und Quellen
 
-### GitHub
+Registrierung und CLI-Namen stehen in [`app/adapters/registry.py`](app/adapters/registry.py). Laufende Sammelbereiche und Parameter stehen in [`app/config/search_terms.yaml`](app/config/search_terms.yaml) sowie [`app/config/sources.yaml`](app/config/sources.yaml). Die Source-ID ist – wo in der Tabelle angegeben – der Collector-/`source_name`-Schlüssel; kein Schlüssel ist eine UUID.
 
-Benötigt `GITHUB_TOKEN`, sonst ist der Adapter nicht konfigurierbar. Sucht Repositories nach Topics und Erstellungszeiträumen, splittet zu große Suchfenster und begrenzt die Abfrage. Bereits bekannte Repositories können für neue Kennzahlen und Aktivitätsdaten erneut gelesen werden. Sterne und weitere Zähler sind Observations; stabile Repository-Merkmale bilden die Hash-Basis. API-Such- und Host-Limits sind im Adapter berücksichtigt. Erfasste Contributor- und Aktivitätsdaten werden minimiert; z. B. werden Commit-Autorennamen und E-Mail-Adressen nicht gespeichert.
+| Source-ID / Collector | Status und Umfang | Begrenzungen, Datenqualität und Einschränkungen |
+|---|---|---|
+| `openalex` | Registrierter API-Collector; Werke mit deutschen Institutionsbezügen nach Themenbegriffen | 100 Datensätze pro Seite, Startfenster 30 Tage, 7-Tage-Lookback, maximal 100 Autor:innen pro Werk werden normalisiert. Ohne API-Key Basic-Paging bis 10.000 Ergebnisse pro Abfrage; der Key-freie Zugriff ist budgetbegrenzt. Die vorhandene README nennt widersprüchliche konkrete Tagesbudgets; vor einer belastbaren Angabe extern prüfen. OpenAlex-Adapter beschreibt die Daten als CC0. Späte Indexierung älterer Publikationen kann durch publication-date-basierte Cursor übersehen werden. |
+| `github` | Registrierter Collector, benötigt `GITHUB_TOKEN`; Topic-Suche, keine Geografie | Sucht in 7-Tage-Fenstern, splittet zu große Fenster, max. 100 Repositories pro Query/Lauf, mindestens 3 Stars, refreshed 25 bekannte Repositories. Search wird mit 2,1 s Abstand gedrosselt; Core-/Search-Rate-Limits werden behandelt, Wartezeiten über fünf Minuten führen zum Abbruch. Activity-Abruf max. 30 Items je Typ. Keine Git-Autorennamen oder E-Mail-Adressen; Discussions werden nicht gesammelt. |
+| `arxiv` | Registrierter API-Collector nach Kategorien; keine Länderfilterung | max. 1 Anfrage alle 3 Sekunden, initial 3 Tage, 1-Tages-Lookback, max. 1.000 Ergebnisse pro Lauf, oldest-first. Metadaten laut Adapter CC0; PDFs werden nicht gespeichert, höchstens als URL referenziert. Autoren haben keine stabilen Quell-IDs. |
+| `huggingface` | Registrierter Hub-Collector für Modelle, Datensätze, Spaces; Tag-/Suchscope konfiguriert | max. 100 Items pro Query, max. 50 Namespace-Lookups, Kartenabruf optional und auf 20.000 Zeichen begrenzt. Öffentliche Endpunkte möglich, `HF_TOKEN` optional. Entwicklungsnetz-Erreichbarkeit war am 2026-11-20 nicht gegeben; nur Mock-Tests. Tag-Formate und Organisationsendpunkte sind vor Live-Betrieb zu bestätigen. |
+| `exist` | Registrierter HTML-/Sitemap-Collector für Erfolgsgeschichten und Programmseiten | Liest Sitemap, verwendet WordPress-API nur für Publikationsdaten, 2 s Host-Abstand, 7-Tage-Lookback. Programmbeziehungen entstehen aus Keywords und sind `UNVERIFIED`. Keine Personenerkennung; strukturierte Förder-/Projektstartdaten bleiben unbekannt. |
+| `university` | Registrierter Sammel-Collector; Quellenstatus siehe Quell-Keys weiter unten | RSS/Atom, validierte Sitemap+JSON-LD, JSON-LD, Page-Metadata oder CSS-Selektoren. Explizite Quellen, kein blindes Crawling. Robots-Prüfung für jeden Abruf. RSS standardmäßig 2 s Abstand; Nicht-RSS mindestens 10 s pro Host. Teaser und HTML-Felder sind begrenzt, Volltexte/Autoren nicht pauschal gespeichert. |
+| `cordis` | Registrierter Collector über den öffentlichen EURIO-SPARQL-Endpunkt; Standard-Land `DE` | Nur read-only `SELECT`; 10 s Mindestabstand, Seite standardmäßig 25/max. 50 Projekte, 2 Requests pro Seite, max. 1.000 Projekte pro Lauf. Erstabruf 90 Tage, danach 60-Tage-Overlap, da kein Änderungsdatum genutzt wird. Nur Beteiligte aus konfigurierten Ländern. CC BY 4.0; Attribution „© European Union, CORDIS“ wird laut Adapter mitgeführt. Organisationstyp bleibt generisch `organization`. Keine Bulk-ZIPs oder Fallback-Endpunkte. |
+| `manual_import` | Registrierter lokaler CSV-/JSON-Import; kein Netzwerkzugriff | Standardverzeichnis `data/manual_imports/`; max. 5 MB und 5.000 Zeilen je Datei. LinkedIn-URLs werden nur syntaktisch validiert und nie geöffnet. Gültige Dateien werden nach erfolgreichem Import verschoben; `processed`-Retention 30 Tage, `failed` 14 Tage. Fehlermeldungen nennen keine Zellinhalte. Enthält dennoch personenbezogene Daten und ist dauerhaft von der LLM-Allowlist ausgeschlossen. |
 
-### arXiv
+### 6.1 Hochschul-Quell-Keys und Status
 
-Liest Metadaten über die offizielle Atom-API nach konfigurierten Kategorien und optionalen Begriffen. Der Adapter drosselt auf höchstens eine Anfrage alle drei Sekunden, sortiert ältere Treffer zuerst und begrenzt die Ergebnisse pro Lauf. Abstracts, Autoren, Kategorien und Identifier werden normalisiert. PDFs werden nicht gespeichert; ihre URL kann als Link-Metadatum vorkommen.
+Alle aktiven und deaktivierten Feed-/Seiten-Keys gehören zum Sammel-Collector `university`:
 
-### Hugging Face
+| Quell-Key | Gruppe | Connector / Art | Konfigurationsstatus |
+|---|---|---|---|
+| `kit` | – | RSS / `press_release` | aktiv (implizites `enabled: true`) |
+| `tu_darmstadt` | – | RSS / `news` | aktiv (implizites `enabled: true`) |
+| `ude_forschung` | `ude` | RSS / `news` | aktiv |
+| `ude_aktuell` | `ude` | RSS / `news` | deaktiviert |
+| `ude_guide` | `ude` | `page_metadata` + validierte Sitemap / `organization_unit` | deaktiviert |
 
-Liest `models`, `datasets` und `spaces` nach konfigurierten Filtern und Suchbegriffen. Model-/Dataset-Cards werden optional und mit Zeichenlimit gelesen. Namespace-Lookups unterscheiden Organisationen und Benutzer; öffentliche Organisationsmitglieder werden nur mit begrenzten, öffentlichen Profildaten berücksichtigt. Downloads, Likes und verwandte Zähler landen als Observations.
+University-Source-Keys prägen die `external_id` der Datensätze und den Cursor-Scope; alle diese Datensätze gehören zur Source `university`. `--source` akzeptiert beim Collector `university` einen Quell-Key oder eine Gruppe; die UDE-Gruppe schlägt fehl, solange deaktivierte Mitglieder explizit enthalten sind. Generische Testvorlagen sind kommentiert und nicht aktiv.
 
-### EXIST
+Für UDE sind Quellenprüfung und einige Laufbefunde in der vorhandenen Projektdokumentation auf den **20.11.2026** datiert; sie wurden bei dieser AGENTS-Überarbeitung nicht erneut extern geprüft:
 
-Liest konfigurierte Programmseiten und Erfolgsgeschichten aus der Sitemap. Der öffentliche WordPress-Endpunkt wird ergänzend nur für Veröffentlichungsdaten genutzt; Story-Inhalte kommen aus HTML. Programmnennungen werden über konfigurierbare Keywords erkannt und als **unverifizierte** Förderbeziehung modelliert. Personen werden nicht aus Interviewtext extrahiert. Der Adapter respektiert `robots.txt` und konfiguriert eine Mindestpause pro Host.
+- `ude_forschung`: Forschungs-RSS, aktiv; höchstens 200 Items und initial 90 Tage, 10 s Abstand, `CONTACT_EMAIL` erforderlich. Laut bestehender Dokumentation wurden nur Feed-Metadaten und ein maximal 500 Zeichen langer Teaser gespeichert, keine Volltexte, Autoren, Enclosures oder Bilder.
+- `ude_aktuell` und `ude_guide`: deaktiviert, bis Nutzungsbedingungen geklärt sind. Die vorhandene Dokumentation nennt eine `GPTBot`-Sperre in `robots.txt`; sie ist kein Grund, den Crawler für KI-Training zu nutzen.
+- `ude_guide`: nur Titel/Meta-Beschreibung; Sitemap wird vor Nutzung geprüft und auf `/guide/` begrenzt. Die historische Prüfung nannte genau 5.000 Sitemap-URLs und sechs `/guide/`-URLs; dies kann unvollständig oder inzwischen veraltet sein.
+- Live geprüft laut bestehender Dokumentation: UDE-Forschungs-RSS mit gedrosseltem Dry-Run und gespeichertem, idempotentem Lauf; GUIDE nur Fixture-/Mock-Test. Die große Feed-Übersichtsseite `feeds.php` nicht ungezielt abrufen.
 
-### Hochschulen
+### 6.2 Forschungsstand der Quellen und ausgeschlossene Quellen
 
-Die Hochschulquellen stehen unter `universities.sources` in `sources.yaml`; konfiguriert sind KIT, TU Darmstadt und die Universität Duisburg-Essen (UDE). `UniversityAdapter` unterstützt die Connectoren `rss`, `sitemap` (validierte Sitemap + JSON-LD pro passender URL), `jsonld` (explizite URLs), `page_metadata` (explizite URLs und/oder validierte Sitemap mit Pfadpräfix; nur Titel und Meta-Beschreibung) und `html` (CSS-Selektoren auf einer Listingseite). Es wird nicht allgemein oder unbeschränkt gecrawlt. Die Connectoren stehen in [`app/adapters/university/connectors.py`](app/adapters/university/connectors.py); optionale quellspezifische Anpassungen liegen in [`app/adapters/university/plugins.py`](app/adapters/university/plugins.py). Der KIT-Plugin ergänzt eine aus der URL extrahierte Pressemitteilungsnummer.
+Die bestehende Projektdokumentation hält folgende Befunde unter Prüfdatum **2026-11-20** fest. Diese Angaben wurden in diesem Auftrag nicht erneut live verifiziert; sie sind Hinweise zur Quellenprüfung, keine Rechtsberatung:
 
-Quellenoptionen in `sources.yaml`: `enabled` (`false` = Collector aus), `group` (Quellen derselben Hochschule teilen eine Universitäts-Entity `university:<group>`), `kind` (`press_release`, `news`, `research_project`, `organization_unit`), `min_interval_seconds`, `require_contact_email`, `initial_days` (Zeitfenster beim ersten Lauf ohne Cursor, Standard 30), `lookback_days`, `max_items`, `properties` (zusätzliche Entity-Eigenschaften), `unit_name`/`unit_aliases` (für `organization_unit`). Regeln im Adapter: Nicht-RSS-Connectoren warten mindestens 10 s pro Host; ohne `CONTACT_EMAIL` bricht eine Quelle mit `require_contact_email` mit einem Konfigurationsfehler ab; eine explizit per `--source` gewählte deaktivierte Quelle ist ein Konfigurationsfehler (Exit-Code 2); jede Sitemap wird vor der Nutzung mit `validate_sitemap()` geprüft (kein DOCTYPE/Entities, `urlset` im Sitemap-Namespace, 1 bis 50.000 URLs, nur Hosts der Sitemap), ein Fehler lässt die Quelle fehlschlagen statt still auf etwas anderes zurückzufallen. Gespeichert werden nur Metadaten, Links, Datum und ein Teaser von höchstens 500 Zeichen; keine Volltexte (`content:encoded`), Bilder/Enclosures oder Autoren.
+- Hinterlegte Source-/Terms-Referenzen (aus Code/README; keine erneute externe Prüfung in diesem Auftrag):
 
-**UDE (erstes ausgearbeitetes Beispiel, Gruppe `ude`):** `ude_forschung` (RSS, aktiv), `ude_aktuell` (RSS, deaktiviert) und `ude_guide` (Gründungszentrum GUIDE, `page_metadata` + Sitemap-Präfix `/guide/`, deaktiviert; als `organization_unit` `unit:ude_guide` mit `MEMBER_OF` zur Universität, ohne Signal, nur die Startseite aktualisiert die Entity). Zwei Quellen sind deaktiviert, weil keine Nutzungsbedingungen für automatisierte Weiterverwendung gefunden wurden und die `robots.txt` `GPTBot` ausdrücklich sperrt; sie erst nach Klärung aktivieren, die Daten nicht für KI-Training verwenden. Die UDE-Sitemap listet genau 5.000 URLs (vermutlich gekappt) und gilt nicht als vollständiger Index. Tests: [`tests/adapters/test_university_ude.py`](tests/adapters/test_university_ude.py) mit Fixtures `ude_forschung.rss`, `ude_sitemap.xml`, `ude_guide.html`.
+  | Collector/Quelle | Hinterlegte Referenz |
+  |---|---|
+  | OpenAlex | API `https://api.openalex.org`; Rate-Limit-/API-Information `https://help.openalex.org/how-to-use-the-api/rate-limits-and-authentication` |
+  | GitHub | API `https://api.github.com`; API-Terms `https://docs.github.com/en/site-policy/github-terms/github-terms-of-service#h-api-terms` |
+  | arXiv | API `https://export.arxiv.org/api`; Terms `https://info.arxiv.org/help/api/tou.html` |
+  | Hugging Face | Hub `https://huggingface.co`; Terms `https://huggingface.co/terms-of-service` |
+  | EXIST | `https://exist.de`; hinterlegte Rechts-/Datenschutzreferenz `https://exist.de/datenschutz/` |
+  | KIT | RSS `https://kit.edu/pi.rss`; SourceSpec hinterlegt keine Terms-URL |
+  | TU Darmstadt | RSS `https://www.tu-darmstadt.de/universitaet/aktuelles_meldungen/neues_aus_der_tu_rss.de.rss`; SourceSpec hinterlegt keine Terms-URL |
+  | UDE | Forschungs-RSS `https://www.uni-due.de/rss/forschung.rss`, allgemeiner RSS `https://www.uni-due.de/rss/aktuell.rss`, GUIDE `https://www.uni-due.de/guide/`; laut vorhandenem Recherchebefund keine Bedingungen zur automatisierten Wiederverwendung gefunden |
+  | CORDIS | SPARQL `https://cordis.europa.eu/datalab/sparql-api`; Rechts-/Lizenzreferenz `https://cordis.europa.eu/about/legal`, SPARQL-Hilfe `https://cordis.europa.eu/about/sparql` |
+  | Manual Import | lokale Dateien; kein externer Abruf und keine Source-Terms-URL |
 
-### CORDIS
+- CORDIS/EURIO: laut Dokumentation am 2026-11-20 geprüft (Robots erlaubt den verwendeten Endpoint, JSON-Antwort, Offset-Paging, keine Authentifizierung; etwa 24.000 Projekte mit deutscher Beteiligung). Der Endpoint dokumentiert keine Limits; aktuelle Konfiguration drosselt vorsorglich.
+- `foerderdatenbank.de`: nicht implementiert; laut Recherche sperrt `robots.txt` die Suchpfade und setzt `Crawl-delay: 30`.
+- Fraunhofer-RSS: kommerzielle Nutzung laut damaligem Impressum nur mit schriftlicher Genehmigung. Max-Planck-Gesellschaft: alle Rechte vorbehalten. DLR: Bedingungen auf Presse/Rundfunk gerichtet; Bilder CC BY-NC-ND.
+- Leibniz-RSS mischt nach damaliger Prüfung Institutsmeldungen und Magazin; Hamburg-Atomfeed: keine Bedingungen gefunden. STARTPLATZ: Vervielfältigung laut Impressum nur mit schriftlicher Zustimmung.
+- SPRIND, UnternehmerTUM, TUM, Max Planck Innovation, Deutscher Gründerpreis und Gründungswoche: trotz technisch offener Robots keine Bedingungen für automatisierte Wiederverwendung gefunden; daher nicht als Collector implementiert.
+- GEPRIS: `robots.txt` sperrt laut Befund alle Pfade. HTGF: damalige Content-Signale `ai-input=no`, `ai-train=no`. Bundesanzeiger: automatisierter Abruf laut Befund untersagt.
+- Kein Event-Collector ist implementiert. Quellen mit ungeklärten Rechten/Terms nicht eigenmächtig aktivieren oder ergänzen.
 
-`CordisAdapter` ([`app/adapters/cordis.py`](app/adapters/cordis.py), Konfiguration `cordis:` in `sources.yaml`) liest ausschließlich per `GET` und `SELECT` den öffentlichen EURIO-SPARQL-Endpoint `https://cordis.europa.eu/datalab/sparql-api` (am 2026-11-20 live geprüft, Antwort `application/sparql-results+json`). Keine Bulk-ZIPs (`robots.txt` sperrt `/data/`), keine Data-Extraction-API, keine föderierten Abfragen, kein Ersatzendpoint: Nicht erreichbarer Endpoint, `robots.txt`-Sperre oder Nicht-SPARQL-Antwort lassen den Lauf fehlschlagen. Pro Seite zwei Anfragen (Projektliste mit `LIMIT/OFFSET`, dann Details und Teilnehmer per `VALUES`), mindestens 10 s Abstand, Seitengröße höchstens 50. Gefiltert wird auf Projekte mit Teilnehmern in `countries`; nur diese Teilnehmer werden gespeichert (Ländercodes und Projekt-URIs werden vor dem Einbau in die Abfrage validiert). Cursor: Startdatum plus `skip` (Wiederaufnahme innerhalb eines Startdatums, wenn `max_projects_per_run` erreicht wurde), danach `lookback_days` Überlappung, weil CORDIS kein Änderungsdatum liefert.
+Bei Änderungen an Quellen: Basis- und Terms-URL, Prüfdatum, Nutzungsbedingungen, Attribution, Robots, Raten und Datenminimierung prüfen; Status im Quellkonfigurationsabschnitt aktuell halten. Die bloße öffentliche Abrufbarkeit ist keine Wiederverwendungserlaubnis. Für manuell bereitgestellte Daten gelten dieselben Datenschutz- und Nutzungsregeln.
 
-Modell: Projekt → `RESEARCH_PROJECT` (`project:<Projektnummer>`, Signal `NEW_FUNDING_PROJECT` am Startdatum, Abstract höchstens 1000 Zeichen); Teilnehmer → `ORGANIZATION` mit `properties.organization_type` (JSONB, persistent), Ländern und Website; `PARTICIPATED_IN` mit `SOURCE_ASSERTED` und Rollen. Jeder Rohdatensatz enthält Lizenz (CC BY 4.0, Beschluss 2011/833/EU), Attribution „© European Union, CORDIS“, Projekt-URL und Endpoint. **Einschränkung Organisationstypen:** Das Datenmodell kennt nur `UNIVERSITY` und `ORGANIZATION`; CORDIS liefert keinen Aktivitätstyp (an einer Stichprobe geprüft), daher ist `organization_type` der generische Wert `organization`. Typen wie `research_institute`/`research_organization` brauchen eine Änderung an `app/domain.py` und der Datenbank und sind nicht Teil von Phase 1. Nicht übernommen, weil nicht belastbar verifiziert: Förderprogramm (Grant-Ressource ohne Label), Akronym (eigene Ressource), Gesamtkosten, Zahlungsbeträge. Tests: [`tests/adapters/test_cordis.py`](tests/adapters/test_cordis.py) mit den synthetischen Fixtures `cordis_projects.json` und `cordis_details.json` im EURIO-Antwortformat.
+## 7. Candidate Discovery – freigegebenes Entwicklungsziel, noch nicht implementiert
 
-### Manueller Import
+Candidate Discovery soll aus bestehenden Rohdatensätzen und frühen Signalen mögliche Kandidaten bilden, ohne auf einen vollständig implementierten Knowledge Graph zu warten. Mögliche Eingaben sind:
 
-`ManualImportAdapter` ([`app/adapters/manual_import.py`](app/adapters/manual_import.py), Konfiguration `manual_import:`) liest lokale `.csv`/`.json`-Dateien aus `MANUAL_IMPORT_DIR` (Standard `data/manual_imports/`, samt Unterordnern in `.gitignore`). Er nutzt **kein Netzwerk**, öffnet LinkedIn-URLs nie (nur Syntaxprüfung `linkedin.com/in/<profil>`) und übermittelt nichts an Dritte. Felder: `linkedin_url`, `name` (Pflicht), `position`, `company`, `project_affiliation` (Freitext), `verification_status` (`unverified` Standard oder `manually_verified`, dann sind `verification_method` und `checked_at` Pflicht), `notes`, `row_id`; unbekannte Spalten verwerfen die Datei. Modell: `PERSON` (`person:<Hash der normalisierten URL>`), `ORGANIZATION` (`org:<normalisierter Name>`, nur innerhalb dieser Quelle) und `WORKS_AT` mit dem angegebenen Status; keine Signals/Observations; keine automatische Zuordnung zu Entities anderer Quellen.
+`source_records`, `entities`, `entity_aliases`, `entity_source_records`, `relationships`, `signals` und `observations`.
 
-Dateien: Eine Datei mit irgendeiner ungültigen Zeile wird komplett abgelehnt (Rohsatz `rejected_file` mit Hash und Feldnamen, Lauf `partial`, Datei nach `failed/` mit `.problems.txt`). Gültige Dateien werden erst nach vollständig gespeicherten Zeilen nach `processed/` verschoben (neutraler Name aus UTC-Zeit und Inhalts-Hash); bei Satzfehler, `--limit` oder `--dry-run` bleiben sie liegen. Aufbewahrung: `processed_retention_days` (30) und `failed_retention_days` (14), danach werden die Dateien gelöscht. Logs und Fehlermeldungen enthalten nur Anzahlen, Zeilennummern und Feldnamen, keine Namen, Firmen, URLs oder Notizen; Tests verwenden ausschließlich synthetische Daten ([`tests/adapters/test_manual_import.py`](tests/adapters/test_manual_import.py)). Importierte Zeilen sind personenbezogene Daten in der Datenbank (Löschverfahren: README).
+Potenzielle Hinweise können Publikationen und Forschungsergebnisse, Universitätszugehörigkeit, Repositories und Entwickleraktivität, EXIST-Gründungsvorhaben, Forschungsprojekte mit Verwertungspotenzial und Technologietransfer umfassen. Ein einzelner Hinweis reicht nicht automatisch für einen Kandidaten. Mehrere zusammenhängende und möglichst unabhängige Quellen sind aussagekräftiger.
 
-## 5. Konfiguration und Einstellungen
+Verbindliche Interpretationsregeln:
 
-- [`app/config/search_terms.yaml`](app/config/search_terms.yaml): Suchbegriffe, Topics, Kategorien, Zeiträume, Caps und adapterbezogene Abrufgrenzen für API-Collector.
-- [`app/config/sources.yaml`](app/config/sources.yaml): HTML-/RSS-Quellen, Hochschulen, URLs, Programme und Extraktionsoptionen.
-- [`app/config/settings.py`](app/config/settings.py): Pydantic-Settings, YAML-Lader und Umgebungsvariablen. Einstellungen werden pro Prozess gecacht.
-- `.env.example`: Variablennamen und lokale Konfigurationsvorlage. Zugangsdaten gehören ausschließlich in eine lokale, nicht versionierte `.env` oder sichere Deployment-Secrets; niemals in Dokumentation, Tests, Logs oder Commits kopieren.
+- Ein Forschungsprojekt ist nicht automatisch ein Unternehmen.
+- Ein Repository ist nicht automatisch ein Produkt oder Startup.
+- Eine Universität ist nicht automatisch ein Gründerteam.
+- Textnennung oder technischer Erfolg ist kein Beweis für Gründung oder Finanzierung.
+- Unsichere Identitätszuordnungen sichtbar unsicher halten; keine Sicherheit vortäuschen.
+- Candidate Discovery darf globale Entities nicht unkontrolliert zusammenführen oder ändern.
+- Quellenübergreifende **Kandidatenzuordnung** ist ein vorläufiger Analysebezug. Sie ist nicht gleichbedeutend mit dauerhafter globaler Entity Resolution oder dem Merge von Entity-IDs.
+- Kandidaten müssen auf Quell- und Entity-Belege zurückverweisen; originale Quelldatensätze bleiben unverändert.
 
-Wichtige Umgebungsvariablen: `DATABASE_URL`, optional `DATABASE_URL_DIRECT`, `TEST_DATABASE_URL`, `GITHUB_TOKEN`, `OPENALEX_API_KEY`, `HF_TOKEN`, `CONTACT_EMAIL`, `MANUAL_IMPORT_DIR`, `HTTP_TIMEOUT_SECONDS`, `HTTP_MAX_RETRIES`, `LOG_LEVEL`, `LOG_FORMAT` und `OBSERVATION_BUCKET`. `DATABASE_URL` wird für normale DB-Verbindungen genutzt; Migrationen verwenden bevorzugt `DATABASE_URL_DIRECT`. Der PostgreSQL-Treiber wird bei Bedarf auf psycopg 3 normalisiert.
+Vorgesehene Ergebnisartefakte sind `candidate_discovery.json`, `candidate_validation.json`, `candidate_overview.csv` und `candidate_research_report.md`. Diese Dateien und ihre Erzeugung sind derzeit nicht vorhanden.
 
-Bevor du Suchbereiche oder Quellen änderst, prüfe die Nutzungsbedingungen und Abrufregeln der jeweiligen Quelle. Halte Begrenzungen, Host-Abstände und `robots.txt`-Vorgaben ein; nimm keine Zugangsdaten in YAML auf.
+Als künftige Discovery-Ausgabe fachlich vorsehen: stabile Candidate-ID, Bezeichnung, Kandidatentyp, Kurzbeschreibung, referenzierte Entity- und Source-Record-IDs, erkannte Signals, Quellenbelege, Begründung, Zeitbezug und Unsicherheiten. Wiederholte Analysen sollen Kandidaten anhand stabiler, nicht von Anzeigenamen oder Reihenfolge abhängiger IDs wiedererkennen und aktualisieren; Änderungen der Evidenz/Zuordnung nachvollziehbar halten, nicht durch wechselnde Namen Duplikate anlegen. Der konkrete Persistenzmechanismus ist noch zu entwerfen. Keine Candidate-Tabellen oder Spalten ohne explizite Schemaentscheidung und Migration hinzufügen.
 
-## 6. Lokales Entwickeln und Ausführen
+## 8. Candidate Validation und Funding Verification – freigegebenes Entwicklungsziel
 
-Voraussetzung ist Python 3.12 oder neuer.
+Candidate Validation muss unabhängig von der ursprünglichen Discovery aktuelle, öffentlich zugängliche Informationen recherchieren. Die bestehende Ingestion-Datenbank allein genügt nicht als Validierung. Die beiden Fragen aus Abschnitt [Produktbegriffe](#3-produktbegriffe-und-finanzierungsregeln) sind getrennt zu beantworten: eigenständiges Unternehmen vorhanden? Externe Runde öffentlich belegt?
+
+Künftige Ergebnisse sollen mindestens festhalten:
+
+- Candidate-ID und geprüfte Unternehmensidentität;
+- Company Status und Funding Status als getrennte Werte;
+- Unternehmenswebsite und offizielle Quellen;
+- Gründungsdatum, nur sofern belegt;
+- mögliche Verbindung zur ursprünglichen Forschung oder zum Technologieteam;
+- bekannte Investoren, Finanzierungsereignisse, Instrumente, Finanzierungsart und Datum; Betrag nur, wenn öffentlich belegt;
+- Fördermittel separat von Equity-Finanzierungen;
+- Recherchequellen mit URL, Herausgeber, Veröffentlichungsdatum soweit vorhanden und tatsächlichem Ereignisdatum, sowie Abruf-/Prüfdatum;
+- Evidenzqualität, offene Fragen und Unsicherheiten.
+
+Bevorzuge offizielle Unternehmens- und Investorenseiten sowie zuverlässige Nachrichten- und Registerquellen. Verwende mehrere unabhängige Belege, wenn eine belastbare Aussage erforderlich ist. Erfinde keine Fakten. Fehlende Suchtreffer beweisen nicht das Fehlen eines Unternehmens oder einer Finanzierung. Beachte Nutzungsbedingungen, Urheberrecht, Robots-Regeln und Datenschutz der Recherchequellen.
+
+**Kein Validierungsprozess ist derzeit implementiert.** Es gibt keine Finanzierungsstatus-Enums, keine `company_status`-/`funding_status`-Spalten, keine Validierungsadapter, keine CLI-Befehle, keine Kandidaten-Berichte und keinen Finanzierungsrunden-Datensatz. Die geplanten Company-/Funding-Statuswerte in Abschnitt 3 dürfen nicht als aktuelle Code-Enums beschrieben oder verwendet werden, solange sie nicht ausdrücklich implementiert und migriert sind.
+
+## 9. Knowledge Graph
+
+Die Tabellen `entities`, `entity_aliases`, `entity_source_records`, `relationships`, `signals` und `observations` liefern eine relationale Graph-Grundlage mit quellenbezogener Identität und nachvollziehbaren Kanten. Das ist kein vollständiger Graph-MVP: Es gibt keine Candidate Resolution, keinen globalen Cross-Source-Merge, keinen dedizierten Graph-Store, keine Graph-Abfragen/Visualisierung und keine UI.
+
+Candidate Discovery und Candidate Validation sollen konzeptionell ohne Vollständigkeit des Knowledge Graphen nutzbar sein. Sie können vorhandene Relationen und Provenienz lesen; keine globale Identität durch heuristische Namensübereinstimmung herstellen. Eine spätere dauerhafte Entity Resolution benötigt eigene explizite Regeln, Evidenz, Unsicherheitsbehandlung und Schema-/Migrationsfreigabe.
+
+## 10. LLM- und KI-Funktionen
+
+LLM-Analyse ist von deterministischer Early-Signal-Discovery sowie externer Candidate Validation getrennt:
+
+- `app/llm/` enthält ein provider-neutrales Interface, striktes Pydantic-Ausgabeschema, Evidenzvalidierung, Allowlist, Runner und einen lokalen Fake Provider.
+- [`app/config/llm_allowlist.yaml`](app/config/llm_allowlist.yaml) enthält `default_policy: deny` und eine leere Quellen-Allowlist. Der Allowlist-Loader verlangt explizite Field-Auswahl, Zweck, Prüfdatum, Reviewer, Terms-Referenz und Review-Zusammenfassung.
+- Der aktuelle Runner ruft ausschließlich den lokalen `FakeLLMProvider` ohne Netzwerk-I/O auf und beschränkt ihn auf synthetische Quellen (`synthetic_*`). Reale Quell-Datensätze werden blockiert; `manual_import` ist ausdrücklich und dauerhaft blockiert.
+- `ventureradar llm preview` prüft Allowlist-Berechtigung read-only; `ventureradar llm run` kann ausschließlich synthetische, freigegebene Testdaten mit Fake Provider verarbeiten und Ergebnisse persistieren. Es existiert keine echte Provider-Integration. Nicht durch Allowlist-Änderung oder Umgebungsvariable umgehen.
+- Jede Evidenz muss auf ein tatsächlich kuratiertes Feld verweisen und wörtlich darin vorkommen. Originaldaten werden nicht geändert. Die Analyse behauptet weder Startup-Status noch Funding, Entity Resolution oder Score.
+- Migration `0002` ergänzt `llm_analyses`: Analyse-Hash und Source Record, Analyzer-/Prompt-/Schema-/Provider-/Model-Version, validiertes JSONB-Ergebnis oder sichere Fehlerkategorie, Usage-Werte und Zeitstempel. Erfolgreiche Identitäten sind idempotent; Fehlschläge speichern keine Ergebnis-Payload.
+
+Keine externen Quelldaten an nicht freigegebene LLM-Anbieter senden. Eine Erlaubnis zur Datensammlung ist keine Erlaubnis zur LLM-Weitergabe. Keine echten Provider oder externen API-Aufrufe aktivieren, bevor Datenschutz, Urheberrecht, Anbieterbedingungen, Aufbewahrung und jede Source-/Field-Freigabe ausdrücklich geklärt sind. Keine vollständigen Artikel, unnötigen personenbezogenen Rohdaten oder vollständigen Prompts übertragen oder persistieren. Herkunft und Evidenz jeder KI-Ableitung erhalten. Weitere Implementierungsdetails stehen in [`docs/phase2b4-llm-allowlist.md`](docs/phase2b4-llm-allowlist.md).
+
+## 11. Deterministische Early-Signal Discovery
+
+Discovery-Code steht in [`app/discovery/`](app/discovery/), Detailregeln und Ausschlüsse in [`docs/phase2-signal-contract.md`](docs/phase2-signal-contract.md). Tests liegen in `tests/discovery/`. Die Funktion arbeitet über bereits gespeicherte Signals und Observations; sie ruft keine externen Quellen ab.
 
 ```powershell
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev]"
+python -m app.cli discovery preview --limit 100
+python -m app.cli discovery preview --source github --limit 100
+python -m app.cli discovery run --source university --limit 100
+```
+
+- `preview` ist read-only: Quellsignale/Observations klassifizieren und Text-Treffer anzeigen.
+- `run` schreibt/reconciliert nur abgeleitete Text-Erwähnungs-Signals. Bestehende Quellsignale werden nicht dupliziert.
+- Quellsignale wie `NEW_PUBLICATION`, `NEW_REPOSITORY`, `NEW_RESEARCH_PROJECT`, `NEW_FUNDING_PROJECT`, `NEW_MODEL`, `NEW_DATASET`, `NEW_SPACE`, `NEW_CONTRIBUTOR` und `NEW_PRESS_RELEASE` erhalten eine Kategorie und Interpretation; z. B. ist ein Repository kein Startup und ein öffentlich gefördertes Projekt keine Equity-Runde.
+- Einzelne Observations werden je Source und Kennzahl als schwache Forschungs-, Technologie-, Entwickler- oder Organisationsaktivität klassifiziert. Ein einzelner Wert ist kein Trend, Wachstum oder Schwellenereignis.
+- Versionierte deterministische Textregeln erzeugen `FOUNDING_ACTIVITY_MENTION`, `SPINOUT_MENTION` und `COMMERCIALIZATION_MENTION` nur in definierten Source-/Record-Kontexten. Negierte Erwähnungen werden teilweise ausgeschlossen. Es bleiben Texttreffer, keine bestätigten Gründungs-, Spin-out-, Produkt-, Verkaufs- oder Startup-Fakten.
+- Kein Adapter emittiert derzeit `NEW_PITCH_PRESENTATION`.
+- Die Ableitung speichert Regel-ID/-Version, Feld und Trefferbegriff sowie Verweise auf Source-Signal und Source-Record. Wiederholtes Ausführen ist idempotent und reconciliert veraltete, abgeleitete Treffer nur im bearbeiteten Scope.
+- `event_date` wird nicht aus einem Publikationsdatum erfunden.
+
+Nicht implementiert: Vergleich von Observations über Zeit als Trendregel, Kandidatenbildung, Cross-Source-Entity Resolution, Funding Verification, Startup-Klassifikation und Ranking.
+
+## 12. Konfiguration, Datenbank und Betriebsregeln
+
+Einstellungen in [`app/config/settings.py`](app/config/settings.py) kommen aus der Umgebung bzw. `.env`; YAML-Quellenkonfigurationen sind im Paket. Wichtige Namen sind `DATABASE_URL`, `DATABASE_URL_DIRECT`, `TEST_DATABASE_URL`, `GITHUB_TOKEN`, `OPENALEX_API_KEY`, `HF_TOKEN`, `CONTACT_EMAIL`, `MANUAL_IMPORT_DIR`, `HTTP_TIMEOUT_SECONDS`, `HTTP_MAX_RETRIES`, `LOG_LEVEL`, `LOG_FORMAT` und `OBSERVATION_BUCKET`. `.env` ist git-ignored. Nie Secret-Werte in Ausgaben, Doku oder Commits kopieren; nur prüfen, ob eine benötigte Variable gesetzt ist.
+
+### Neon-Ziel und tatsächliche Codeverdrahtung
+
+**Betriebsfreigabe:** Für freigegebene Neon-Arbeiten ist `DATABASE_URL_DIRECT` das autorisierte Ziel. `DATABASE_URL` nicht ungeprüft als produktives Neon-Ziel annehmen. Keine Connection Strings, Passwörter oder Zugangsdaten ausgeben. Vor jedem Schreibzugriff das Ziel eindeutig und ohne Offenlegung des Werts prüfen.
+
+**Aktuelle technische Verdrahtung (nicht eigenmächtig ändern):**
+
+- `make_engine()` ohne `direct=True` verwendet `DATABASE_URL`.
+- Alembic [`app/database/migrations/env.py`](app/database/migrations/env.py) ruft `make_engine(direct=True)` auf; `make_engine` fällt jedoch technisch auf `DATABASE_URL` zurück, wenn `DATABASE_URL_DIRECT` fehlt.
+- Collector-, Discovery-, LLM-, History- und Status-CLI nutzen `make_engine()` ohne `direct=True`, also `DATABASE_URL`.
+- Für freigegebene Collector-Unterprozesse muss daher der effektive Wert von `DATABASE_URL` ausdrücklich auf das autorisierte Direct-Ziel geroutet werden. Nur `DATABASE_URL_DIRECT` zu setzen ändert die Collector-Verbindung nicht.
+
+Diese Hinweise beschreiben einen Betriebsunterschied, keine Anweisung, die Verbindungskonfiguration, CLI oder Migrationen im Rahmen einer Dokumentationsaufgabe umzubauen. Keine Live-Verbindung aufbauen oder einen Schreibbefehl ausführen, sofern dies nicht ausdrücklich freigegeben ist.
+
+`database init` führt `alembic upgrade head` aus und kann alle enthaltenen Revisionen bis `head` anwenden; niemals ungeprüft gegen Neon starten. Migration `0002` ergänzt LLM-Analysen und ist für die fachlichen Abläufe Ingestion und Candidate Discovery nicht erforderlich. Da `database init` aber auf `head` aktualisiert, würde es sie dennoch anwenden.
+
+Der lokale PostgreSQL-Dienst aus [`docker-compose.yml`](docker-compose.yml) ist für entbehrliche Entwicklung/Testdaten vorgesehen (PostgreSQL 16, Port `5433`, DB-Name `ventureradar_test`). Verwende keinen geteilten oder produktiven DB-Endpoint als Testziel.
+
+## 13. Entwicklung, CLI und Tests
+
+Voraussetzung ist Python 3.12+. README-Setup hält die virtuelle Umgebung möglichst außerhalb von OneDrive:
+
+```powershell
+python -m venv C:\Users\<you>\venvs\startup-finder
+C:\Users\<you>\venvs\startup-finder\Scripts\python.exe -m pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
-`.env` lokal mit den nötigen Verbindungsdaten konfigurieren. Eine lokale PostgreSQL-Instanz für Tests kann über Docker Compose gestartet werden:
+`.env` ausschließlich lokal befüllen. Für eine lokale Datenbank: `docker compose up -d`. CLI-Beispiele:
 
 ```powershell
-docker compose up -d postgres
+python -m app.cli database status
+python -m app.cli collect openalex --limit 10 --dry-run
+python -m app.cli collect university --source ude_forschung --limit 5 --dry-run
+python -m app.cli collect cordis --limit 5 --dry-run
+python -m app.cli collect manual_import --dry-run
+python -m app.cli ingestion history --limit 10 --source github
+python -m app.cli discovery preview --source university --limit 100
+python -m app.cli llm preview --limit 100
 ```
 
-Der Compose-Dienst veröffentlicht PostgreSQL auf Port `5433`; die Testdatenbank heißt `ventureradar_test`. Stelle sicher, dass `TEST_DATABASE_URL` auf genau diese dedizierte Testdatenbank zeigt. Teste niemals gegen eine produktive oder anderweitig wertvolle Datenbank.
+Die installierte CLI heißt `ventureradar`; `python -m app.cli ...` ist die direkte Alternative. `--dry-run` benötigt für Collector keinen Datenbank-Schreibzugriff, aber Discovery- und LLM-Preview lesen jeweils aus der Datenbank. `--source` bei `collect` ist nur für `university` erlaubt. Collector-Exit-Codes: `0` erfolgreich, `10` partiell, `1` fehlgeschlagen, `2` Konfiguration, `3` Datenbank. stdout enthält JSON, Logs schreiben nach stderr.
 
-CLI-Beispiele:
+Für Tests ohne Datenbank und ohne externe Live-Aufrufe ist `python -m pytest -m "not db and not live"` der sichere Unit-Test-Einstieg.
 
-```powershell
-ventureradar database init
-ventureradar database status
-ventureradar collect openalex --limit 10 --dry-run
-ventureradar collect all --limit 10
-ventureradar collect university --source ude_forschung --limit 5 --dry-run
-ventureradar ingestion history --limit 20 --source github
-```
+Tests sind mit pytest konfiguriert (`tests/`, Standardmarker `not live` in [`pyproject.toml`](pyproject.toml)). Adapter- und HTTP-Tests verwenden überwiegend HTTP-Mocks/Fixtures. Discovery-Regeln, CLI-Verhalten, SQL-Statements und LLM-Allowlist/Schema/Runner sind in eigenen Tests abgedeckt. Candidate Discovery und Candidate Validation besitzen keine Tests, da sie nicht implementiert sind.
 
-`collect --source` gilt nur für `university` (Quellschlüssel oder Gruppe, z. B. `ude_forschung`, `ude`); für andere Collector ist es ein Konfigurationsfehler (Exit-Code 2).
+**Destruktive DB-Testfixture:** [`tests/conftest.py`](tests/conftest.py) löscht das `public`-Schema der unter `TEST_DATABASE_URL` konfigurierten Datenbank, erstellt es neu und migriert bis `head`. DB-markierte Tests ausschließlich auf einer eigens dafür vorgesehenen, entbehrlichen Testdatenbank ausführen. Niemals DB-Tests gegen Neon, Produktiv- oder gemeinsam genutzte Datenbanken ausführen. In diesem Dokumentationsauftrag keine Collector, Migrationen oder DB-Tests starten.
 
-Alternativ zur installierten CLI kann `python -m app.cli ...` verwendet werden. `python scripts/initialize_database.py` führt `database init` aus; `python scripts/run_collector.py` delegiert an die CLI. Collector-Läufe geben JSON-Ergebnisse aus. Exit-Codes: `0` erfolgreich, `10` partiell, `1` fehlgeschlagen, `2` Konfiguration, `3` Datenbank.
-
-`database init` wendet Alembic-Migrationen bis `head` an. `database status` prüft Verbindung, Migrationstand und Tabellenzähler. Die CLI erstellt das Schema nicht neben Alembic direkt aus SQLAlchemy-Metadaten.
-
-## 7. Tests und wichtige Sicherheitsaspekte
-
-```powershell
-python -m pytest
-python -m pytest tests\adapters\test_github.py tests\ingestion\test_pipeline.py
-python -m pytest -m db
-```
-
-Die Pytest-Konfiguration in [`pyproject.toml`](pyproject.toml) schließt standardmäßig mit `-m 'not live'` Tests aus, die reale externe Dienste aufrufen. Adapter- und HTTP-Tests verwenden HTTP-Mocks/Fixtures; DB- und Migrationstests sind mit `db` markiert und überspringen sich, wenn die konfigurierte Testdatenbank nicht erreichbar ist.
-
-**Achtung:** Die DB-Fixture in [`tests/conftest.py`](tests/conftest.py) löscht vor den DB-Tests das `public`-Schema der unter `TEST_DATABASE_URL` erreichbaren Datenbank und erstellt es neu. Führe DB-Tests daher ausschließlich gegen eine entbehrliche, dedizierte Testdatenbank aus.
-
-Bei Änderungen sollen passende Parser-, Adapter-, Pipeline- und/oder Migrationstests ergänzt oder angepasst werden. Nutze Fixture-Dateien in `tests/fixtures/` für repräsentative API-, XML- und HTML-Antworten; verwende keine echten Tokens oder produktiven Daten in Fixtures.
-
-## 8. Muster zum Erweitern
-
-### Neuen API-/HTML-Collector ergänzen
-
-1. Adapter unter `app/adapters/` von `BaseAdapter` ableiten; stabilen Collector-Namen und `SourceSpec` festlegen.
-2. `fetch()` als Iterator von `RawRecord` implementieren. Externe IDs müssen stabil und innerhalb der Quelle eindeutig sein; Pagination, Grenzen, Retries, Rate Limits, Terms und gegebenenfalls `robots.txt` beachten.
-3. `normalize()` ausschließlich aus verfügbaren Quelldaten ein `NormalizedBundle` bauen. Unbekannte Werte nicht erfinden; optionalen Feldern `None` lassen.
-4. Nur belegte Beziehungen erstellen; schwache/inferierte Hinweise als `UNVERIFIED` markieren.
-5. Adapter in `app/adapters/registry.py` eintragen und passende Konfiguration in den bestehenden YAML-Dateien ergänzen.
-6. HTTP- und Adaptertests mit Mock-Transporten/Fixtures schreiben; Idempotenz, Fehler, Pagination, Dry-Run und Cursorverhalten testen.
-
-Für eine zusätzliche Universität zuerst einen passenden vorhandenen Connector und die `universities.sources`-Konfiguration verwenden (Vorlage: die UDE-Einträge). Robots.txt und Nutzungsbedingungen prüfen und die Quelle mit `enabled: false` belassen, solange etwas unklar ist. Einen Plugin-Hook nur hinzufügen, wenn die generischen Connectoren nicht ausreichen.
-
-### Datenbankschema ändern
+Migrationsregeln:
 
 1. SQLAlchemy-Modelle in `app/database/models.py` ändern.
-2. Eine neue Alembic-Revision erzeugen und prüfen, dass Upgrade und Downgrade korrekt sind; bestehende Migrationen nicht nachträglich umschreiben, sobald sie als geteilt gelten.
-3. Migrationstests ausführen und sicherstellen, dass `compare_metadata` keine unbeabsichtigte Differenz findet.
+2. Eine neue Alembic-Migration erstellen; freigegebene/benutzte Migrationen nicht rückwirkend editieren.
+3. Upgrade/Downgrade und Migration-/Metadata-Tests gezielt auf einer sicheren Test-DB prüfen.
+4. Keine Candidate-/Funding-Tabellen oder Statusspalten ohne ausdrückliche Fach- und Schemafreigabe ergänzen.
 
-Bei Persistenzänderungen auch Constraints, Quell-Provenienz, Upsert-Idempotenz und bestehende Datensätze berücksichtigen. Schreiblogik gehört in `IngestionRepository`, nicht in einzelne Adapter.
+## 14. Verbindliche Agentenregeln
 
-## 9. Verzeichnisübersicht
+1. Vor Änderungen relevante Implementierungen, Tests, YAML-Konfigurationen und Migrationen lesen. Der Code bleibt die Quelle der Wahrheit; diese Datei bei erkannter Abweichung korrigieren.
+2. Implementierte Funktion, teilweise getestete Funktion, freigegebenes Entwicklungsziel und nicht implementierte/ausgeschlossene Funktion sichtbar unterscheiden. Geplantes nie als vorhanden bezeichnen.
+3. Bestehende Typen, Collector, Normalisierer, HTTP-Client und `IngestionRepository` wiederverwenden. Keine zweite Persistenz-/Datenflussarchitektur ohne klaren Bedarf einführen.
+4. Quell-IDs, externe IDs, source keys, Cursor, History und Provenienz nicht stillschweigend ändern oder entfernen.
+5. Keine automatische Cross-Source-Entity-Merge-Logik ohne ausdrückliche Freigabe. Kandidatenzuordnung ist kein globaler Entity-Merge.
+6. Keine Unternehmens- oder Finanzierungsaussage ohne konkrete Evidenz/Quellenbeleg. Förderung strikt von Equity-Runden trennen; Fehlende Treffer nicht als bewiesenes Nichtvorhandensein darstellen.
+7. Unsicherheit, nicht verifizierte Beziehungen und fehlende Werte erhalten; nichts erfinden oder stillschweigend als erfolgreich interpretieren.
+8. Öffentliche Zugänglichkeit nicht mit Nutzungs-/LLM-Recht gleichsetzen. Quellenbedingungen, Attribution, Robots, Raten, Datenminimierung und angegebene Live-Prüfgrenzen beachten.
+9. Keine Live-Collector, externen Validierungsrecherchen, LLM-Provider-Aufrufe oder Produktions-/Neon-Schreibzugriffe ohne ausdrückliche Freigabe.
+10. Keine destruktiven Datenbanktests gegen geteilte oder produktive Datenbanken. DB-Tests nur mit sicher isolierter, wegwerfbarer `TEST_DATABASE_URL`.
+11. Keine Secrets, Connection Strings, persönlichen Daten, manuell importierten Rohdaten oder vollständigen personenbezogenen Inhalte in Logs, Dokumentation, Tests oder Commits.
+12. Schemaänderungen nur mit neuer Alembic-Revision. Keine Candidate- oder Funding-Persistenz ohne explizite Migration und Freigabe.
+13. Änderungen eng am Auftrag halten, direkt betroffene Tests/Dokumentation aktualisieren und den kleinsten sicheren Testumfang ausführen. Bei reiner Dokumentation keine Laufzeittests nötig.
+
+## 15. Verzeichnisübersicht und Referenzdokumente
 
 | Pfad | Inhalt |
-| --- | --- |
-| `app/cli.py` | Typer-CLI, Collector-Ausführung, DB-Status und Run-Historie |
-| `app/adapters/` | Quellenadapter, Registrierung und Hochschul-Connectoren |
-| `app/config/` | Settings sowie YAML-Quellen- und Suchkonfiguration |
-| `app/database/` | Verbindung, SQLAlchemy-Modelle, Repository und Alembic-Migrationen |
-| `app/http/` | Gemeinsamer höflicher HTTP-Client mit Retry-/Robots-Logik |
-| `app/ingestion/` | Pydantic-Typen für Rohdatensätze, Bundles und Ergebnisse |
+|---|---|
+| `app/cli.py` | Typer-CLI für Collector, Datenbankstatus/-initialisierung, Run-Historie, Discovery und LLM |
+| `app/adapters/` | Collector, Registry, Hochschul-Connectoren und Plugins |
+| `app/config/` | Runtime-Einstellungen, Suchbegriffe, Quellen und LLM-Allowlist |
+| `app/database/` | SQLAlchemy-Modelle, Repository, DB-Verbindung und Migrationen |
+| `app/discovery/` | Deterministische Signal-/Observation-Klassifikation und Text-Erwähnungsregeln |
+| `app/llm/` | Allowlist, kuratierte Eingaben, strukturierte Analyse, Fake Provider und Runner |
+| `app/http/` | Gemeinsamer gedrosselter/retryfähiger HTTP-Client |
+| `app/ingestion/` | Pydantic-Eingabe-/Ergebnistypen |
 | `app/normalization/` | Wiederverwendbare Normalisierung für Personen, Organisationen, Texte und Publikationen |
-| `app/utils/` | Zeit-/Datumsfunktionen, Hashing und Logging |
-| `scripts/` | Kleine Einstiegsskripte, die an die CLI delegieren |
-| `tests/` | Adapter-, Pipeline-, Datenbank-, HTTP- und Normalisierungstests |
-| `docker-compose.yml` | Lokaler PostgreSQL-Dienst für Entwicklung und Tests |
-| `pyproject.toml` | Paketmetadaten, Abhängigkeiten, Console-Script und Pytest-Konfiguration |
-| `alembic.ini` | Alembic-Migrationspfad und Logging-Konfiguration |
+| `app/utils/` | Datumsfunktionen, Hashing und Logging |
+| `scripts/` | CLI-Einstiegsskripte |
+| `tests/` | Adapter-, Discovery-, LLM-, Integration-, DB-, HTTP-, Pipeline- und Normalisierungstests |
+| `docs/phase2-signal-contract.md` | Detaillierter Vertrag für Early-Signal-Regeln und Evidenzgrenzen |
+| `docs/phase2b4-llm-allowlist.md` | LLM-Allowlist, Datenminimierung und aktuelle Provider-Sperren |
+| `README.md` | Setup, Collectordetails, Betrieb, Quellenbefunde, Datenschutz und bekannte Einschränkungen |
 
-## 10. Leitlinien für Änderungen durch Agenten
+## 16. Quellenbefunde und technische Grenzen
 
-- Lies vor Änderungen die relevanten Implementierungen und Tests; halte Änderungen eng am Auftrag.
-- Bevorzuge bestehende gemeinsame Typen, Normalisierer, HTTP- und Repository-Helfer gegenüber parallel implementierter Logik.
-- Halte Datenquellen, externe IDs und Cursor getrennt; führe nicht stillschweigend quellenübergreifende Entity-Merges ein.
-- Bewahre Rohdaten, Provenienz und bisherige Fehlersemantik. Keine stillen Fallbacks, die einen fehlgeschlagenen Abruf als erfolgreichen leeren Lauf ausgeben.
-- Aktualisiere direkt betroffene Tests und Dokumentation; führe den kleinsten passenden Testumfang aus.
-- Committe keine Secrets, lokalen `.env`-Dateien, personenbezogenen Rohdaten oder privaten Zugangsdaten.
-- Gib Werte aus `.env` (Tokens, Keys, Passwörter, E-Mail-Adressen) weder in Terminalausgaben noch in Dateien aus; prüfe nur, ob sie gesetzt sind.
-- Rufe keine sehr großen Seiten ab (z. B. die UDE-Feed-Übersicht `feeds.php`) und halte bei Live-Prüfungen Abstände und Limits ein.
-- Beachte Abschnitt 1.1: Förderungen (EXIST, CORDIS u. a.) sind keine Finanzierungsrunden; bezeichne gesammelte Daten nicht als „unfinanziert“ und implementiere die Funding-Verification nicht ohne ausdrückliche Freigabe.
+Die in diesem Dokument genannten Recherchebefunde stammen – soweit ausdrücklich markiert – aus den bereits im Repository dokumentierten Prüfungen vom **20.11.2026**. Sie wurden bei dieser Aktualisierung nicht erneut extern recherchiert. Bei späteren Änderungen müssen aktuelle Terms, Robots-Regeln und technische Limits geprüft und mit Prüfdatum dokumentiert werden.
 
-## 11. Recherchierte Quellen (Stand 2026-11-20)
-
-Welche externen Quellen für die Entwicklung herangezogen oder vom Code abgerufen werden. „Live geprüft“ bedeutet: im Rahmen der Entwicklung real abgerufen (UDE am 2026-11-20 mit wenigen, gedrosselten Anfragen). Alle anderen Einträge sind die im Code hinterlegten Basis- bzw. Terms-URLs und wurden hier nicht erneut inhaltlich bewertet.
-
-### Universität Duisburg-Essen (live geprüft)
-
-| Quelle | URL | Verwendung / Befund |
-| --- | --- | --- |
-| Forschungs-RSS | https://www.uni-due.de/rss/forschung.rss | Aktiver Collector `ude_forschung`; Live-Dry-Run und gespeicherter Lauf (5 Datensätze, zweiter Lauf idempotent) |
-| Allgemeiner News-RSS | https://www.uni-due.de/rss/aktuell.rss | Konfiguriert als `ude_aktuell`, deaktiviert |
-| RSS-Übersicht | https://www.uni-due.de/de/presse/feeds.php | Quelle der Feed-URLs; Seite sehr groß, nicht erneut komplett laden |
-| GUIDE (Gründungszentrum) | https://www.uni-due.de/guide/ | Konfiguriert als `ude_guide`, deaktiviert; nur Titel und Meta-Beschreibung; nicht live abgerufen, nur mit Fixtures getestet |
-| robots.txt | https://www.uni-due.de/robots.txt | Wird vor jedem Abruf beachtet; sperrt `GPTBot` |
-| Sitemap | https://www.uni-due.de/sitemap.xml | Valides `urlset`, genau 5.000 URLs, davon 6 unter `/guide/`; wird vor Nutzung validiert |
-
-Keine Nutzungs- oder Lizenzbedingungen für automatisierte Weiterverwendung der UDE-Inhalte gefunden; deshalb sind `ude_aktuell` und `ude_guide` aus.
-
-### Weitere konfigurierte Quellen (in `sources.yaml` bzw. `SourceSpec`)
-
-| Collector | Basis-URL | Hinterlegte Terms-/Limit-Seite |
-| --- | --- | --- |
-| `openalex` | https://api.openalex.org | https://help.openalex.org/how-to-use-the-api/rate-limits-and-authentication |
-| `github` | https://api.github.com | https://docs.github.com/en/site-policy/github-terms/github-terms-of-service#h-api-terms |
-| `arxiv` | https://export.arxiv.org/api | https://info.arxiv.org/help/api/tou.html (höchstens 1 Anfrage je 3 s) |
-| `huggingface` | Hub-API von huggingface.co (im Entwicklungsnetz nicht erreichbar, nur mit Mocks getestet) | https://huggingface.co/terms-of-service |
-| `exist` | https://exist.de (Programmseiten und Erfolgsgeschichten aus der Sitemap) | https://exist.de/datenschutz/ |
-| `university` / KIT | https://kit.edu/pi.rss | – |
-| `university` / TU Darmstadt | https://www.tu-darmstadt.de/universitaet/aktuelles_meldungen/neues_aus_der_tu_rss.de.rss | – |
-| `cordis` | https://cordis.europa.eu, Endpoint `/datalab/sparql-api`; live geprüft 2026-11-20: `robots.txt` erlaubt den Pfad, JSON-Antwort, Antwortzeit unter 0,5 s, `OFFSET`-Paginierung funktioniert, rund 24.000 Projekte mit deutscher Beteiligung, keine Authentifizierung | https://cordis.europa.eu/about/legal (CC BY 4.0 und Beschluss 2011/833/EU, Attribution „© European Union, CORDIS“), Hilfe https://cordis.europa.eu/about/sparql. Die SPARQL-Antwort selbst trägt keinen Lizenzhinweis; die Lizenz stammt von der Rechtsseite. Endpoint-Limits sind nicht dokumentiert. `robots.txt` sperrt u. a. `/search`, `/data/` (Bulk-ZIPs), `/booklet/`, `/publication/` und `format=xml`/`format=pdf`. |
-| `manual_import` | lokale Dateien, kein Abruf | – |
-
-### Geprüft, nicht im Umfang (nur Dokumentation, nicht implementiert, auch nicht deaktiviert)
-
-Bei unklaren oder restriktiven Nutzungsbedingungen wird keine Quelle angelegt. Stand 2026-11-20:
-
-| Quelle | Befund |
-| --- | --- |
-| RSS Fraunhofer | Impressum: kommerzielle Nutzung nur mit schriftlicher Genehmigung |
-| RSS Max-Planck-Gesellschaft | alle Rechte vorbehalten |
-| RSS DLR | Nutzungsbedingungen richten sich an Presse/Rundfunk, Bilder CC BY-NC-ND |
-| RSS Leibniz-Gemeinschaft | nur Pressemitteilungen der Gemeinschaft frei; `rss.xml` mischt Institutsmeldungen und Magazin, `content:encoded` enthält Volltext |
-| Atom Universität Hamburg (`/newsroom.atom`) | keine Nutzungsbedingungen gefunden |
-| STARTPLATZ | Impressum: Vervielfältigung nur mit schriftlicher Zustimmung |
-| SPRIND, UnternehmerTUM, TUM, Max Planck Innovation, Deutscher Gründerpreis, Gründungswoche | `robots.txt` technisch offen, aber keine Nutzungsbedingungen für automatisierte Weiterverwendung gefunden; TUM-Sitemaps enthalten keine Eventdaten |
-| GEPRIS | `robots.txt` sperrt `/` für alle Agents |
-| HTGF | Content-Signal `ai-input=no`, `ai-train=no` |
-| Bundesanzeiger | automatisierter Abruf untersagt |
-
-Ein Eventadapter entfällt, weil keine Quelle mit klaren Bedingungen gefunden wurde.
-
-Beim Hinzufügen oder Ändern einer Quelle diesen Abschnitt mit URL, Prüfdatum und Befund (Terms, `robots.txt`, Limits) aktualisieren.
+- Die Quelle `foerderdatenbank.de` wird nicht gesammelt; laut dokumentiertem Befund sperrt Robots die Suchpfade und nennt Crawl-Delay 30.
+- `huggingface.co` war aus dem damaligen Entwicklungsnetz nicht erreichbar; Live-Verhalten, Tag-Formate und Organisationseinstiegspunkte bleiben zu bestätigen.
+- Für UDE sind nur freigegebene/aktivierte Konfigurationsquellen zu verwenden; `ude_aktuell` und `ude_guide` bleiben bis zur Klärung deaktiviert.
+- CORDIS-Projektförderung und EXIST-Programmbezug sind Frühphasenkontext, keine Venture-Finanzierungsrunden.
+- GitHub und arXiv haben keinen Länderfilter. Eine deutsche Ausrichtung ergibt sich nicht automatisch aus diesen Quellen.
+- OpenAlex' publication-date-/Lookback-Cursor kann verspätet indexierte ältere Werke verpassen.
+- Keine angeführte Quelle ist automatisch für LLM-Verarbeitung, kommerzielle Wiederverwendung oder beliebige Langzeitarchivierung freigegeben.
