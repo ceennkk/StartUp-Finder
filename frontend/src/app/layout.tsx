@@ -7,7 +7,7 @@ import "../collector/collector-dashboard.css";
 import "../finder/htgf-brand.css";
 
 export const metadata: Metadata = {
-  title: "Pre-Round | Early Startup Intelligence",
+  title: "Pre-Round Startup Finder",
   description: "Discover early-stage technology startups before their first equity round.",
   robots: { index: false, follow: false },
 };

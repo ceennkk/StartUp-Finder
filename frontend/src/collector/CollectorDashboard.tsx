@@ -81,9 +81,9 @@ export function CollectorDashboard({
   return (
     <div className="htgf fa fa-live">
       <header className="fa-bar live-bar">
-        <a href="/datenbestand" className="fa-logo" aria-label={`Pre-Round ${tr("Fundstellen")}`}>
+        <a href="/datenbestand" className="fa-logo" aria-label={`Pre-Round Startup Finder ${tr("Fundstellen")}`}>
           <img src="/htgf/images/htgf-logo--black.svg" alt="HTGF" />
-          <span>Pre-Round</span>
+          <span>Pre-Round Startup Finder</span>
         </a>
         <nav className="fa-nav live-nav" aria-label={tr("Datenbereiche")}>
           {NAV.map((item) => (

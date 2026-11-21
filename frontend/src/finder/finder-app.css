@@ -1,4 +1,4 @@
-/* Find the Founder app – HTGF style (desktop). Builds on htgf.css tokens inside .htgf. */
+/* Pre-Round Startup Finder app – HTGF style (desktop). Builds on htgf.css tokens inside .htgf. */
 .fa {
   --muted: #575550;
   --soft: rgba(0, 0, 0, 0.14);
@@ -2085,30 +2085,31 @@
   .fa-landscape__bubble,.fa-landscape__bubble-shape,.fa-landscape__bubble-shape path { transition: none !important; }
 }
 
-/* Ranked bubble cloud: proportional circles packed into one continuous field. */
-.fa-landscape__bubbles { position: relative; display: block; width: 100%; aspect-ratio: 1000 / 650; min-height: 0; padding: 0; overflow: visible; }
-.fa-landscape__bubble { position: absolute; left: var(--bubble-x); top: var(--bubble-y); z-index: 1; display: block; width: var(--bubble-size); height: auto; aspect-ratio: 1; padding: 0; overflow: visible; border: 0; border-radius: 50%; background: transparent; color: #202723; text-align: center; box-shadow: none; transform: translate(-50%,-50%); transition: transform .24s cubic-bezier(.2,.75,.25,1); animation: fa-bubble-arrive .45s cubic-bezier(.2,.75,.25,1) both; animation-delay: var(--bubble-delay); }
+/* A responsive, collision-free circle pack; coordinates are normalized to the field. */
+.fa-landscape.has-selection { grid-template-columns: minmax(0,1fr) !important; }
+.fa-landscape__bubbles { position: relative; display: block; width: 100%; min-height: 0; padding: 0; overflow: visible; }
+.fa-landscape__bubble { position: absolute; left: 50%; top: 50%; z-index: 1; display: block; height: auto; aspect-ratio: 1; padding: 0; overflow: visible; border: 0; border-radius: 50%; background: transparent; color: #202723; text-align: center; box-shadow: none; transform: translate(-50%,-50%); transition: transform .24s cubic-bezier(.2,.75,.25,1); animation: fa-bubble-arrive .45s cubic-bezier(.2,.75,.25,1) both; animation-delay: var(--bubble-delay); }
 .fa-landscape__bubble-orb { position: absolute; inset: 1px; border: 1.3px solid #9dc9a7; border-radius: 50%; background: radial-gradient(circle at 33% 25%,#f1faf2 0%,#dcefe0 66%,#d0e7d5 100%); box-shadow: 0 9px 20px rgba(53,91,59,.075),inset 0 1px 0 rgba(255,255,255,.86); transition: border-color .2s,box-shadow .2s,filter .2s; }
 .fa-landscape__bubble--high .fa-landscape__bubble-orb { border-color: #88bd93; background: radial-gradient(circle at 33% 25%,#effaf0 0%,#d4ecd8 67%,#c7e3cd 100%); }
 .fa-landscape__bubble--medium .fa-landscape__bubble-orb { border-color: #d3bc78; background: radial-gradient(circle at 33% 25%,#fffaf0 0%,#f1e8d0 68%,#e9ddbd 100%); }
 .fa-landscape__bubble--early .fa-landscape__bubble-orb { border-color: #baa3c8; background: radial-gradient(circle at 33% 25%,#fbf8fd 0%,#eae2ef 68%,#ddd1e7 100%); }
 .fa-landscape__bubble--pending .fa-landscape__bubble-orb { border-color: #d1ceca; border-style: dashed; background: radial-gradient(circle at 33% 25%,#fff 0%,#f1f0ee 72%,#e9e7e4 100%); box-shadow: 0 5px 13px rgba(53,49,46,.045); }
-.fa-landscape__bubble:hover,.fa-landscape__bubble:focus-visible { z-index: 3; transform: translate(-50%,-50%) scale(1.07); }
+.fa-landscape__bubble:hover,.fa-landscape__bubble:focus-visible { z-index: 3; transform: translate(-50%,-50%) scale(1.045); }
 .fa-landscape__bubble:hover .fa-landscape__bubble-orb,.fa-landscape__bubble:focus-visible .fa-landscape__bubble-orb { box-shadow: 0 16px 30px rgba(41,54,43,.17),inset 0 1px 0 rgba(255,255,255,.92); }
 .fa-landscape__bubble.is-selected { z-index: 2; }
 .fa-landscape__bubble.is-selected .fa-landscape__bubble-orb { border-color: #426b4a; border-width: 2.5px; }
-.fa-landscape__bubble-content { position: absolute; inset: 18% 13%; display: grid; grid-template-rows: 34px minmax(22px,auto) auto auto; justify-items: center; align-content: center; gap: 3px; pointer-events: none; }
-.fa-landscape__bubble-mark { display: grid; place-items: center; width: 32px; height: 32px; overflow: hidden; border: 1px solid rgba(45,59,46,.09); border-radius: 10px; background: rgba(255,255,255,.85); box-shadow: 0 3px 8px rgba(39,47,40,.06); color: #4c6951; font: 650 11px var(--ag); letter-spacing: -.03em; }
+.fa-landscape__bubble-content { position: absolute; inset: 14% 11%; display: grid; grid-template-rows: 27px minmax(20px,auto) auto auto; justify-items: center; align-content: center; gap: 2px; pointer-events: none; }
+.fa-landscape__bubble-mark { display: grid; place-items: center; width: 27px; height: 27px; overflow: hidden; border: 1px solid rgba(45,59,46,.09); border-radius: 9px; background: rgba(255,255,255,.85); box-shadow: 0 3px 8px rgba(39,47,40,.06); color: #4c6951; font: 650 10px var(--ag); letter-spacing: -.03em; }
 .fa-landscape__bubble-mark img { width: 23px; height: 23px; object-fit: contain; }
 .fa-landscape__bubble-name { display: -webkit-box; max-width: 100%; max-height: 2.35em; overflow: hidden; color: #343833; font: 600 clamp(10px,1vw,13px)/1.15 var(--ag); overflow-wrap: anywhere; text-overflow: ellipsis; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.fa-landscape__bubble-score { display: flex; align-items: baseline; gap: 2px; color: #242a25; font: 650 20px/.95 var(--ag); letter-spacing: -.045em; }
+.fa-landscape__bubble-score { display: flex; align-items: baseline; gap: 2px; color: #242a25; font: 650 18px/.95 var(--ag); letter-spacing: -.045em; }
 .fa-landscape__bubble-score small { color: #7e817a; font: 500 7px var(--ag); letter-spacing: 0; }
-.fa-landscape__bubble-note { max-width: 105px; overflow: hidden; color: #777a73; font: 8px/1.1 var(--ag); text-overflow: ellipsis; white-space: nowrap; }
+.fa-landscape__bubble-note { max-width: 105px; overflow: visible; color: #626b63; font: 700 8px/1.15 var(--ag); text-overflow: clip; white-space: nowrap; }
 .fa-landscape__bubble--pending .fa-landscape__bubble-content { inset: 16% 12%; grid-template-rows: 26px auto auto auto; }
 .fa-landscape__bubble--pending .fa-landscape__bubble-mark { width: 24px; height: 24px; border-radius: 8px; font-size: 9px; }
 .fa-landscape__bubble--pending .fa-landscape__bubble-score { color: #77736e; font-size: 16px; }
 .fa-landscape__field-caption > span { font-size: 12px; }
-@media(max-width:760px) { .fa-landscape__bubbles { min-height: 380px; aspect-ratio: auto; } .fa-landscape__bubble-content { inset-inline: 10%; } }
+@media(max-width:760px) { .fa-landscape__bubbles { min-width: 650px; } .fa-landscape__field { overflow-x: auto; } .fa-landscape__bubble-content { inset-inline: 10%; } }
 @media(prefers-reduced-motion:reduce) { .fa-landscape__bubble,.fa-landscape__bubble-orb { transition: none !important; animation: none !important; } }
 @keyframes fa-bubble-arrive { from { opacity: 0; scale: .88; } to { opacity: 1; scale: 1; } }
 

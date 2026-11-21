@@ -68,9 +68,9 @@ function Shell() {
   return (
     <div className="fa">
       <header className="fa-bar">
-        <a href="#/home" className="fa-logo" aria-label={`Pre-Round – ${t("home")} `}>
+        <a href="#/home" className="fa-logo" aria-label={`Pre-Round Startup Finder – ${t("home")} `}>
           <img src="/htgf/images/htgf-logo--black.svg" alt="HTGF" />
-          <span>Pre-Round</span>
+          <span>Pre-Round Startup Finder</span>
         </a>
         <nav className="fa-nav" aria-label={t("navigation") }>
           {NAV.map((n) => (

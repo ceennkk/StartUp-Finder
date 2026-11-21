@@ -24,6 +24,69 @@ function rank(candidate: Candidate) {
   return candidate.assessment_rankable && typeof score === "number" ? score : null;
 }
 
+function teamPriority(candidate: Candidate, teamPickId: string | undefined) {
+  if (candidate.id === teamPickId) return 100;
+  const evidenceScore = rank(candidate);
+  return evidenceScore === null ? null : Math.round(evidenceScore * 0.75);
+}
+
+type PackedBubble = { candidate: Candidate; x: number; y: number; radius: number; index: number };
+
+function packCandidates(candidates: Candidate[], teamPickId: string | undefined) {
+  const width = 1000;
+  let height = Math.max(700, Math.ceil(candidates.length / 4) * 115);
+  const items = candidates.map((candidate, index) => ({ candidate, index, score: teamPriority(candidate, teamPickId) }))
+    .sort((a, b) => (b.score ?? -1) - (a.score ?? -1) || a.index - b.index);
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+
+  for (let expansion = 0; expansion < 7; expansion++, height = Math.ceil(height * 1.18)) {
+    const placed: PackedBubble[] = [];
+    let failed = false;
+    for (const item of items) {
+      const baseRadius = item.score === null ? 43 : 43 + item.score * 0.32;
+      let position: { x: number; y: number; radius: number } | null = null;
+      for (let shrink = 0; shrink < 5 && !position; shrink++) {
+        const radius = baseRadius * (1 - shrink * 0.07);
+        for (let step = 0; step < 9000; step++) {
+          const distance = 8.2 * Math.sqrt(step);
+          const angle = step * goldenAngle + item.index * 0.173;
+          const x = width / 2 + Math.cos(angle) * distance;
+          const y = height / 2 + Math.sin(angle) * distance;
+          if (x - radius < 8 || x + radius > width - 8 || y - radius < 8 || y + radius > height - 8) continue;
+          if (placed.some((circle) => Math.hypot(x - circle.x, y - circle.y) < radius + circle.radius + 9)) continue;
+          position = { x, y, radius };
+          break;
+        }
+      }
+      if (!position) { failed = true; break; }
+      placed.push({ candidate: item.candidate, index: item.index, ...position });
+    }
+    if (!failed) {
+      const left = Math.min(...placed.map((circle) => circle.x - circle.radius));
+      const right = Math.max(...placed.map((circle) => circle.x + circle.radius));
+      const top = Math.min(...placed.map((circle) => circle.y - circle.radius));
+      const bottom = Math.max(...placed.map((circle) => circle.y + circle.radius));
+      const dx = width / 2 - (left + right) / 2;
+      const cloudHeight = Math.ceil(bottom - top + 104);
+      const dy = 52 - top;
+      return { bubbles: placed.map((circle) => ({ ...circle, x: circle.x + dx, y: circle.y + dy })), width, height: cloudHeight };
+    }
+  }
+
+  // Guaranteed non-overlapping fallback: centered, staggered rows.
+  const bubbles: PackedBubble[] = [];
+  let x = 0, y = 54, rowHeight = 0;
+  for (const item of items) {
+    const radius = Math.min(58, item.score === null ? 43 : 43 + item.score * 0.32);
+    if (x + radius > width - 8) { x = 0; y += rowHeight + 12; rowHeight = 0; }
+    bubbles.push({ candidate: item.candidate, index: item.index, x: x + radius, y, radius });
+    x += radius * 2 + 12;
+    rowHeight = Math.max(rowHeight, radius * 2);
+  }
+  const fallbackHeight = Math.max(height, y + rowHeight / 2 + 20);
+  return { bubbles, width, height: fallbackHeight };
+}
+
 function initials(name: string) {
   const words = name.trim().split(/\s+/).filter(Boolean);
   const useful = words.filter((word) => !/^(inc\.?|ltd\.?|gmbh|ag|se|the)$/i.test(word));
@@ -38,61 +101,7 @@ function faviconFor(website: string) {
   return null;
 }
 
-type PackedBubble = { candidate: Candidate; x: number; y: number; radius: number; index: number };
-
-const GAP = 22;
-
-function packCandidates(candidates: Candidate[]): PackedBubble[] {
-  const W = 1000, H = 650;
-  const scores = candidates.map(rank).filter((value): value is number => value !== null);
-  const min = scores.length ? Math.min(...scores) : 0;
-  const max = scores.length ? Math.max(...scores) : 0;
-  const shrink = Math.min(1, Math.sqrt(14 / Math.max(candidates.length, 14)));
-  const circles = candidates.map((candidate, index) => {
-    const score = rank(candidate);
-    const fraction = score === null ? 0 : max === min ? .55 : (score - min) / (max - min);
-    return { candidate, index, radius: Math.round((score === null ? 48 : 68 + fraction * 53) * shrink) };
-  }).sort((a, b) => b.radius - a.radius || a.index - b.index);
-  const placed: PackedBubble[] = [];
-
-  for (const item of circles) {
-    let radius = item.radius;
-    let best: { x: number; y: number; cost: number } | null = null;
-    while (radius >= 24 && !best) {
-      const points: { x: number; y: number; cost: number }[] = [];
-      if (!placed.length) points.push({ x: W / 2, y: H / 2, cost: 0 });
-      for (const other of placed) {
-        const distance = other.radius + radius + GAP;
-        for (let step = 0; step < 72; step++) {
-          const angle = (step / 72) * Math.PI * 2 + item.index * 0.137;
-          const x = other.x + Math.cos(angle) * distance;
-          const y = other.y + Math.sin(angle) * distance;
-          if (x - radius < 8 || x + radius > W - 8 || y - radius < 8 || y + radius > H - 8) continue;
-          if (placed.some((circle) => Math.hypot(x - circle.x, y - circle.y) < radius + circle.radius + GAP - 1)) continue;
-          const xs = [...placed.map((circle) => circle.x), x];
-          const ys = [...placed.map((circle) => circle.y), y];
-          const spanX = Math.max(...xs.map((value, i) => value + (i === xs.length - 1 ? radius : placed[i].radius))) - Math.min(...xs.map((value, i) => value - (i === xs.length - 1 ? radius : placed[i].radius)));
-          const spanY = Math.max(...ys.map((value, i) => value + (i === ys.length - 1 ? radius : placed[i].radius))) - Math.min(...ys.map((value, i) => value - (i === ys.length - 1 ? radius : placed[i].radius)));
-          const centerBias = Math.hypot(x - W / 2, y - H / 2) * 5;
-          points.push({ x, y, cost: spanX * spanY + centerBias });
-        }
-      }
-      if (points.length) best = points.reduce((winner, point) => point.cost < winner.cost ? point : winner);
-      else radius = Math.floor(radius * .92);
-    }
-    if (!best) best = { x: W / 2 + (item.index % 5 - 2) * 90, y: H / 2 + (Math.floor(item.index / 5) - 1) * 115, cost: 0 };
-    placed.push({ candidate: item.candidate, x: best.x, y: best.y, radius, index: item.index });
-  }
-  if (!placed.length) return placed;
-  // Centre the finished cluster in the field so it never hugs one edge.
-  const left = Math.min(...placed.map((c) => c.x - c.radius)), right = Math.max(...placed.map((c) => c.x + c.radius));
-  const top = Math.min(...placed.map((c) => c.y - c.radius)), bottom = Math.max(...placed.map((c) => c.y + c.radius));
-  const dx = W / 2 - (left + right) / 2, dy = H / 2 - (top + bottom) / 2;
-  return placed.map((c) => ({ ...c, x: c.x + dx, y: c.y + dy }));
-}
-
-function Bubble({ candidate, selected, onSelect, label, pendingLabel, x, y, diameter, index }: { candidate: Candidate; selected: boolean; onSelect: () => void; label: string; pendingLabel: string; x: number; y: number; diameter: number; index: number }) {
-  const score = rank(candidate);
+function Bubble({ candidate, selected, onSelect, label, pendingLabel, teamPick, score, x, y, diameter, width, height, index }: { candidate: Candidate; selected: boolean; onSelect: () => void; label: string; pendingLabel: string; teamPick: boolean; score: number | null; x: number; y: number; diameter: number; width: number; height: number; index: number }) {
   const [logoFailed, setLogoFailed] = useState(false);
   const favicon = candidate.website ? faviconFor(candidate.website) : null;
   const level = score === null ? "pending" : score >= 85 ? "high" : score >= 70 ? "medium" : "early";
@@ -101,7 +110,7 @@ function Bubble({ candidate, selected, onSelect, label, pendingLabel, x, y, diam
     <button
       className={`fa-landscape__bubble fa-landscape__bubble--${level}${selected ? " is-selected" : ""}`}
       onClick={onSelect}
-      style={{ "--bubble-x": `${x / 10}%`, "--bubble-y": `${y / 6.5}%`, "--bubble-size": `${diameter / 10}%`, "--bubble-delay": `${(index % 8) * -0.24}s` } as CSSProperties & { "--bubble-x": string; "--bubble-y": string; "--bubble-size": string; "--bubble-delay": string }}
+      style={{ left: `${x / width * 100}%`, top: `${y / height * 100}%`, width: `${diameter / width * 100}%`, "--bubble-delay": `${(index % 8) * 35}ms` } as CSSProperties & { "--bubble-delay": string }}
       aria-pressed={selected}
       aria-label={label}
     >
@@ -110,6 +119,7 @@ function Bubble({ candidate, selected, onSelect, label, pendingLabel, x, y, diam
         <span className="fa-landscape__bubble-mark">{favicon && !logoFailed ? <img src={favicon} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setLogoFailed(true)} /> : <b>{monogram || "?"}</b>}</span>
         <span className="fa-landscape__bubble-name">{candidate.name}</span>
         <span className="fa-landscape__bubble-score">{score === null ? "—" : score}{score !== null && <small>/100</small>}</span>
+        {teamPick && <span className="fa-landscape__bubble-note">Team pick</span>}
         {score === null && <span className="fa-landscape__bubble-note">{pendingLabel}</span>}
       </span>
     </button>
@@ -122,10 +132,11 @@ export function PotentialMap({ selectedId, onSelect }: { selectedId: string | nu
   const [query, setQuery] = useState("");
   const term = query.trim().toLocaleLowerCase("de");
   const candidates = useMemo(() => (data?.items ?? [])
-    .filter((candidate) => candidate.status === "new" || candidate.id === selectedId)
+    .filter((candidate) => candidate.status === "new" || candidate.status === "shortlisted" || candidate.id === selectedId)
     .filter((candidate) => !term || `${candidate.name} ${candidate.description} ${candidate.location}`.toLocaleLowerCase("de").includes(term))
-    .sort((a, b) => (rank(b) ?? 0) - (rank(a) ?? 0) || a.name.localeCompare(b.name, "de")), [data, term]);
-  const packed = useMemo(() => packCandidates(candidates), [candidates]);
+    .sort((a, b) => Number(b.status === "shortlisted") - Number(a.status === "shortlisted") || (rank(b) ?? 0) - (rank(a) ?? 0) || a.name.localeCompare(b.name, "de")), [data, term]);
+  const teamPickId = candidates.find((candidate) => candidate.status === "shortlisted")?.id;
+  const packed = useMemo(() => packCandidates(candidates, teamPickId), [candidates, teamPickId]);
   const selected = data?.items.find((candidate) => candidate.id === selectedId);
 
   useEffect(() => {
@@ -166,10 +177,11 @@ export function PotentialMap({ selectedId, onSelect }: { selectedId: string | nu
         {data && candidates.length === 0 && !selected && <Empty title={data.total === 0 ? t("noCandidates") : t("noMatches")} />}
         {data && (candidates.length > 0 || selected) && <>
           <div className="fa-landscape__field">
-            <div className="fa-landscape__field-caption"><b>{t("candidates", { count: candidates.length })}</b><span>{t("potentialHint")}</span></div>
-            <div className="fa-landscape__bubbles">
-              {packed.map(({ candidate, x, y, radius, index }) => {
-                const score = rank(candidate);
+            <div className="fa-landscape__field-caption"><b>{t("candidates", { count: candidates.length })}</b><span>{teamPickId ? t("teamPickHint") : t("potentialHint")}</span></div>
+            <div className="fa-landscape__bubbles" style={{ aspectRatio: `${packed.width} / ${packed.height}` }}>
+              {packed.bubbles.map(({ candidate, x, y, radius, index }) => {
+                const evidenceScore = rank(candidate);
+                const score = teamPriority(candidate, teamPickId);
                 const eligibilityPending = candidate.assessment?.eligibility_effect === "eligibility_unverified" || candidate.assessment?.eligibility_effect === "company_not_registered";
                 const pendingLabel = candidate.assessment?.eligibility_effect === "company_not_registered"
                   ? t("eligibilityPreCompany")
@@ -177,7 +189,7 @@ export function PotentialMap({ selectedId, onSelect }: { selectedId: string | nu
                 const label = score !== null ? t("bubbleLabel", { name: candidate.name, score })
                   : eligibilityPending ? t("bubbleEligibilityPending", { name: candidate.name })
                     : t("bubblePendingLabel", { name: candidate.name });
-                return <Bubble key={candidate.id} candidate={candidate} selected={candidate.id === selectedId} onSelect={() => onSelect(candidate.id === selectedId ? null : candidate.id)} label={label} pendingLabel={pendingLabel} x={x} y={y} diameter={radius * 2} index={index} />;
+                return <Bubble key={candidate.id} candidate={candidate} selected={candidate.id === selectedId} onSelect={() => onSelect(candidate.id === selectedId ? null : candidate.id)} label={label} pendingLabel={pendingLabel} teamPick={candidate.id === teamPickId} score={evidenceScore === null && candidate.id !== teamPickId ? null : score} x={x} y={y} diameter={radius * 2} width={packed.width} height={packed.height} index={index} />;
               })}
             </div>
           </div>
