@@ -2,96 +2,96 @@
 
 > Build a sourcing engine that spots upcoming startups from the traces they leave long before their funding round.
 
-StartUp-Finder erkennt potenzielle Start-ups und frühe Gründungsvorhaben anhand öffentlicher Spuren aus Forschung, Hochschulen, Förderprojekten, Open Source und frühen Unternehmensaktivitäten und macht sie nachvollziehbar prüfbar. Im Mittelpunkt stehen belegbare Hinweise mit Herkunft, nicht möglichst viele Datensätze.
+StartUp-Finder identifies potential startups and early-stage ventures from public traces in research, universities, grant-funded projects, open source, and early business activity, and makes them traceable and reviewable. The focus is on evidence with provenance, not on collecting the largest possible number of records.
 
-Das Repository ist ein **Team-Prototyp (MVP)**, keine fertige öffentliche Mehrbenutzerplattform. Bewertungen und Scores sind Recherchehilfen, keine Anlageempfehlung und keine HTGF-Investitionsentscheidung.
+This repository is a **team prototype (MVP)**, not a finished public multi-user platform. Assessments and scores are research aids, not investment recommendations or HTGF investment decisions.
 
-`ventureradar`, `VentureRadar-Ingestion` und die Paket-/Tabellennamen sind historische technische Bezeichnungen; Produktname ist **StartUp-Finder**.
+`ventureradar`, `VentureRadar-Ingestion`, and the package/table names are historical technical names; the product is **StartUp-Finder**.
 
-## Inhalt
+## Contents
 
-1. [Überblick und Umsetzungsstand](#überblick-und-umsetzungsstand)
-2. [Repository-Aufbau](#repository-aufbau)
-3. [Architektur](#architektur)
+1. [Overview and implementation status](#overview-and-implementation-status)
+2. [Repository layout](#repository-layout)
+3. [Architecture](#architecture)
 4. [Setup](#setup)
-5. [Datensammlung (Collector)](#datensammlung-collector)
-6. [Early-Signal-Discovery](#early-signal-discovery)
-7. [Finder-Pipeline: API, Worker und Knowledge Graph](#finder-pipeline-api-worker-und-knowledge-graph)
+5. [Data collection (collector)](#data-collection-collector)
+6. [Early-signal discovery](#early-signal-discovery)
+7. [Finder pipeline: API, worker, and knowledge graph](#finder-pipeline-api-worker-and-knowledge-graph)
 8. [Frontend](#frontend)
-9. [Förderung, Eigenkapital und Finanzmodell](#förderung-eigenkapital-und-finanzmodell)
-10. [HTGF-Bewertung (offline)](#htgf-bewertung-offline)
-11. [LLM-Allowlist (Ingestion-Seite)](#llm-allowlist-ingestion-seite)
-12. [Daten-Artefakte](#daten-artefakte)
-13. [Datenbankschema](#datenbankschema)
-14. [Datenqualität, Datenschutz und Recht](#datenqualität-datenschutz-und-recht)
-15. [Fehlerbehandlung](#fehlerbehandlung)
-16. [Neue Quelle hinzufügen](#neue-quelle-hinzufügen)
+9. [Grants, equity, and the financial model](#grants-equity-and-the-financial-model)
+10. [HTGF assessment (offline)](#htgf-assessment-offline)
+11. [LLM allowlist (ingestion)](#llm-allowlist-ingestion)
+12. [Data artifacts](#data-artifacts)
+13. [Database schema](#database-schema)
+14. [Data quality, privacy, and legal considerations](#data-quality-privacy-and-legal-considerations)
+15. [Error handling](#error-handling)
+16. [Adding a source](#adding-a-source)
 17. [Tests](#tests)
-18. [Bekannte Grenzen](#bekannte-grenzen)
-19. [Weitere Dokumentation](#weitere-dokumentation)
+18. [Known limitations](#known-limitations)
+19. [Further documentation](#further-documentation)
 
-## Überblick und Umsetzungsstand
+## Overview and implementation status
 
-| Baustein | Inhalt | Stand |
+| Component | Description | Status |
 |---|---|---|
-| **Datensammlung** (`app/`, CLI `ventureradar`) | Öffentliche bzw. manuell bereitgestellte Quellen erfassen, normalisieren und mit Provenienz in PostgreSQL (Neon) speichern | Implementiert für `openalex`, `arxiv`, `github`, `huggingface`, `exist`, `university`, `cordis`, `manual_import`; Live-Verifizierung quellenabhängig |
-| **Early-Signal-Discovery** (`app/discovery/`) | Deterministische Einordnung gespeicherter Signals/Observations und begrenzte Text-Erwähnungsregeln | Implementiert und getestet; keine Startup-Klassifikation |
-| **Finder-Pipeline** (`startup_finder/`) | Adapter-Bridge, Relevanzprüfung, Graphiti/Neo4j-Knowledge-Graph, Kandidatenprofile, Recherche, Bewertung, Ranking, JSON-API | Prototyp; benötigt PostgreSQL, Neo4j und OpenAI; keine Exactly-once-Garantie |
-| **Frontend** (`frontend/`) | Next.js-Oberfläche für Kandidaten, Shortlist, Suchaufträge, Quellen, Pipeline, Graph sowie read-only Datenbestandsansicht | Prototyp; spricht ausschließlich mit der Finder-API (außer `/datenbestand`) |
-| **Finanzmodell** (`app/finance/`, `app/evidence/`) | Förderung und externes Eigenkapital getrennt modellieren und konservativ bewerten | Offline-Modelle und Tests; **keine Persistenz in Neon** |
-| **HTGF-Bewertung** (`app/htgf/`) | Kuratierte Kandidaten-Evidenz gegen drei HTGF-Kriterien prüfen | Offline, dateibasiert, ohne DB/LLM/Netzwerk |
-| **LLM-Allowlist** (`app/llm/`) | Freigabeprüfung, Evidenzvalidierung, Fake Provider für synthetische Daten | Deny-by-default; keine echte Provider-Integration auf Ingestion-Seite |
-| **Pitch** (`pitch/`) | Pitch-Video mit synthetischen Demodaten | Separates Hilfsprojekt |
+| **Data collection** (`app/`, `ventureradar` CLI) | Collect public or manually supplied sources, normalize them, and store them in PostgreSQL (Neon) with provenance | Implemented for `openalex`, `arxiv`, `github`, `huggingface`, `exist`, `university`, `cordis`, and `manual_import`; live verification varies by source |
+| **Early-signal discovery** (`app/discovery/`) | Deterministic classification of stored signals/observations and limited text-mention rules | Implemented and tested; does not classify startups |
+| **Finder pipeline** (`startup_finder/`) | Adapter bridge, relevance checks, Graphiti/Neo4j knowledge graph, candidate profiles, research, assessment, ranking, JSON API | Prototype; requires PostgreSQL, Neo4j, and OpenAI; no exactly-once guarantee |
+| **Frontend** (`frontend/`) | Next.js interface for candidates, shortlist, search jobs, sources, pipeline, graph, and a read-only data inventory view | Prototype; communicates only with the Finder API (except `/datenbestand`) |
+| **Financial model** (`app/finance/`, `app/evidence/`) | Model grants and external equity separately and assess them conservatively | Offline models and tests; **not persisted in Neon** |
+| **HTGF assessment** (`app/htgf/`) | Assess curated candidate evidence against three HTGF criteria | Offline, file-based, with no database, LLM, or network access |
+| **LLM allowlist** (`app/llm/`) | Permission checks, evidence validation, and a fake provider for synthetic data | Deny by default; no real provider integration on the ingestion side |
+| **Pitch** (`pitch/`) | Pitch video with synthetic demo data | Separate supporting project |
 
-Wichtige Abgrenzungen:
+Important boundaries:
 
-* Die Collector-Daten sind **keine** Startup-Liste. Gespeicherte Organisationen können bereits finanziert sein und werden nicht automatisch als Startup klassifiziert. `EntityType.STARTUP` ist nur ein Typwert.
-* Es gibt **keine globale Entity Resolution** auf Collector-Ebene: Entities sind quellenbezogen und werden nie über Quellen oder gleiche Namen hinweg zusammengeführt. Die Finder-Pipeline gleicht Identitäten nur innerhalb des Graphiti-Graphen ab (Modell-Extraktion und Decision-Routen), nicht in den Collector-Tabellen.
-* Förderungen (EXIST, CORDIS, Zuschüsse, Stipendien, Preise) sind **keine** Eigenkapitalrunden. `NEW_FUNDING_PROJECT` und `FUNDED_BY` beschreiben Förder- bzw. Projektkontext.
-* Fehlende Treffer beweisen nie, dass keine Finanzierung oder kein Unternehmen existiert.
+* Collector data is **not** a startup list. Stored organizations may already be funded and are not automatically classified as startups. `EntityType.STARTUP` is only a type value.
+* There is **no global entity resolution** at the collector level: entities are source-specific and are never merged across sources or just because their names match. The Finder pipeline matches identities only within the Graphiti graph (model extraction and decision routes), not in the collector tables.
+* Grants (EXIST, CORDIS, subsidies, stipends, prizes) are **not** equity rounds. `NEW_FUNDING_PROJECT` and `FUNDED_BY` describe grant or project context.
+* Missing search results never prove that a company or financing does not exist.
 
-## Repository-Aufbau
+## Repository layout
 
-| Pfad | Inhalt |
+| Path | Description |
 |---|---|
-| `app/cli.py` | Typer-CLI `ventureradar`: `collect`, `database`, `ingestion`, `discovery`, `llm`, `htgf` |
-| `app/adapters/` | Collector, Registry, Hochschul-Connectoren und Plugins |
-| `app/config/` | Runtime-Einstellungen, `search_terms.yaml`, `sources.yaml`, `llm_allowlist.yaml` |
-| `app/database/` | SQLAlchemy-Modelle, Repository, Verbindung, Alembic-Migrationen |
-| `app/discovery/` | Deterministische Signal-/Observation-Klassifikation und Textregeln |
-| `app/evidence/` | Gemeinsame Modelle für Quelle, Dokument, Claim, Evidenz und Zitatvalidierung |
-| `app/finance/` | Finanzereignisse, Equity-Feststellungen und Equity-Bewertung |
-| `app/htgf/` | Offline-HTGF-Bewertung mit append-only Historie |
-| `app/llm/` | Allowlist, Autorisierung, Analyse-Schema, Fake Provider, Runner |
-| `app/http/`, `app/ingestion/`, `app/normalization/`, `app/utils/` | HTTP-Client, Pydantic-Typen, Normalisierung, Hilfsfunktionen |
-| `startup_finder/` | Finder-API, Worker, Store, Adapter-Bridge, Graphiti-Clients, Ontologie, Kandidaten, Ranking, Rebuild |
-| `frontend/` | Next.js-16-/React-19-Frontend |
-| `data/candidates/` | Punktuelle Kandidatenanalyse (Stand 2026-11-20) und HTGF-Ein-/Ausgaben |
-| `data/exports/` | Pilot-Exporte für Knowledge Graph und Finanzen |
-| `docs/` | Architektur, API-Vertrag, Signal-Vertrag, LLM-Allowlist, Finanzmodell, HTGF, Pilot-Handoff, Ontologie |
-| `pitch/` | Skript, Szenen und Rendering des Pitch-Videos |
-| `scripts/` | Einstiegsskripte (`run_collector.py`, `initialize_database.py`) und ein einmaliges Pilot-Skript |
-| `tests/` | Adapter-, Discovery-, Finance-, HTGF-, LLM-, HTTP-, DB-, Integrations- und Normalisierungstests |
+| `app/cli.py` | Typer `ventureradar` CLI: `collect`, `database`, `ingestion`, `discovery`, `llm`, `htgf` |
+| `app/adapters/` | Collectors, registry, university connectors, and plugins |
+| `app/config/` | Runtime settings, `search_terms.yaml`, `sources.yaml`, `llm_allowlist.yaml` |
+| `app/database/` | SQLAlchemy models, repository, connection, and Alembic migrations |
+| `app/discovery/` | Deterministic signal/observation classification and text rules |
+| `app/evidence/` | Shared models for sources, documents, claims, evidence, and quote validation |
+| `app/finance/` | Financial events, equity findings, and equity assessment |
+| `app/htgf/` | Offline HTGF assessment with append-only history |
+| `app/llm/` | Allowlist, authorization, analysis schema, fake provider, and runner |
+| `app/http/`, `app/ingestion/`, `app/normalization/`, `app/utils/` | HTTP client, Pydantic types, normalization, and utilities |
+| `startup_finder/` | Finder API, worker, store, adapter bridge, Graphiti clients, ontology, candidates, ranking, rebuild |
+| `frontend/` | Next.js 16 / React 19 frontend |
+| `data/candidates/` | Point-in-time candidate analysis (as of 2026-11-20) and HTGF inputs/outputs |
+| `data/exports/` | Pilot exports for the knowledge graph and finance |
+| `docs/` | Architecture, API contract, signal contract, LLM allowlist, financial model, HTGF, pilot handoff, ontology |
+| `pitch/` | Pitch video script, scenes, and rendering |
+| `scripts/` | Entry-point scripts (`run_collector.py`, `initialize_database.py`) and a one-off pilot script |
+| `tests/` | Adapter, discovery, finance, HTGF, LLM, HTTP, database, integration, and normalization tests |
 
-## Architektur
+## Architecture
 
 ```mermaid
 flowchart LR
-  subgraph Collector["Datensammlung (app/)"]
+  subgraph Collector["Data collection (app/)"]
     CLI[ventureradar CLI] --> RUN[BaseAdapter.run]
-    HTTP[PoliteHttpClient: Abstand, Retries, Retry-After, robots.txt] --> A
-    RUN --> A[Adapter: OpenAlex, GitHub, arXiv, Hugging Face, EXIST, Hochschulen, CORDIS, Manual Import]
+    HTTP[PoliteHttpClient: delays, retries, Retry-After, robots.txt] --> A
+    RUN --> A[Adapters: OpenAlex, GitHub, arXiv, Hugging Face, EXIST, universities, CORDIS, manual import]
     A -->|RawRecord| SR[(source_records + revisions)]
     A -->|normalize| N[entities, aliases, relationships, signals, observations]
     DISC[discovery preview / run] --> N
   end
-  subgraph Finder["Finder-Pipeline (startup_finder/)"]
+  subgraph Finder["Finder pipeline (startup_finder/)"]
     BR[Adapter-Bridge] --> J[(jobs / records)]
     J --> W[Worker]
-    W --> DEC[Relevanzprüfung: Decision API + Belegzitat]
+    W --> DEC[Relevance check: Decision API + evidence quote]
     DEC --> G[Graphiti → Neo4j]
-    G --> C[Kandidatenprofile]
-    C --> R[Recherche + Bewertung + Ranking]
+    G --> C[Candidate profiles]
+    C --> R[Research + assessment + ranking]
     API[JSON-API]
   end
   SR --> BR
@@ -100,60 +100,60 @@ flowchart LR
   SR -. read-only .-> FE
 ```
 
-**Datensammlung:** `app/adapters/base.py` orchestriert `fetch → Rohdaten speichern → normalize → validate → normalisiert speichern`. Rohdaten werden zuerst geschrieben (jeder Datensatz in eigenem Savepoint), alle Schreibvorgänge sind Upserts auf Unique-Constraints, Läufe sind dadurch idempotent. Spätestens nach 50 Datensätzen wird committet.
+**Data collection:** `app/adapters/base.py` orchestrates `fetch → store raw data → normalize → validate → store normalized data`. Raw data is stored first (each record in its own savepoint); all writes are upserts against unique constraints, making runs idempotent. Transactions are committed at least every 50 records.
 
-**Finder-Pipeline:** Die Adapter-Bridge liest Collector-`source_records` samt verknüpften Normalisierungen read-only und reiht Verarbeitungsjobs ein. Der Worker prüft die Relevanz, extrahiert mit Graphiti ein `StartupVenture` und dessen direkte Beziehungen in Neo4j, materialisiert Kandidatenprofile in PostgreSQL und löst Recherche und Bewertung aus. Details: [docs/architecture.md](docs/architecture.md).
+**Finder pipeline:** The adapter bridge reads collector `source_records` and their linked normalized data in read-only mode, then queues processing jobs. The worker checks relevance, uses Graphiti to extract a `StartupVenture` and its direct relationships into Neo4j, materializes candidate profiles in PostgreSQL, and triggers research and assessment. Details: [docs/architecture.md](docs/architecture.md).
 
 ## Setup
 
-Voraussetzungen: Python 3.12+, Docker (lokale Test-Datenbank), Node.js (Frontend), ein Neon-Projekt für Produktivdaten. Für die Finder-Pipeline zusätzlich Neo4j und ein OpenAI-Zugang.
+Requirements: Python 3.12+, Docker (local test database), Node.js (frontend), and a Neon project for production data. The Finder pipeline additionally requires Neo4j and OpenAI access.
 
 ```powershell
-# virtuelle Umgebung außerhalb von OneDrive halten
+# Keep the virtual environment outside OneDrive
 python -m venv C:\Users\<you>\venvs\startup-finder
 C:\Users\<you>\venvs\startup-finder\Scripts\python.exe -m pip install -r requirements.txt
-# optional: Finder-Pipeline mit Graphiti
+# Optional: Finder pipeline with Graphiti
 C:\Users\<you>\venvs\startup-finder\Scripts\python.exe -m pip install -e ".[live,dev]"
 
-Copy-Item .env.example .env        # danach lokal befüllen, nie committen
-docker compose up -d               # lokales PostgreSQL 16 auf Port 5433 (Tests / Fallback)
+Copy-Item .env.example .env        # Fill in locally; never commit this file
+docker compose up -d               # Local PostgreSQL 16 on port 5433 (tests / fallback)
 python -m app.cli database status
 ```
 
-`python -m app.cli database init` führt `alembic upgrade head` aus und wendet alle Revisionen an (aktuell `0001` Basisschema, `0002` `llm_analyses`). **Nie ungeprüft gegen Neon ausführen.**
+`python -m app.cli database init` runs `alembic upgrade head` and applies all revisions (currently `0001` base schema and `0002` `llm_analyses`). **Never run this against Neon without first verifying the target.**
 
-### Konfiguration (`.env`)
+### Configuration (`.env`)
 
-`.env` ist git-ignored. Secrets werden nur aus der Umgebung gelesen, nie im Code oder in der Datenbank gespeichert. Variablennamen stehen in [.env.example](.env.example).
+`.env` is git-ignored. Secrets are read only from the environment and are never stored in code or the database. Variable names are listed in [.env.example](.env.example).
 
-| Variable | Benötigt für | Hinweise |
+| Variable | Required for | Notes |
 |---|---|---|
-| `DATABASE_URL` | Collector, Discovery, LLM, Finder | Collector-CLI und Finder nutzen diesen Wert. `postgresql://` wird für Collector automatisch auf psycopg 3 umgeschrieben. |
-| `DATABASE_URL_DIRECT` | Alembic | Nicht gepoolte Neon-URL; Alembic fällt sonst auf `DATABASE_URL` zurück. Collector nutzen sie **nicht** – für Collector-Läufe gegen das Direct-Ziel muss `DATABASE_URL` entsprechend gesetzt werden. |
-| `TEST_DATABASE_URL` | DB-Tests | Nur eine entbehrliche Datenbank (z. B. Docker, `127.0.0.1:5433`). Tests löschen das `public`-Schema. |
-| `GITHUB_TOKEN` | `github` | Token mit öffentlichem Lesezugriff |
-| `OPENALEX_API_KEY` | `openalex` (empfohlen) | Ohne Key gilt ein knappes, geteiltes Tagesbudget und Basic-Paging bis 10.000 Ergebnisse |
-| `HF_TOKEN` | `huggingface` (optional) | Öffentliche Endpunkte funktionieren ohne Token |
-| `CONTACT_EMAIL` | empfohlen, für UDE Pflicht | Wird im `User-Agent` gesendet |
-| `MANUAL_IMPORT_DIR` | `manual_import` | Standard `data/manual_imports/`, git-ignored |
-| `HTTP_TIMEOUT_SECONDS`, `HTTP_MAX_RETRIES`, `LOG_LEVEL`, `LOG_FORMAT`, `OBSERVATION_BUCKET` | Collector | Laufzeitparameter |
-| `HOST`, `PORT`, `API_TOKEN`, `CORS_ORIGINS`, `APP_MODE` | Finder-API | `API_TOKEN` ist Pflicht, wenn `HOST` kein Loopback ist; `APP_MODE` fehlt oder ist `live` |
-| `OPENAI_API_KEY`, `OPENAI_MODEL` | Finder-Worker | Pflicht für den Finder-Start |
-| `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`, `NEO4J_DATABASE` | Finder | Pflicht für den Finder-Start |
-| `GRAPHITI_GROUP_ID`, `GRAPHITI_CLIENT_FACTORY`, `GRAPHITI_TELEMETRY_ENABLED`, `SEMAPHORE_LIMIT` | Finder | Graphiti-Konfiguration |
-| `DECISION_PROVIDER`, `OPENAI_DECISIONS_MODEL`, `JEV_API_KEY`, `JEV_MODEL` | Finder (optional) | `off`, `openai` oder `jev`; fehlende Unterstützung führt zu einem Fehler, nicht zu einem stillen Fallback |
-| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | `compose.yml` | Lokaler Finder-Stack |
+| `DATABASE_URL` | Collector, discovery, LLM, Finder | Used by both the collector CLI and Finder. For the collector, `postgresql://` is automatically converted to psycopg 3. |
+| `DATABASE_URL_DIRECT` | Alembic | Unpooled Neon URL; Alembic falls back to `DATABASE_URL` if this is unset. Collectors do **not** use it — to run collectors against the direct endpoint, set `DATABASE_URL` accordingly. |
+| `TEST_DATABASE_URL` | Database tests | Use only a disposable database (e.g. Docker at `127.0.0.1:5433`). Tests drop the `public` schema. |
+| `GITHUB_TOKEN` | `github` | Token with public read access |
+| `OPENALEX_API_KEY` | `openalex` (recommended) | Without a key, a small shared daily budget and basic paging up to 10,000 results apply |
+| `HF_TOKEN` | `huggingface` (optional) | Public endpoints work without a token |
+| `CONTACT_EMAIL` | Recommended; required for UDE | Sent in the `User-Agent` |
+| `MANUAL_IMPORT_DIR` | `manual_import` | Defaults to `data/manual_imports/`; git-ignored |
+| `HTTP_TIMEOUT_SECONDS`, `HTTP_MAX_RETRIES`, `LOG_LEVEL`, `LOG_FORMAT`, `OBSERVATION_BUCKET` | Collector | Runtime parameters |
+| `HOST`, `PORT`, `API_TOKEN`, `CORS_ORIGINS`, `APP_MODE` | Finder API | `API_TOKEN` is required if `HOST` is not loopback; `APP_MODE` must be unset or `live` |
+| `OPENAI_API_KEY`, `OPENAI_MODEL` | Finder worker | Required to start the Finder |
+| `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`, `NEO4J_DATABASE` | Finder | Required to start the Finder |
+| `GRAPHITI_GROUP_ID`, `GRAPHITI_CLIENT_FACTORY`, `GRAPHITI_TELEMETRY_ENABLED`, `SEMAPHORE_LIMIT` | Finder | Graphiti configuration |
+| `DECISION_PROVIDER`, `OPENAI_DECISIONS_MODEL`, `JEV_API_KEY`, `JEV_MODEL` | Finder (optional) | `off`, `openai`, or `jev`; unsupported options raise an error instead of silently falling back |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | `compose.yml` | Local Finder stack |
 
-### Docker-Varianten
+### Docker variants
 
-| Datei | Zweck |
+| File | Purpose |
 |---|---|
-| `docker-compose.yml` | Entbehrliche Test-/Entwicklungsdatenbank für Collector (PostgreSQL 16, Port `5433`, `ventureradar_test`) |
-| `compose.yml` | Lokales PostgreSQL (Port `5432`) und Neo4j (`7474`/`7687`) für die Finder-Pipeline |
-| `compose.app.yml` | Ergänzt `api` und `worker`: `docker compose -f compose.yml -f compose.app.yml up --build` |
-| `Dockerfile` | Image für Finder-API/Worker (`python -m startup_finder serve`) |
+| `docker-compose.yml` | Disposable test/development database for the collector (PostgreSQL 16, port `5433`, `ventureradar_test`) |
+| `compose.yml` | Local PostgreSQL (port `5432`) and Neo4j (`7474`/`7687`) for the Finder pipeline |
+| `compose.app.yml` | Adds `api` and `worker`: `docker compose -f compose.yml -f compose.app.yml up --build` |
+| `Dockerfile` | Image for the Finder API/worker (`python -m startup_finder serve`) |
 
-## Datensammlung (Collector)
+## Data collection (collector)
 
 ```powershell
 python -m app.cli collect openalex --limit 10 --dry-run
@@ -166,110 +166,110 @@ python -m app.cli database status
 python -m app.cli ingestion history --limit 10 --source github
 ```
 
-Die installierte CLI heißt `ventureradar`; `python -m app.cli` ist gleichwertig.
+The installed CLI is named `ventureradar`; `python -m app.cli` is equivalent.
 
-* `--limit N` begrenzt die Datensätze; ein limitierter Lauf schreibt keine Cursor fort.
-* `--dry-run` ruft Quelle und Normalisierung auf, schreibt aber nichts und braucht keine Datenbank.
-* `--source` ist nur bei `university` erlaubt (Quell-Key oder Gruppe).
-* stdout enthält JSON (ein `RunResult` je Collector), Logs gehen als JSON-Zeilen nach stderr (`LOG_FORMAT=text` für Menschen).
+* `--limit N` limits the number of records; a limited run does not advance cursors.
+* `--dry-run` fetches and normalizes source data but writes nothing and does not require a database.
+* `--source` is supported only for `university` (source key or group).
+* stdout contains JSON (one `RunResult` per collector); logs are written to stderr as JSON lines (`LOG_FORMAT=text` for human-readable output).
 
-| Exit-Code | Bedeutung |
+| Exit code | Meaning |
 |---|---|
-| 0 | erfolgreich |
-| 10 | partiell: einzelne Datensätze fehlgeschlagen, Rest gespeichert |
-| 1 | fehlgeschlagen (bereits gespeicherte Daten bleiben) |
-| 2 | Konfigurationsfehler (unbekannter Collector, fehlender Token / `DATABASE_URL`) |
-| 3 | Datenbank nicht erreichbar |
+| 0 | Success |
+| 10 | Partial: some records failed; the rest were stored |
+| 1 | Failed (previously stored data remains) |
+| 2 | Configuration error (unknown collector, missing token / `DATABASE_URL`) |
+| 3 | Database unavailable |
 
-### Collector-Übersicht
+### Collector overview
 
-Jeder Collector läuft eigenständig, inkrementell (Cursor in `sync_state`, nur nach vollständig erfolgreichem Lauf fortgeschrieben), paginiert und rate-limit-bewusst (Tenacity, `Retry-After`). Suchbereiche stehen in `app/config/search_terms.yaml` und `app/config/sources.yaml`.
+Each collector runs independently and incrementally (cursors in `sync_state` advance only after a fully successful run), supports pagination, and observes rate limits (Tenacity, `Retry-After`). Search scopes are defined in `app/config/search_terms.yaml` and `app/config/sources.yaml`.
 
-| Collector | Zugriff | Verhalten und Felder | Grenzen |
+| Collector | Access | Behavior and fields | Limitations |
 |---|---|---|---|
-| `openalex` | REST `/works` | Werke mit deutschen Institutionsbezügen nach Themen. ID, Titel, Abstract (aus invertiertem Index), Datum, Autor:innen + IDs, Institutionen (ROR), Topics, Keywords, DOI; Zitationszahl als Observation. Max. 100 Autor:innen je Werk. | Cursor nach Publikationsdatum mit 7-Tage-Lookback; spät indexierte ältere Werke können fehlen. Daten CC0. |
-| `github` | REST + Search | Repository-Suche nach Topics in 7-Tage-Fenstern (automatisches Splitten), README, Contributors, Commits/Issues/PRs (nur IDs und Daten, **keine E-Mails oder Git-Autorennamen**). Bekannte Repositories werden mit ETags erneut beobachtet. | Benötigt `GITHUB_TOKEN`; Search mit 2,1 s Abstand; Wartezeiten > 5 min brechen ab. Kein Länderfilter, keine Discussions. |
-| `arxiv` | Atom-API | Kategorien, oldest-first; ID, Titel, Abstract, Autor:innen, Daten, Kategorien, DOI, PDF-**URL** (PDFs werden nicht gespeichert). | 1 Anfrage / 3 s; max. 1.000 Ergebnisse pro Lauf; kein Länderfilter, keine stabilen Autoren-IDs. |
-| `huggingface` | Hub-API | Modelle, Datensätze, Spaces, optional Model Cards (max. 20.000 Zeichen), Namespaces als Organisation/Nutzer, öffentliche Mitglieder (nur Handles). Observations: Downloads, Likes. | Bisher nur mit Mocks/Fixtures verifiziert, siehe [Bekannte Grenzen](#bekannte-grenzen). |
-| `exist` | Sitemap + WordPress-REST (Daten) + HTML | Erfolgsgeschichten und Programmseiten. | Programmbezüge sind Keyword-Treffer und `UNVERIFIED` `FUNDED_BY`; keine strukturierten Förderdaten, keine Personen. |
-| `university` | RSS, validierte Sitemap + JSON-LD, JSON-LD, Page-Metadata, CSS-Selektoren | Explizit konfigurierte Quellen, kein Crawling. Aktiv: `kit`, `tu_darmstadt`, `ude_forschung`. | Robots-Prüfung je Abruf; Nicht-RSS mind. 10 s pro Host. Siehe [UDE](#universität-duisburg-essen-ude). |
-| `cordis` | Öffentlicher EURIO-SPARQL-Endpunkt (nur `SELECT`) | EU-Projekte mit Beteiligten aus konfigurierten Ländern (Standard `DE`): `research_project` mit `NEW_FUNDING_PROJECT`, Beteiligte als `organization` mit `PARTICIPATED_IN`. | 10 s Abstand, 25 Projekte pro Seite, max. 1.000 pro Lauf, 60-Tage-Overlap; CC BY 4.0, Attribution „© European Union, CORDIS“. Kein Fallback-Endpunkt. |
-| `manual_import` | Lokale CSV/JSON-Dateien, **kein Netzwerk** | Personen und Unternehmen (`person`, `organization`, `WORKS_AT`, standardmäßig `unverified`). | Max. 5 MB / 5.000 Zeilen; LinkedIn-URLs nur syntaktisch geprüft, nie geöffnet. Dauerhaft von LLM-Verarbeitung ausgeschlossen. |
+| `openalex` | REST `/works` | Works by topic with links to German institutions. ID, title, abstract (from inverted index), date, authors + IDs, institutions (ROR), topics, keywords, DOI; citation count as an observation. Max. 100 authors per work. | Cursor based on publication date with a 7-day lookback; older works indexed late may be missed. Data is CC0. |
+| `github` | REST + Search | Repository search by topic in 7-day windows (automatically split), README, contributors, commits/issues/PRs (IDs and dates only, **no email addresses or Git author names**). Known repositories are rechecked with ETags. | Requires `GITHUB_TOKEN`; searches are spaced 2.1 s apart; waits longer than 5 min abort. No country filter or Discussions. |
+| `arxiv` | Atom API | Categories, oldest first; ID, title, abstract, authors, dates, categories, DOI, PDF **URL** (PDFs are not stored). | 1 request / 3 s; max. 1,000 results per run; no country filter and no stable author IDs. |
+| `huggingface` | Hub API | Models, datasets, Spaces, optional model cards (max. 20,000 characters), namespaces as organizations/users, public members (handles only). Observations: downloads, likes. | So far verified only with mocks/fixtures; see [Known limitations](#known-limitations). |
+| `exist` | Sitemap + WordPress REST (data) + HTML | Success stories and program pages. | Program associations are keyword matches and `UNVERIFIED` `FUNDED_BY`; no structured grant data or people. |
+| `university` | RSS, validated sitemap + JSON-LD, JSON-LD, page metadata, CSS selectors | Explicitly configured sources; no crawling. Active: `kit`, `tu_darmstadt`, `ude_forschung`. | Robots check on each request; non-RSS requests are at least 10 s apart per host. See [UDE](#university-of-duisburg-essen-ude). |
+| `cordis` | Public EURIO SPARQL endpoint (`SELECT` only) | EU projects with participants from configured countries (default `DE`): `research_project` with `NEW_FUNDING_PROJECT`; participants as `organization` with `PARTICIPATED_IN`. | 10 s delay, 25 projects per page, max. 1,000 per run, 60-day overlap; CC BY 4.0, attribution “© European Union, CORDIS”. No fallback endpoint. |
+| `manual_import` | Local CSV/JSON files, **no network access** | People and companies (`person`, `organization`, `WORKS_AT`, `unverified` by default). | Max. 5 MB / 5,000 rows; LinkedIn URLs are syntax-checked only and never opened. Permanently excluded from LLM processing. |
 
-`foerderdatenbank.de`, Fraunhofer, Max-Planck, DLR, GEPRIS, HTGF, Bundesanzeiger u. a. werden wegen Robots-Regeln oder ungeklärter Nutzungsbedingungen **nicht** gesammelt (Befunde vom 2026-11-20, siehe [AGENTS.md](AGENTS.md)). Öffentliche Abrufbarkeit ist keine Wiederverwendungserlaubnis.
+`foerderdatenbank.de`, Fraunhofer, Max Planck, DLR, GEPRIS, HTGF, Bundesanzeiger, and others are **not** collected due to robots rules or unclear terms of use (findings dated 2026-11-20; see [AGENTS.md](AGENTS.md)). Public accessibility does not grant permission to reuse content.
 
 ### CORDIS
 
-* Konfiguration: `sources.yaml` → `cordis` (`countries`, `initial_days`, `lookback_days`, `page_size`, `max_projects_per_run`). Nur Beteiligte aus den konfigurierten Ländern werden gespeichert.
-* Cursor: Projektstartdatum plus Skip-Zähler, damit ein begrenzter Lauf innerhalb eines Datums fortsetzen kann.
-* CORDIS liefert keinen feineren Organisationstyp; `organization_type` bleibt generisch `organization`.
-* CORDIS-Projekte sind öffentliche Forschungsförderung, keine Startup-Finanzierungsrunden.
+* Configuration: `sources.yaml` → `cordis` (`countries`, `initial_days`, `lookback_days`, `page_size`, `max_projects_per_run`). Only participants from configured countries are stored.
+* Cursor: project start date plus a skip counter, allowing a limited run to resume within the same date.
+* CORDIS does not provide a more specific organization type; `organization_type` remains the generic `organization`.
+* CORDIS projects represent public research funding, not startup funding rounds.
 
 ### Manual Import
 
-Dateien in `MANUAL_IMPORT_DIR` ablegen und `python -m app.cli collect manual_import [--dry-run]` ausführen.
+Place files in `MANUAL_IMPORT_DIR` and run `python -m app.cli collect manual_import [--dry-run]`.
 
-* Spalten/Keys: `linkedin_url`, `name` (Pflicht); `position`, `company`, `project_affiliation`, `verification_status` (`unverified` oder `manually_verified` mit `verification_method` und `checked_at`), `notes`, `row_id`. Unbekannte Spalten führen zur Ablehnung.
-* Eine Datei mit einer ungültigen Zeile wird vollständig abgelehnt und nach `failed/` verschoben (mit `.problems.txt`, das nur Zeilen und Felder nennt); der Lauf ist `partial`.
-* Erfolgreich importierte Dateien gehen nach `processed/` (neutraler Name). Aufbewahrung: `processed` 30 Tage, `failed` 14 Tage.
-* Logs enthalten nie Namen, Firmen, URLs oder Notizen. Tests verwenden nur synthetische Daten.
+* Columns/keys: `linkedin_url`, `name` (required); `position`, `company`, `project_affiliation`, `verification_status` (`unverified` or `manually_verified` with `verification_method` and `checked_at`), `notes`, `row_id`. Unknown columns cause rejection.
+* A file containing an invalid row is rejected in its entirety and moved to `failed/` (with a `.problems.txt` file listing only rows and fields); the run is marked `partial`.
+* Successfully imported files go to `processed/` (with a neutral name). Retention: 30 days for `processed`, 14 days for `failed`.
+* Logs never contain names, companies, URLs, or notes. Tests use synthetic data only.
 
-### Universität Duisburg-Essen (UDE)
+### University of Duisburg-Essen (UDE)
 
-| Key | Quelle | Connector / Art | Status |
+| Key | Source | Connector / type | Status |
 |---|---|---|---|
 | `ude_forschung` | `https://www.uni-due.de/rss/forschung.rss` | `rss` / `news` | **aktiv** |
-| `ude_aktuell` | `https://www.uni-due.de/rss/aktuell.rss` | `rss` / `news` | deaktiviert |
-| `ude_guide` | `https://www.uni-due.de/guide/` + validierte Sitemap (nur `/guide/`) | `page_metadata` / `organization_unit` | deaktiviert |
+| `ude_aktuell` | `https://www.uni-due.de/rss/aktuell.rss` | `rss` / `news` | disabled |
+| `ude_guide` | `https://www.uni-due.de/guide/` + validated sitemap (`/guide/` only) | `page_metadata` / `organization_unit` | disabled |
 
-* `ude_aktuell` und `ude_guide` bleiben deaktiviert, bis Nutzungsbedingungen geklärt sind (keine Bedingungen für automatisierte Wiederverwendung gefunden; `robots.txt` sperrt `GPTBot`). Eine deaktivierte Quelle auszuwählen endet mit Exit-Code 2.
-* Gespeichert: Titel, Link, Datum, Teaser (max. 500 Zeichen), Feed-Metadaten als Provenienz. **Nicht** gespeichert: Volltexte, Enclosures, Bilder, Autor:innen.
-* `CONTACT_EMAIL` ist Pflicht; Anfragen an `www.uni-due.de` mindestens 10 s auseinander; Erstabruf max. 90 Tage.
-* Sitemaps werden vor Nutzung validiert; die geprüfte Sitemap listete genau 5.000 URLs und wirkt gekappt, ist also kein vollständiger Seitenindex.
+* `ude_aktuell` and `ude_guide` remain disabled until terms of use are clarified (no terms for automated reuse were found; `robots.txt` blocks `GPTBot`). Selecting a disabled source exits with code 2.
+* Stored: title, link, date, teaser (max. 500 characters), and feed metadata as provenance. **Not** stored: full text, enclosures, images, or authors.
+* `CONTACT_EMAIL` is required; requests to `www.uni-due.de` are at least 10 s apart; initial fetch is limited to 90 days.
+* Sitemaps are validated before use; the checked sitemap listed exactly 5,000 URLs and appears truncated, so it is not a complete site index.
 
-Zeitstempel werden nie vermischt: `published_at` ist das Datum in der Quelle, `event_date` das reale Ereignis (oft `NULL`), `first_seen_at` die erste Erfassung, `created_at`/`updated_at` sind DB-Buchhaltung. Alles in UTC; Unbekanntes bleibt `NULL`.
+Timestamps are kept distinct: `published_at` is the date from the source, `event_date` is the actual event date (often `NULL`), `first_seen_at` is when the record was first collected, and `created_at`/`updated_at` are database bookkeeping. All timestamps are UTC; unknown values remain `NULL`.
 
-## Early-Signal-Discovery
+## Early-signal discovery
 
-Discovery liest nur bereits gespeicherte Daten und macht keine Netzwerkanfragen.
+Discovery reads only data that has already been stored and makes no network requests.
 
 ```powershell
 python -m app.cli discovery preview --limit 100                  # read-only
 python -m app.cli discovery preview --source github --limit 100
-python -m app.cli discovery run --source university --limit 100  # schreibt abgeleitete Erwähnungs-Signals
+python -m app.cli discovery run --source university --limit 100  # writes derived mention signals
 ```
 
-* Adapter-Signals (`NEW_PUBLICATION`, `NEW_REPOSITORY`, `NEW_MODEL`, `NEW_FUNDING_PROJECT`, `NEW_CONTRIBUTOR`, `NEW_PRESS_RELEASE`, …) werden klassifiziert, nicht dupliziert. Ein Repository ist kein Startup, ein gefördertes Projekt keine Equity-Runde.
-* Einzelne Observations gelten als schwache Aktivitätsindizien; ein Einzelwert ist kein Trend.
-* Versionierte Textregeln erzeugen nur `FOUNDING_ACTIVITY_MENTION`, `SPINOUT_MENTION` und `COMMERCIALIZATION_MENTION` – lexikalische Treffer, keine bestätigten Fakten. `event_date` wird nicht aus dem Publikationsdatum abgeleitet.
-* Regel-ID/-Version, Feld, Treffer und Quellverweis stehen in `signals.properties`; wiederholte Läufe sind idempotent.
+* Adapter signals (`NEW_PUBLICATION`, `NEW_REPOSITORY`, `NEW_MODEL`, `NEW_FUNDING_PROJECT`, `NEW_CONTRIBUTOR`, `NEW_PRESS_RELEASE`, …) are classified, not duplicated. A repository is not a startup, and a grant-funded project is not an equity round.
+* Individual observations are weak activity indicators; a single value is not a trend.
+* Versioned text rules produce only `FOUNDING_ACTIVITY_MENTION`, `SPINOUT_MENTION`, and `COMMERCIALIZATION_MENTION`—lexical matches, not confirmed facts. `event_date` is not inferred from the publication date.
+* The rule ID/version, field, match, and source reference are stored in `signals.properties`; repeated runs are idempotent.
 
 Details: [docs/phase2-signal-contract.md](docs/phase2-signal-contract.md).
 
-## Finder-Pipeline: API, Worker und Knowledge Graph
+## Finder pipeline: API, worker, and knowledge graph
 
-Die Finder-Pipeline (`startup_finder/`) baut aus Collector-Daten Kandidatenprofile und einen Knowledge Graph. Sie läuft ausschließlich im Produktivmodus und startet nur mit PostgreSQL-`DATABASE_URL`, Neo4j und `OPENAI_API_KEY`.
+The Finder pipeline (`startup_finder/`) builds candidate profiles and a knowledge graph from collector data. It runs only in production mode and starts only with PostgreSQL `DATABASE_URL`, Neo4j, and `OPENAI_API_KEY`.
 
 ```powershell
-python -m startup_finder init-db        # legt Finder-Tabellen (records, jobs, leases, schema_version) an
-python -m startup_finder serve          # JSON-API, Standard http://127.0.0.1:8000
-python -m startup_finder worker         # Queue, Relevanzprüfung, Graphiti, Recherche, Bewertung
+python -m startup_finder init-db        # Creates Finder tables (records, jobs, leases, schema_version)
+python -m startup_finder serve          # JSON API; default http://127.0.0.1:8000
+python -m startup_finder worker         # Queue, relevance checks, Graphiti, research, assessment
 python -m startup_finder sync-adapters --source exist --record-type success_story --limit 1 --dry-run
 python -m startup_finder sync-adapters --source exist --record-type success_story --limit 1
 python -m startup_finder rebuild-graph --group-id startup_finder_de_ontology_v1
 ```
 
-**Achtung:** Jeder dieser Befehle – auch `sync-adapters --dry-run` – initialisiert zuerst die Finder-Tabellen in der unter `DATABASE_URL` konfigurierten Datenbank. Diese Tabellen werden nicht über Alembic verwaltet. Ein Lauf ohne `--dry-run` reiht Jobs ein; der Worker löst anschließend kostenpflichtige OpenAI-, Embedding- und Graphiti-Aufrufe aus.
+**Warning:** Every one of these commands—including `sync-adapters --dry-run`—first initializes the Finder tables in the database configured by `DATABASE_URL`. These tables are not managed by Alembic. A run without `--dry-run` queues jobs; the worker then makes billable OpenAI, embedding, and Graphiti calls.
 
-Ablauf:
+Workflow:
 
-1. **Adapter-Bridge:** liest `source_records` mit Revisionen, Entities, Aliasen, Beziehungen, Signals und Observations read-only und erzeugt Finder-Fundstellen. Nur Datensätze mit HTTP(S)-URL, Titel und verwertbarem Text werden übernommen. Der Worker pollt neue Adapterdatensätze automatisch im 60-Sekunden-Takt.
-2. **Relevanzprüfung:** Die Decision-Route bewertet jeden Datensatz; nur relevante Datensätze werden vom generativen Modell auf einen konkret benannten Venture-Kandidaten mit wörtlichem Belegzitat geprüft. Allgemeine Publikationen und Programme bleiben Neon-Quellbelege, werden aber nicht in den Graph übernommen.
-3. **Knowledge Graph:** Graphiti schreibt in Neo4j nach dem Vokabular in [docs/startup-sourcing-ontology.ttl](docs/startup-sourcing-ontology.ttl) (Ventures, Personen, Organisationen, Produkte, Technologien, Märkte, Investoren, Finanzierungsrunden, Programme, Standorte, Kennzahlen). Die API liest eine materialisierte Teilansicht in PostgreSQL.
-4. **Recherche und Bewertung:** Jeder neue Kandidat löst Recherche (Produkt, Team, Standort, Markt, Finanzierungsrunden/Investoren) und Bewertung aus. Funding gilt nur als bestätigt, wenn ein Zitat in einem abgerufenen Originaldokument verifiziert wurde; `not_found` heißt nur „in den durchsuchten Quellen kein Beleg“.
-5. **Ranking:** Vier Kriterien, gleich gewichtet; mindestens drei müssen mit Belegreferenzen bewertet sein. Die Gewichtung ist eine unvalidierte Startversion.
+1. **Adapter bridge:** Reads `source_records` and their revisions, entities, aliases, relationships, signals, and observations in read-only mode and creates Finder records. Only records with an HTTP(S) URL, a title, and usable text are imported. The worker polls for new adapter records every 60 seconds.
+2. **Relevance check:** The decision route assesses each record; only relevant records are checked by the generative model for a specifically named venture candidate with a verbatim evidence quote. General publications and programs remain source records in Neon but are not added to the graph.
+3. **Knowledge graph:** Graphiti writes to Neo4j using the vocabulary in [docs/startup-sourcing-ontology.ttl](docs/startup-sourcing-ontology.ttl) (ventures, people, organizations, products, technologies, markets, investors, funding rounds, programs, locations, metrics). The API reads a materialized subset in PostgreSQL.
+4. **Research and assessment:** Each new candidate triggers research (product, team, location, market, funding rounds/investors) and assessment. Funding is confirmed only when a quote has been verified in a retrieved original document; `not_found` means only “no evidence found in the sources searched.”
+5. **Ranking:** Four equally weighted criteria; at least three must be assessed with evidence references. The weighting is an unvalidated initial version.
 
-API-Endpunkte und Datenformate: [docs/frontend-contract.md](docs/frontend-contract.md). Suchaufträge sammeln konfigurierte Quellen; der Prompt wird nur als Kontext gespeichert – eine semantische Suche ist nicht implementiert.
+API endpoints and data formats: [docs/frontend-contract.md](docs/frontend-contract.md). Search jobs collect configured sources; the prompt is stored as context only—semantic search is not implemented.
 
 ## Frontend
 
@@ -280,57 +280,57 @@ npm run dev      # http://localhost:3000
 npm run check    # Typecheck + Build
 ```
 
-Die Oberfläche spricht über `frontend/src/finder/api/client.ts` mit der Finder-API (Standard `http://localhost:8000`, `CORS_ORIGINS` muss `http://localhost:3000` enthalten). Produktdaten werden erst angezeigt, wenn die API `live` meldet; es gibt keine Mock-API. Auf Loopback ist kein Token nötig, bei Netzwerkbindung verlangt das Backend `API_TOKEN`.
+The interface communicates with the Finder API through `frontend/src/finder/api/client.ts` (default `http://localhost:8000`; `CORS_ORIGINS` must include `http://localhost:3000`). Product data is displayed only when the API reports `live`; there is no mock API. No token is required on loopback; when bound to a network interface, the backend requires `API_TOKEN`.
 
-`/datenbestand` ist eine separate technische Ansicht, die Collector-Daten serverseitig in Read-only-Transaktionen aus Neon liest (Entities, Beziehungen, Fundstellen, Läufe). Für Deployments eine Datenbankrolle ohne Schreibrechte verwenden. Details: [frontend/README.md](frontend/README.md).
+`/datenbestand` is a separate technical view that reads collector data from Neon on the server side using read-only transactions (entities, relationships, records, runs). Use a database role without write permissions for deployments. Details: [frontend/README.md](frontend/README.md).
 
-## Förderung, Eigenkapital und Finanzmodell
+## Grants, equity, and the financial model
 
-`app/finance/` trennt Förderung strikt von externem Eigenkapital ([docs/financial-support-and-equity.md](docs/financial-support-and-equity.md)):
+`app/finance/` strictly separates grants from external equity ([docs/financial-support-and-equity.md](docs/financial-support-and-equity.md)):
 
-* `FinancialSupportEvent` beschreibt ein kuratiertes Ereignis mit Kategorie (Zuschuss, Stipendium, Forschungsförderung, Preis, Equity, Angel/VC, Darlehen, Wandelinstrument, Sachleistung, sonstige, unbekannt), Status, Betrag mit Qualifier (`exact`, `up_to`, `approximate`), Rollen (Antragsteller, Empfänger, Geldgeber) und den Merkmalen `dilutive`/`repayable` (`yes`/`no`/`unknown`). Jede Angabe trägt Provenienz mit exakt validiertem Zitat.
-* `assess_equity` liefert getrennt davon:
-  * `equity_confirmed` – nur mit expliziter Equity-Feststellung, Beleg und **dokumentierter menschlicher Prüfung**; unterscheidet `completed` von `binding_agreement`.
-  * `no_public_equity_round_found` – nur nach dokumentierter, menschlich geprüfter Recherche über Unternehmens-, Register-, Investoren- und Medienquellen; **kein** Beweis, dass keine private Finanzierung existiert.
-  * `equity_status_unclear` – alle übrigen Fälle.
-* Eine Kategorie wie „Venture Capital“ allein ergibt keinen Equity-Befund. Eine eigene Kategorie für Spenden sowie Felder für erworbene Anteile oder Beteiligungsquoten gibt es nicht.
-* **Persistenz:** Finanzereignisse und Equity-Bewertungen werden **nicht** in Neon-Tabellen gespeichert. Für vier Pilotfälle (OnSite, nodeline, Floronics, deepset) liegen sie in [data/exports/pilot_finance.json](data/exports/pilot_finance.json) und verweisen auf Neon-Entity- und Source-Record-IDs. Alle vier Bewertungen sind `equity_status_unclear`; bei deepset ist die berichtete 30-Mio.-USD-Runde (2023) erfasst, ein menschlich geprüfter Equity-Befund fehlt.
+* `FinancialSupportEvent` describes a curated event with a category (grant, stipend, research funding, prize, equity, angel/VC, loan, convertible instrument, in-kind, other, unknown), status, amount with qualifier (`exact`, `up_to`, `approximate`), roles (applicant, recipient, funder), and the `dilutive`/`repayable` attributes (`yes`/`no`/`unknown`). Each claim has provenance with an exactly validated quote.
+* Separately, `assess_equity` returns:
+  * `equity_confirmed` — requires an explicit equity finding, evidence, and **documented human review**; distinguishes `completed` from `binding_agreement`.
+  * `no_public_equity_round_found` — only after documented, human-reviewed research across company, registry, investor, and media sources; this is **not** proof that no private financing exists.
+  * `equity_status_unclear` — all other cases.
+* A category such as “Venture Capital” alone does not establish an equity finding. There is no dedicated donation category or fields for purchased shares or ownership percentages.
+* **Persistence:** Financial events and equity assessments are **not** stored in Neon tables. For four pilot cases (OnSite, nodeline, Floronics, deepset), they are in [data/exports/pilot_finance.json](data/exports/pilot_finance.json) and reference Neon entity and source record IDs. All four assessments are `equity_status_unclear`; the reported 2023 USD 30 million deepset round is recorded, but there is no human-reviewed equity finding.
 
-## HTGF-Bewertung (offline)
+## HTGF assessment (offline)
 
-Bewertet manuell kuratierte Kandidaten-Evidenz gegen drei HTGF-Kriterien (Technologie, Unternehmensalter, Deutschlandbezug). Kein Datenbankzugriff, keine Online-Recherche, kein LLM, keine Investitionsentscheidung.
-
-```powershell
-python -m app.htgf            # oder: python -m app.cli htgf run
-```
-
-Eingabe `data/candidates/htgf_input.json`; Ausgaben `htgf_assessments.json` (append-only Historie), `htgf_overview.csv`, `htgf_research_report.md`. Details: [docs/htgf-assessment.md](docs/htgf-assessment.md).
-
-## LLM-Allowlist (Ingestion-Seite)
-
-`app/llm/` prüft vor jeder Analyse eine Source-/Field-Allowlist ([app/config/llm_allowlist.yaml](app/config/llm_allowlist.yaml), `default_policy: deny`, derzeit leer) und validiert, dass jede Evidenz wörtlich in einem kuratierten Feld vorkommt.
+Assesses manually curated candidate evidence against three HTGF criteria (technology, company age, and connection to Germany). No database access, online research, or LLM is used; this is not an investment decision.
 
 ```powershell
-python -m app.cli llm preview --limit 100   # read-only Freigabeprüfung
-python -m app.cli llm run --limit 100       # schreibt in llm_analyses; nur synthetische Quellen, lokaler Fake Provider
+python -m app.htgf            # or: python -m app.cli htgf run
 ```
 
-Es gibt hier keine echte Provider-Integration; reale Quelldaten und `manual_import` sind blockiert. Ergebnisse landen in `llm_analyses` (Migration `0002`). Diese Sperre gilt für die Ingestion-Seite; die Finder-Pipeline nutzt OpenAI unabhängig davon über eigene Konfiguration. Details: [docs/phase2b4-llm-allowlist.md](docs/phase2b4-llm-allowlist.md).
+Input: `data/candidates/htgf_input.json`; outputs: `htgf_assessments.json` (append-only history), `htgf_overview.csv`, `htgf_research_report.md`. Details: [docs/htgf-assessment.md](docs/htgf-assessment.md).
 
-## Daten-Artefakte
+## LLM allowlist (ingestion)
 
-| Datei | Inhalt |
+Before each analysis, `app/llm/` checks a source/field allowlist ([app/config/llm_allowlist.yaml](app/config/llm_allowlist.yaml), `default_policy: deny`, currently empty) and validates that each piece of evidence appears verbatim in a curated field.
+
+```powershell
+python -m app.cli llm preview --limit 100   # Read-only permission check
+python -m app.cli llm run --limit 100       # Writes to llm_analyses; synthetic sources only, local fake provider
+```
+
+There is no real provider integration here; real source data and `manual_import` are blocked. Results are stored in `llm_analyses` (migration `0002`). This restriction applies to ingestion; the Finder pipeline uses OpenAI independently through its own configuration. Details: [docs/phase2b4-llm-allowlist.md](docs/phase2b4-llm-allowlist.md).
+
+## Data artifacts
+
+| File | Description |
 |---|---|
-| `data/candidates/candidate_discovery.json`, `candidate_validation.json`, `candidate_overview.csv`, `candidate_research_report.md` | Punktuelle Kandidatenanalyse aus einem Neon-Snapshot vom 2026-11-20: 8 Kandidaten aus EXIST-Erfolgsgeschichten mit getrenntem Company- und Funding-Status und regelbasiertem Recherche-Score (0–10). Kein wiederholbarer Code-Workflow und keine Anlagebewertung. |
-| `data/candidates/htgf_*` | Ein- und Ausgaben der HTGF-Bewertung |
-| `data/exports/knowledge_graph_pilot.json` | Aus Neon gelesene Pilot-Entities, Beziehungen und Source Records (Quelle `manual_pilot_research`) |
-| `data/exports/pilot_finance.json` | Pilot-Finanzereignisse, Evidenz, Equity-Feststellungen und -Bewertungen |
+| `data/candidates/candidate_discovery.json`, `candidate_validation.json`, `candidate_overview.csv`, `candidate_research_report.md` | Point-in-time candidate analysis from a Neon snapshot dated 2026-11-20: 8 candidates from EXIST success stories, with separate company and funding statuses and a rule-based research score (0–10). No repeatable code workflow or investment assessment. |
+| `data/candidates/htgf_*` | HTGF assessment inputs and outputs |
+| `data/exports/knowledge_graph_pilot.json` | Pilot entities, relationships, and source records read from Neon (source `manual_pilot_research`) |
+| `data/exports/pilot_finance.json` | Pilot financial events, evidence, equity findings, and assessments |
 
-Herkunft, Zählerstände und SQL-Beispiele des Piloten: [docs/knowledge-graph-handoff.md](docs/knowledge-graph-handoff.md).
+Pilot provenance, counts, and SQL examples: [docs/knowledge-graph-handoff.md](docs/knowledge-graph-handoff.md).
 
-## Datenbankschema
+## Database schema
 
-Alle Primärschlüssel sind UUIDs, alle Zeitstempel `timestamptz` (UTC). Collector-Tabellen werden über Alembic verwaltet (`app/database/migrations/`).
+All primary keys are UUIDs; all timestamps are `timestamptz` (UTC). Collector tables are managed through Alembic (`app/database/migrations/`).
 
 ```mermaid
 erDiagram
@@ -348,36 +348,36 @@ erDiagram
   source_records ||--o{ llm_analyses : analysed
 ```
 
-| Tabelle | Zweck |
+| Table | Purpose |
 |---|---|
-| `sources` | Quelle, Typ, Basis- und Terms-URL; identifiziert über `source_name` |
-| `ingestion_runs` | Ein Eintrag pro Lauf: Status, Zähler, Fehler |
-| `source_records` | **Original-Payloads** (JSONB), Hash, `published_at`, `first_seen_at`, `last_seen_at`; eindeutig je `(source_id, external_id)` |
-| `source_record_revisions` | Vorherige Payloads bei inhaltlicher Änderung |
-| `entities` | Normalisierte Entities (13 Typen), JSONB-Properties |
-| `entity_aliases` | Namen, URLs, ORCID/ROR/DOI und quellenbezogene Identifier |
-| `entity_source_records` | Provenienz Entity ↔ Quell-Datensatz |
-| `relationships` | Typisierte Kanten mit `verification_status` (`source_asserted`, `unverified`, `manually_verified`) und Pflicht-`source_record_id` |
-| `signals` | Ereignisse mit Quelle und Zeitbezug, eindeutig je Entity, Typ und Datensatz |
-| `observations` | Zeitreihen (Stars, Downloads, Zitationen …), gebucktet nach `OBSERVATION_BUCKET` |
-| `sync_state` | Cursor und ETags je Quelle und Abfragebereich |
-| `llm_analyses` | Versionierte LLM-Analyseversuche (Migration `0002`) |
+| `sources` | Source, type, base URL, and terms URL; identified by `source_name` |
+| `ingestion_runs` | One entry per run: status, counters, errors |
+| `source_records` | **Original payloads** (JSONB), hash, `published_at`, `first_seen_at`, `last_seen_at`; unique by `(source_id, external_id)` |
+| `source_record_revisions` | Previous payloads when content changes |
+| `entities` | Normalized entities (13 types), JSONB properties |
+| `entity_aliases` | Names, URLs, ORCID/ROR/DOI, and source-specific identifiers |
+| `entity_source_records` | Entity ↔ source record provenance |
+| `relationships` | Typed edges with `verification_status` (`source_asserted`, `unverified`, `manually_verified`) and required `source_record_id` |
+| `signals` | Source- and time-related events, unique per entity, type, and record |
+| `observations` | Time series (stars, downloads, citations, etc.), bucketed by `OBSERVATION_BUCKET` |
+| `sync_state` | Cursors and ETags per source and query scope |
+| `llm_analyses` | Versioned LLM analysis attempts (migration `0002`) |
 
-Die Finder-Pipeline nutzt zusätzlich eigene, nicht migrierte Tabellen (`records`, `jobs`, `leases`, `schema_version`) und Neo4j. Volatile Felder erzeugen keine Revisionen; ihre Historie liegt in `observations`.
+The Finder pipeline also uses its own non-migrated tables (`records`, `jobs`, `leases`, `schema_version`) and Neo4j. Volatile fields do not create revisions; their history is stored in `observations`.
 
-## Datenqualität, Datenschutz und Recht
+## Data quality, privacy, and legal considerations
 
-1. Rohdaten werden nie durch normalisierte Daten überschrieben; alles verweist über `entity_source_records` / `source_record_id` zurück.
-2. Unbekannte Werte bleiben `NULL`; keine erfundenen Daten, Länder, Gründer oder Finanzierungen.
-3. Gleichnamige Personen werden nie zusammengeführt; Schreibvarianten von Organisationen sind Aliase.
-4. Beziehungen nur, wenn die Quelle sie nennt, sonst als `unverified` markiert.
-5. Wiederholte Läufe erzeugen keine Duplikate; Fehler lassen gespeicherte Daten intakt.
+1. Raw data is never overwritten by normalized data; all normalized data links back through `entity_source_records` / `source_record_id`.
+2. Unknown values remain `NULL`; do not invent dates, countries, founders, or funding.
+3. People with the same name are never merged; organization name variants are aliases.
+4. Create relationships only when supported by a source; otherwise mark them `unverified`.
+5. Repeated runs do not create duplicates; errors do not corrupt previously stored data.
 
-* Nur öffentliche, quellenattribuierte Daten; kein LinkedIn-Scraping, keine privaten Profile.
-* Datenminimierung: keine E-Mail-Adressen, keine Git-Autorennamen, keine Klarnamen von Hugging-Face-Mitgliedern.
-* `robots.txt` wird bei HTML/RSS-Abrufen geprüft (fail-closed); API-Bedingungen (Raten, keine arXiv-PDFs) sind im Code umgesetzt.
-* Eine Sammelerlaubnis ist keine Erlaubnis zur Weitergabe an LLM-Anbieter.
-* Löschung/Berichtigung über `ON DELETE CASCADE` (dokumentiertes manuelles Verfahren, keine CLI):
+* Use only public, source-attributed data; no LinkedIn scraping or private profiles.
+* Data minimization: no email addresses, Git author names, or Hugging Face members' real names.
+* Check `robots.txt` for HTML/RSS requests (fail closed); API terms (rate limits, no arXiv PDFs) are enforced in code.
+* Permission to collect data does not grant permission to share it with LLM providers.
+* Deletion/correction via `ON DELETE CASCADE` (documented manual procedure, no CLI):
 
 ```sql
 DELETE FROM entities WHERE id = '<person uuid>';
@@ -385,57 +385,57 @@ DELETE FROM source_records WHERE id IN (
   SELECT source_record_id FROM entity_source_records WHERE entity_id = '<person uuid>');
 ```
 
-Daten in Neo4j und den Finder-Tabellen müssen in diesem Fall separat geprüft bzw. per `rebuild-graph` neu aufgebaut werden.
+In this case, data in Neo4j and the Finder tables must be checked separately or rebuilt using `rebuild-graph`.
 
-## Fehlerbehandlung
+## Error handling
 
-* HTTP: Retries bei Transportfehlern, 429 und 5xx mit Backoff und `Retry-After`; Wartezeiten > 5 min schlagen sofort fehl.
-* Ein fehlerhafter Datensatz wird gezählt und übersprungen (Status `partial`); ein Fetch-Fehler beendet den Lauf (Exit 1), Cursor werden nicht fortgeschrieben.
+* HTTP: retries on transport errors, 429, and 5xx with backoff and `Retry-After`; waits longer than 5 min fail immediately.
+* A faulty record is counted and skipped (status `partial`); a fetch error stops the run (exit code 1), and cursors are not advanced.
 
-## Neue Quelle hinzufügen
+## Adding a source
 
-1. `app/adapters/<name>.py` mit einer `BaseAdapter`-Unterklasse anlegen: `name`, `source` (`SourceSpec`), `fetch()` (liefert `RawRecord`, nutzt `self.http`, `get_cursor`/`set_cursor`) und `normalize()` (liefert `NormalizedBundle`).
-2. In `app/adapters/registry.py` registrieren.
-3. Scope und URLs in `search_terms.yaml` bzw. `sources.yaml` eintragen.
-4. Fixtures und Tests ergänzen (Normalisierung, Pagination, idempotenter Wiederholungslauf).
-5. Für Hochschulen genügt meist ein Eintrag unter `universities.sources`; bei unklaren Bedingungen `enabled: false`.
+1. Add `app/adapters/<name>.py` with a `BaseAdapter` subclass: `name`, `source` (`SourceSpec`), `fetch()` (returns `RawRecord`, uses `self.http`, `get_cursor`/`set_cursor`), and `normalize()` (returns `NormalizedBundle`).
+2. Register it in `app/adapters/registry.py`.
+3. Add the scope and URLs to `search_terms.yaml` or `sources.yaml`.
+4. Add fixtures and tests (normalization, pagination, idempotent reruns).
+5. For universities, an entry under `universities.sources` is usually sufficient; set `enabled: false` if terms are unclear.
 
-Vorher Terms, Attribution, Robots, Raten und Datenminimierung prüfen und mit Prüfdatum dokumentieren.
+First check terms, attribution, robots rules, rate limits, and data minimization, and document the review date.
 
 ## Tests
 
 ```powershell
-python -m pytest -m "not db and not live"            # sicherer Einstieg: ohne DB, ohne Netzwerk
-python -m unittest discover -s tests\finance -t .    # Finanzmodell isoliert
-python -m unittest discover -s tests\htgf -t .       # HTGF isoliert
-docker compose up -d; python -m pytest               # inkl. DB-Tests – nur mit entbehrlicher TEST_DATABASE_URL
-python -m pytest -m live                             # Smoke-Tests gegen echte Dienste
-cd frontend; npm run check                           # Frontend-Typecheck und Build
+python -m pytest -m "not db and not live"            # Safe entry point: no database, no network
+python -m unittest discover -s tests\finance -t .    # Isolated financial model tests
+python -m unittest discover -s tests\htgf -t .       # Isolated HTGF tests
+docker compose up -d; python -m pytest               # Includes DB tests; use only with disposable TEST_DATABASE_URL
+python -m pytest -m live                             # Smoke tests against real services
+cd frontend; npm run check                           # Frontend typecheck and build
 ```
 
-**Warnung:** DB-Tests löschen das `public`-Schema der unter `TEST_DATABASE_URL` konfigurierten Datenbank und migrieren neu. Niemals gegen Neon oder geteilte Datenbanken ausführen. DB-Tests werden übersprungen, wenn die Test-Datenbank nicht erreichbar ist.
+**Warning:** Database tests drop and recreate the `public` schema of the database configured by `TEST_DATABASE_URL`, then run migrations. Never run them against Neon or a shared database. Database tests are skipped if the test database is unavailable.
 
-## Bekannte Grenzen
+## Known limitations
 
-* **Hugging Face:** Lokale Live-Abrufe scheiterten zuletzt an der TLS-Zertifikatsprüfung (`unable to get local issuer certificate`) vor jeder HTTP-Antwort; Token, Tag-Formate (`de`, `language:de`) und Organisations-Endpunkte sind live noch nicht bestätigt. TLS-Prüfungen werden nicht abgeschaltet.
-* GitHub und arXiv haben keinen Länderfilter; eine Deutschland-Ausrichtung ergibt sich nur über OpenAlex und die deutschen Quellen.
-* OpenAlex ohne API-Key ist praktisch auf wenige Anfragen pro Tag begrenzt.
-* HTML-Quellen können sich ändern; Parser sind über Fixtures abgesichert.
-* Textregeln erkennen nur Erwähnungen; kein Adapter erzeugt `NEW_PITCH_PRESENTATION`.
-* Keine Collector-übergreifende Entity Resolution; keine Trendanalyse über Observations.
-* Finanzdaten sind nicht in Neon persistiert; es gibt keine Spenden-Kategorie und keine Felder für Beteiligungsquoten.
-* Finder-Pipeline: Neo4j und PostgreSQL teilen keine Transaktion (kein Exactly-once); kein Rollen-/Mandantenmodell; Ranking-Gewichtung nicht validiert; Modellkosten nicht vollständig bilanziert; `graphiti-core` nicht exakt gepinnt.
-* Live-Quellenausschnitte sind keine claim-genauen Evidenzspannen und müssen vor Investmententscheidungen menschlich geprüft werden.
+* **Hugging Face:** The latest local live requests failed during TLS certificate verification (`unable to get local issuer certificate`), before any HTTP response. The token, tag formats (`de`, `language:de`), and organization endpoints have not yet been confirmed live. TLS verification is not disabled.
+* GitHub and arXiv have no country filter; a German focus is available only through OpenAlex and the German sources.
+* Without an API key, OpenAlex is effectively limited to a small number of requests per day.
+* HTML sources can change; parsers are covered by fixtures.
+* Text rules detect mentions only; no adapter emits `NEW_PITCH_PRESENTATION`.
+* No entity resolution across collectors and no trend analysis over observations.
+* Financial data is not persisted in Neon; there is no donation category or fields for ownership percentages.
+* Finder pipeline: Neo4j and PostgreSQL do not share a transaction (no exactly-once guarantee); no roles/tenant model; ranking weights are unvalidated; model costs are not fully accounted for; `graphiti-core` is not pinned to an exact version.
+* Live source excerpts are not claim-level evidence spans and require human review before investment decisions.
 
-## Weitere Dokumentation
+## Further documentation
 
-* [AGENTS.md](AGENTS.md) – Produktkontext, Quellenbefunde und verbindliche Regeln für Änderungen
-* [docs/architecture.md](docs/architecture.md) – Finder-Architektur, Datenfluss, Konsistenz, Ranking, Sicherheit
-* [docs/frontend-contract.md](docs/frontend-contract.md) – API-Vertrag
-* [docs/phase2-signal-contract.md](docs/phase2-signal-contract.md) – Signal-Regeln und Evidenzgrenzen
-* [docs/phase2b4-llm-allowlist.md](docs/phase2b4-llm-allowlist.md) – LLM-Allowlist und Datenminimierung
-* [docs/financial-support-and-equity.md](docs/financial-support-and-equity.md) – Förderung und Equity-Bewertung
-* [docs/htgf-assessment.md](docs/htgf-assessment.md) – HTGF-Bewertung
-* [docs/knowledge-graph-handoff.md](docs/knowledge-graph-handoff.md) – Pilot-Knowledge-Graph und Finanzexport
-* [docs/startup-sourcing-ontology.ttl](docs/startup-sourcing-ontology.ttl) – Ontologie des Knowledge Graph
+* [AGENTS.md](AGENTS.md) – Product context, source findings, and required change guidelines
+* [docs/architecture.md](docs/architecture.md) – Finder architecture, data flow, consistency, ranking, security
+* [docs/frontend-contract.md](docs/frontend-contract.md) – API contract
+* [docs/phase2-signal-contract.md](docs/phase2-signal-contract.md) – Signal rules and evidence boundaries
+* [docs/phase2b4-llm-allowlist.md](docs/phase2b4-llm-allowlist.md) – LLM allowlist and data minimization
+* [docs/financial-support-and-equity.md](docs/financial-support-and-equity.md) – Grants and equity assessment
+* [docs/htgf-assessment.md](docs/htgf-assessment.md) – HTGF assessment
+* [docs/knowledge-graph-handoff.md](docs/knowledge-graph-handoff.md) – Pilot knowledge graph and finance export
+* [docs/startup-sourcing-ontology.ttl](docs/startup-sourcing-ontology.ttl) – Knowledge graph ontology
 * [frontend/README.md](frontend/README.md), [pitch/README.md](pitch/README.md)
