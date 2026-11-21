@@ -1,0 +1,529 @@
+{
+  "schema_version": "1.0",
+  "generated_at_utc": "2026-11-21T00:34:28.411157+00:00",
+  "database_revision": "0001",
+  "scope": "manual_pilot_research source; source-scoped entities only",
+  "identity_note": "Entities are source-scoped; matching names across sources are not merged.",
+  "entities": [
+    {
+      "id": "a8b79103-5993-4554-a9ea-00f96af6dea3",
+      "entity_type": "funding_program",
+      "canonical_name": "Future GreenTech Incubator",
+      "description": "Incubation program offering selected startups up to €300,000 non-dilutive funding.",
+      "properties": {
+        "pilot_case": "mvp_pilot_2026_11"
+      },
+      "source_record_ids": [
+        "8d8ff092-d3c6-4a0d-aba8-43520e39298a"
+      ]
+    },
+    {
+      "id": "521cb0a9-e334-4513-9efb-8fb7595c5892",
+      "entity_type": "funding_program",
+      "canonical_name": "StartupSecure KASTEL",
+      "description": "KIT incubator and program context for IT-security startups.",
+      "properties": {
+        "pilot_case": "mvp_pilot_2026_11"
+      },
+      "source_record_ids": [
+        "0031a916-e9a7-4881-97dd-0160476ab44c"
+      ]
+    },
+    {
+      "id": "da9cdb25-d6be-41a5-91c0-901eeecbf433",
+      "entity_type": "organization",
+      "canonical_name": "deepset GmbH",
+      "description": "Berlin-based company building enterprise AI software and the Haystack framework.",
+      "properties": {
+        "website": "https://www.deepset.ai/",
+        "pilot_case": "mvp_pilot_2026_11",
+        "identity_source_type": "official_company_imprint"
+      },
+      "source_record_ids": [
+        "40ad5105-740d-4c50-a423-793dd0f881e2",
+        "87f5d603-a676-4e84-aefc-24725292939b"
+      ]
+    },
+    {
+      "id": "fb0446b4-2ff7-47f2-9ef1-9eaa106a8fc3",
+      "entity_type": "organization",
+      "canonical_name": "Floronics",
+      "description": "Official site describes a pre-launch European deep-tech startup building photosynthesis-imaging technology; legal form not verified.",
+      "properties": {
+        "website": "https://floronics.eu/",
+        "pilot_case": "mvp_pilot_2026_11",
+        "identity_source_type": "official_company_site"
+      },
+      "source_record_ids": [
+        "38de0d82-7640-41f8-a5e1-e9f961698637",
+        "7e18fb89-c96e-4f5b-aaf1-2f54c604b7d5"
+      ]
+    },
+    {
+      "id": "273fb5d2-515d-4bad-a921-0a928611ece3",
+      "entity_type": "organization",
+      "canonical_name": "nodeline GmbH",
+      "description": "Company developing AI-assisted data integration products.",
+      "properties": {
+        "website": "https://nodeline.de/",
+        "pilot_case": "mvp_pilot_2026_11",
+        "identity_source_type": "official_company_imprint"
+      },
+      "source_record_ids": [
+        "8dd989b8-ec0d-4344-8010-0b8cbdd9cd2e",
+        "d67d7c6c-84d1-42a1-9a1a-346649265a74",
+        "f4cacb91-73eb-40ca-8b83-a221403d07f6"
+      ]
+    },
+    {
+      "id": "edfb4d6f-5e78-472e-885b-9d98e820c266",
+      "entity_type": "organization",
+      "canonical_name": "OnSite Solutions GmbH",
+      "description": "Digital building-operations company developing the BAIOSS platform.",
+      "properties": {
+        "website": "https://onsite-solutions.eu/",
+        "pilot_case": "mvp_pilot_2026_11",
+        "identity_source_type": "official_company_imprint"
+      },
+      "source_record_ids": [
+        "7e0188c0-9f61-438a-afe3-ac4f5df357dd",
+        "92781aff-b7ca-4407-bc0d-b319a5135307"
+      ]
+    },
+    {
+      "id": "f3415c03-9eba-40fb-897f-ad43c8ed7e1e",
+      "entity_type": "technology",
+      "canonical_name": "BAIOSS",
+      "description": "Platform for assessing and improving the digital readiness of buildings.",
+      "properties": {
+        "pilot_case": "mvp_pilot_2026_11"
+      },
+      "source_record_ids": [
+        "92781aff-b7ca-4407-bc0d-b319a5135307"
+      ]
+    },
+    {
+      "id": "12137572-6e64-4ff3-b8f6-bd09682e3676",
+      "entity_type": "technology",
+      "canonical_name": "flowAI",
+      "description": "AI-assisted product for translating business requirements into technical data processes.",
+      "properties": {
+        "pilot_case": "mvp_pilot_2026_11"
+      },
+      "source_record_ids": [
+        "d67d7c6c-84d1-42a1-9a1a-346649265a74"
+      ]
+    },
+    {
+      "id": "01fc420b-3a1f-45e9-80cb-43c06b3e415e",
+      "entity_type": "technology",
+      "canonical_name": "Haystack",
+      "description": "Open-source framework for building NLP back-end services.",
+      "properties": {
+        "pilot_case": "mvp_pilot_2026_11"
+      },
+      "source_record_ids": [
+        "87f5d603-a676-4e84-aefc-24725292939b"
+      ]
+    },
+    {
+      "id": "e1c8f3f9-1a7b-4db0-9fd8-818e75727544",
+      "entity_type": "technology",
+      "canonical_name": "SIFcam",
+      "description": "Field-deployable camera for solar-induced fluorescence and photosynthesis imaging.",
+      "properties": {
+        "pilot_case": "mvp_pilot_2026_11"
+      },
+      "source_record_ids": [
+        "38de0d82-7640-41f8-a5e1-e9f961698637"
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "d72841ad-7329-4b69-a792-3d1fb45877ad",
+      "source_entity_id": "edfb4d6f-5e78-472e-885b-9d98e820c266",
+      "target_entity_id": "f3415c03-9eba-40fb-897f-ad43c8ed7e1e",
+      "relationship_type": "DEVELOPED",
+      "verification_status": "source_asserted",
+      "confidence": null,
+      "properties": {
+        "relationship_context": "company describes BAIOSS as its platform"
+      },
+      "source_record_id": "92781aff-b7ca-4407-bc0d-b319a5135307",
+      "source_url": "https://www.kit-forge.de/de/magazin/grundung-des-monats-onsite-solutions/"
+    },
+    {
+      "id": "87e9b048-f452-475b-93fc-fa793e8b3de8",
+      "source_entity_id": "273fb5d2-515d-4bad-a921-0a928611ece3",
+      "target_entity_id": "12137572-6e64-4ff3-b8f6-bd09682e3676",
+      "relationship_type": "DEVELOPED",
+      "verification_status": "source_asserted",
+      "confidence": null,
+      "properties": {
+        "relationship_context": "KIT-FORGE profile identifies flowAI as the first product implementation"
+      },
+      "source_record_id": "d67d7c6c-84d1-42a1-9a1a-346649265a74",
+      "source_url": "https://www.kit-forge.de/de/magazin/grndung-des-monats-nodeline/"
+    },
+    {
+      "id": "0d3474ca-080d-4209-ab8f-5eb0fc69e1a7",
+      "source_entity_id": "fb0446b4-2ff7-47f2-9ef1-9eaa106a8fc3",
+      "target_entity_id": "e1c8f3f9-1a7b-4db0-9fd8-818e75727544",
+      "relationship_type": "DEVELOPED",
+      "verification_status": "source_asserted",
+      "confidence": null,
+      "properties": {
+        "relationship_context": "official site presents SIFcam as its product"
+      },
+      "source_record_id": "38de0d82-7640-41f8-a5e1-e9f961698637",
+      "source_url": "https://floronics.eu/"
+    },
+    {
+      "id": "fb65cf67-7020-46a7-a869-c20ab33f6cdc",
+      "source_entity_id": "da9cdb25-d6be-41a5-91c0-901eeecbf433",
+      "target_entity_id": "01fc420b-3a1f-45e9-80cb-43c06b3e415e",
+      "relationship_type": "DEVELOPED",
+      "verification_status": "source_asserted",
+      "confidence": null,
+      "properties": {
+        "relationship_context": "TechCrunch reports deepset released Haystack"
+      },
+      "source_record_id": "87f5d603-a676-4e84-aefc-24725292939b",
+      "source_url": "https://techcrunch.com/2023/08/09/deepset-secures-30m-to-expand-its-llm-focused-mlops-offerings/"
+    }
+  ],
+  "signals": [],
+  "observations": [],
+  "source_records": [
+    {
+      "id": "38de0d82-7640-41f8-a5e1-e9f961698637",
+      "source_name": "manual_pilot_research",
+      "external_id": "https://floronics.eu/",
+      "record_type": "pilot_evidence",
+      "canonical_url": "https://floronics.eu/",
+      "published_at": null,
+      "raw_payload": {
+        "title": "Floronics - See what others can’t",
+        "evidence": [
+          {
+            "field": "public_source_excerpt",
+            "quote": "The first field-deployable camera for real-time photosynthesis imaging under natural sunlight."
+          },
+          {
+            "field": "public_source_excerpt",
+            "quote": "European deep-tech · Pre-launch"
+          }
+        ],
+        "publisher": "Floronics",
+        "source_type": "official_company_site",
+        "published_on": null,
+        "retrieved_on": "2026-11-21"
+      },
+      "entity_ids": [
+        "e1c8f3f9-1a7b-4db0-9fd8-818e75727544",
+        "fb0446b4-2ff7-47f2-9ef1-9eaa106a8fc3"
+      ]
+    },
+    {
+      "id": "7e18fb89-c96e-4f5b-aaf1-2f54c604b7d5",
+      "source_name": "manual_pilot_research",
+      "external_id": "https://floronics.eu/about",
+      "record_type": "pilot_evidence",
+      "canonical_url": "https://floronics.eu/about",
+      "published_at": null,
+      "raw_payload": {
+        "title": "About us | Floronics",
+        "evidence": [
+          {
+            "field": "public_source_excerpt",
+            "quote": "Floronics is a young European deep-tech start-up, straight out of research."
+          },
+          {
+            "field": "public_source_excerpt",
+            "quote": "We build a drone camera for sun-induced fluorescence"
+          }
+        ],
+        "publisher": "Floronics",
+        "source_type": "official_company_site",
+        "published_on": null,
+        "retrieved_on": "2026-11-21"
+      },
+      "entity_ids": [
+        "fb0446b4-2ff7-47f2-9ef1-9eaa106a8fc3"
+      ]
+    },
+    {
+      "id": "f4cacb91-73eb-40ca-8b83-a221403d07f6",
+      "source_name": "manual_pilot_research",
+      "external_id": "https://nodeline.de/",
+      "record_type": "pilot_evidence",
+      "canonical_url": "https://nodeline.de/",
+      "published_at": null,
+      "raw_payload": {
+        "title": "nodeline",
+        "evidence": [
+          {
+            "field": "public_source_excerpt",
+            "quote": "nodeline ist ein deutscher Hersteller KI-gestützter Integrationslösungen."
+          }
+        ],
+        "publisher": "nodeline GmbH",
+        "source_type": "official_company_site",
+        "published_on": null,
+        "retrieved_on": "2026-11-21"
+      },
+      "entity_ids": [
+        "273fb5d2-515d-4bad-a921-0a928611ece3"
+      ]
+    },
+    {
+      "id": "8dd989b8-ec0d-4344-8010-0b8cbdd9cd2e",
+      "source_name": "manual_pilot_research",
+      "external_id": "https://nodeline.de/impressum/",
+      "record_type": "pilot_evidence",
+      "canonical_url": "https://nodeline.de/impressum/",
+      "published_at": null,
+      "raw_payload": {
+        "title": "Impressum",
+        "evidence": [
+          {
+            "field": "public_source_excerpt",
+            "quote": "nodeline GmbH"
+          },
+          {
+            "field": "public_source_excerpt",
+            "quote": "Amtsgericht Mannheim HRB 754387"
+          }
+        ],
+        "publisher": "nodeline GmbH",
+        "source_type": "official_company_imprint",
+        "published_on": null,
+        "retrieved_on": "2026-11-21"
+      },
+      "entity_ids": [
+        "273fb5d2-515d-4bad-a921-0a928611ece3"
+      ]
+    },
+    {
+      "id": "7e0188c0-9f61-438a-afe3-ac4f5df357dd",
+      "source_name": "manual_pilot_research",
+      "external_id": "https://onsite-solutions.eu/impressum/",
+      "record_type": "pilot_evidence",
+      "canonical_url": "https://onsite-solutions.eu/impressum/",
+      "published_at": null,
+      "raw_payload": {
+        "title": "Impressum",
+        "evidence": [
+          {
+            "field": "public_source_excerpt",
+            "quote": "OnSite Solutions GmbH"
+          },
+          {
+            "field": "public_source_excerpt",
+            "quote": "Sitz: Karlsruhe · Registergericht: Amtsgericht Mannheim · HRB 758315"
+          }
+        ],
+        "publisher": "OnSite Solutions GmbH",
+        "source_type": "official_company_imprint",
+        "published_on": null,
+        "retrieved_on": "2026-11-21"
+      },
+      "entity_ids": [
+        "edfb4d6f-5e78-472e-885b-9d98e820c266"
+      ]
+    },
+    {
+      "id": "87f5d603-a676-4e84-aefc-24725292939b",
+      "source_name": "manual_pilot_research",
+      "external_id": "https://techcrunch.com/2023/08/09/deepset-secures-30m-to-expand-its-llm-focused-mlops-offerings/",
+      "record_type": "pilot_evidence",
+      "canonical_url": "https://techcrunch.com/2023/08/09/deepset-secures-30m-to-expand-its-llm-focused-mlops-offerings/",
+      "published_at": null,
+      "raw_payload": {
+        "title": "Deepset secures $30M to expand its LLM-focused MLOps offerings",
+        "evidence": [
+          {
+            "field": "public_source_excerpt",
+            "quote": "it raised $30 million in a funding round led by Balderton Capital with participation from GV and Harpoon Ventures."
+          },
+          {
+            "field": "public_source_excerpt",
+            "quote": "released Haystack, an open source framework to build NLP back-end services"
+          }
+        ],
+        "publisher": "TechCrunch",
+        "source_type": "independent_media",
+        "published_on": "2023-08-09",
+        "retrieved_on": "2026-11-21"
+      },
+      "entity_ids": [
+        "01fc420b-3a1f-45e9-80cb-43c06b3e415e",
+        "da9cdb25-d6be-41a5-91c0-901eeecbf433"
+      ]
+    },
+    {
+      "id": "40ad5105-740d-4c50-a423-793dd0f881e2",
+      "source_name": "manual_pilot_research",
+      "external_id": "https://www.deepset.ai/imprint",
+      "record_type": "pilot_evidence",
+      "canonical_url": "https://www.deepset.ai/imprint",
+      "published_at": null,
+      "raw_payload": {
+        "title": "Imprint",
+        "evidence": [
+          {
+            "field": "public_source_excerpt",
+            "quote": "deepset GmbH"
+          },
+          {
+            "field": "public_source_excerpt",
+            "quote": "10115 Berlin, Germany"
+          },
+          {
+            "field": "public_source_excerpt",
+            "quote": "Handelsregister: HRB 197429 B"
+          }
+        ],
+        "publisher": "deepset GmbH",
+        "source_type": "official_company_imprint",
+        "published_on": "2024-08-09",
+        "retrieved_on": "2026-11-21"
+      },
+      "entity_ids": [
+        "da9cdb25-d6be-41a5-91c0-901eeecbf433"
+      ]
+    },
+    {
+      "id": "8d8ff092-d3c6-4a0d-aba8-43520e39298a",
+      "source_name": "manual_pilot_research",
+      "external_id": "https://www.futureforest.de/en/future-greentech-incubator",
+      "record_type": "pilot_evidence",
+      "canonical_url": "https://www.futureforest.de/en/future-greentech-incubator",
+      "published_at": null,
+      "raw_payload": {
+        "title": "Future Greentech Incubator",
+        "evidence": [
+          {
+            "field": "public_source_excerpt",
+            "quote": "Future GreenTech Incubator offers up to €300,000 non-dilutive funding for selected startups."
+          }
+        ],
+        "publisher": "Future Forest Initiative",
+        "source_type": "official_program_page",
+        "published_on": null,
+        "retrieved_on": "2026-11-21"
+      },
+      "entity_ids": [
+        "a8b79103-5993-4554-a9ea-00f96af6dea3"
+      ]
+    },
+    {
+      "id": "d67d7c6c-84d1-42a1-9a1a-346649265a74",
+      "source_name": "manual_pilot_research",
+      "external_id": "https://www.kit-forge.de/de/magazin/grndung-des-monats-nodeline/",
+      "record_type": "pilot_evidence",
+      "canonical_url": "https://www.kit-forge.de/de/magazin/grndung-des-monats-nodeline/",
+      "published_at": null,
+      "raw_payload": {
+        "title": "Gründung des Monats: nodeline",
+        "evidence": [
+          {
+            "field": "public_source_excerpt",
+            "quote": "Wir entwickeln KI-gestützte Software, die fachliche Anforderungen in technische Datenprozesse übersetzt."
+          },
+          {
+            "field": "public_source_excerpt",
+            "quote": "Mit der ersten Ausprägung von flowAI beginnen wir"
+          },
+          {
+            "field": "public_source_excerpt",
+            "quote": "Förderantrag im Programm StartupSecure eingereicht. Aktuell warten wir noch auf den Förderbescheid."
+          }
+        ],
+        "publisher": "KIT-FORGE",
+        "source_type": "university_incubator_article",
+        "published_on": "2026-08-21",
+        "retrieved_on": "2026-11-21"
+      },
+      "entity_ids": [
+        "12137572-6e64-4ff3-b8f6-bd09682e3676",
+        "273fb5d2-515d-4bad-a921-0a928611ece3"
+      ]
+    },
+    {
+      "id": "92781aff-b7ca-4407-bc0d-b319a5135307",
+      "source_name": "manual_pilot_research",
+      "external_id": "https://www.kit-forge.de/de/magazin/grundung-des-monats-onsite-solutions/",
+      "record_type": "pilot_evidence",
+      "canonical_url": "https://www.kit-forge.de/de/magazin/grundung-des-monats-onsite-solutions/",
+      "published_at": null,
+      "raw_payload": {
+        "title": "Gründung des Monats: OnSite Solutions",
+        "evidence": [
+          {
+            "field": "public_source_excerpt",
+            "quote": "Mit BAIOSS entwickeln wir eine Plattform, die Gebäudeeigentümer, Betreiber und Planer hilft, den digitalen Reifegrad eines Gebäudes zu verstehen und daraus konkrete Maßnahmen abzuleiten."
+          },
+          {
+            "field": "public_source_excerpt",
+            "quote": "Die Idee ist aus unserer gemeinsamen Arbeit am KIT entstanden."
+          },
+          {
+            "field": "public_source_excerpt",
+            "quote": "Unterstützung durch die KIT-Gründerschmiede"
+          },
+          {
+            "field": "public_source_excerpt",
+            "quote": "Wir befinden uns aktuell noch in der Förderung durch das EXIST Gründerstipendium."
+          }
+        ],
+        "publisher": "KIT-FORGE",
+        "source_type": "university_incubator_article",
+        "published_on": "2026-09-23",
+        "retrieved_on": "2026-11-21"
+      },
+      "entity_ids": [
+        "edfb4d6f-5e78-472e-885b-9d98e820c266",
+        "f3415c03-9eba-40fb-897f-ad43c8ed7e1e"
+      ]
+    },
+    {
+      "id": "0031a916-e9a7-4881-97dd-0160476ab44c",
+      "source_name": "manual_pilot_research",
+      "external_id": "https://www.kit-forge.de/de/netzwerk/startup-secure-kastel/",
+      "record_type": "pilot_evidence",
+      "canonical_url": "https://www.kit-forge.de/de/netzwerk/startup-secure-kastel/",
+      "published_at": null,
+      "raw_payload": {
+        "title": "Startup Secure Kastel",
+        "evidence": [
+          {
+            "field": "public_source_excerpt",
+            "quote": "StartupSecure KASTEL ist der KIT-Inkubator für Startups im Bereich IT-Sicherheit"
+          }
+        ],
+        "publisher": "KIT-FORGE",
+        "source_type": "official_program_page",
+        "published_on": null,
+        "retrieved_on": "2026-11-21"
+      },
+      "entity_ids": [
+        "521cb0a9-e334-4513-9efb-8fb7595c5892"
+      ]
+    }
+  ],
+  "pilot_company_entity_ids": {
+    "onsite": "edfb4d6f-5e78-472e-885b-9d98e820c266",
+    "nodeline": "273fb5d2-515d-4bad-a921-0a928611ece3",
+    "floronics": "fb0446b4-2ff7-47f2-9ef1-9eaa106a8fc3",
+    "deepset": "da9cdb25-d6be-41a5-91c0-901eeecbf433"
+  },
+  "counts": {
+    "entities": 10,
+    "relationships": 4,
+    "signals": 0,
+    "observations": 0,
+    "source_records": 11
+  }
+}
