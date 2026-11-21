@@ -1,0 +1,1 @@
+"""Isolated finance domain tests."""

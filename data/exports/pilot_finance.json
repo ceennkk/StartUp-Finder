@@ -1,0 +1,594 @@
+{
+  "schema_version": "1.0",
+  "generated_at_utc": "2026-11-21T00:37:33.739191+00:00",
+  "assessment_as_of": "2026-11-21",
+  "database_revision": "0001",
+  "candidate_id_semantics": "Finance candidate_id equals the actual pilot company Entity UUID; no Candidate table exists.",
+  "companies": [
+    {
+      "entity_id": "edfb4d6f-5e78-472e-885b-9d98e820c266",
+      "canonical_name": "OnSite Solutions GmbH",
+      "identity_source_record_ids": [
+        "7e0188c0-9f61-438a-afe3-ac4f5df357dd"
+      ],
+      "events": [
+        {
+          "schema_version": "1.0",
+          "event_id": "support_event:0787bd14fd709d6a462ba95db5f64c5ca00c6b5c0515b8367cb680284c2941ba",
+          "candidate_id": "edfb4d6f-5e78-472e-885b-9d98e820c266",
+          "category": "founder_stipend",
+          "scope": "program_participation",
+          "beneficiary": "Founding team; individual recipients not identified",
+          "applicant": "OnSite founding team",
+          "legal_recipient": null,
+          "funder": "EXIST-Gründerstipendium",
+          "amount": null,
+          "currency": null,
+          "amount_qualifier": null,
+          "instrument": null,
+          "program_or_project": "EXIST-Gründerstipendium",
+          "event_date": null,
+          "period_start": null,
+          "period_end": null,
+          "statuses": [
+            "unknown"
+          ],
+          "repayable": "unknown",
+          "dilutive": "unknown",
+          "provenance": {
+            "sources": [
+              {
+                "schema_version": "1.0",
+                "source_id": "source:5a559fcaa3ba33094af37943432c5a11f150010ae28b19dd38ad699972b76c2d",
+                "title": "Gründung des Monats: OnSite Solutions",
+                "url": "https://www.kit-forge.de/de/magazin/grundung-des-monats-onsite-solutions/",
+                "publisher": "KIT-FORGE",
+                "source_type": "university_incubator_article",
+                "policy_reference": null
+              }
+            ],
+            "documents": [
+              {
+                "schema_version": "1.0",
+                "document_id": "document:b4b6935a1d9841fa8750fb8257c0876fcb64736e21482a53084e24d5f9c3b06e",
+                "source_id": "source:5a559fcaa3ba33094af37943432c5a11f150010ae28b19dd38ad699972b76c2d",
+                "content_hash": "5f3e9321af1a9490d3a035a8f52c91cf8a2ce5580514a1fe7ae7a3bfa644e63a",
+                "published_on": "2026-09-23",
+                "retrieved_on": "2026-11-21",
+                "fields": {
+                  "excerpts": [
+                    "Wir befinden uns aktuell noch in der Förderung durch das EXIST Gründerstipendium."
+                  ]
+                }
+              }
+            ],
+            "extraction": {
+              "schema_version": "1.0",
+              "claims": [
+                {
+                  "schema_version": "1.0",
+                  "claim_id": "claim:0a3eef2b8d2bb61c44618373339900081b74699314d62d3eff9841141052b0c9",
+                  "candidate_id": "edfb4d6f-5e78-472e-885b-9d98e820c266",
+                  "claim_type": "support",
+                  "kind": "fact_candidate",
+                  "statement": "The KIT-FORGE interview reports that the team is currently supported through the EXIST-Gründerstipendium; it does not identify a company award amount or legal recipient.",
+                  "evidence_ids": [
+                    "evidence:0ac46f01c2f94b738eb14a01200a5dc5f0a2584fef619caadc05bb23fda426c5"
+                  ],
+                  "uncertainties": [
+                    "Award recipients and legal recipient are not specified; the source describes founder-team support, not company equity.",
+                    "The source does not disclose an amount."
+                  ],
+                  "conflict_ids": []
+                }
+              ],
+              "evidence": [
+                {
+                  "schema_version": "1.0",
+                  "evidence_id": "evidence:0ac46f01c2f94b738eb14a01200a5dc5f0a2584fef619caadc05bb23fda426c5",
+                  "document_id": "document:b4b6935a1d9841fa8750fb8257c0876fcb64736e21482a53084e24d5f9c3b06e",
+                  "field_path": "excerpts",
+                  "quote": "Wir befinden uns aktuell noch in der Förderung durch das EXIST Gründerstipendium."
+                }
+              ],
+              "conflicts": []
+            }
+          },
+          "uncertainties": [
+            "Award recipients and legal recipient are not specified; the source describes founder-team support, not company equity.",
+            "The source does not disclose an amount."
+          ]
+        }
+      ],
+      "event_source_record_ids": {
+        "support_event:0787bd14fd709d6a462ba95db5f64c5ca00c6b5c0515b8367cb680284c2941ba": [
+          "92781aff-b7ca-4407-bc0d-b319a5135307"
+        ]
+      },
+      "equity_findings": [],
+      "equity_assessment": {
+        "schema_version": "1.0",
+        "candidate_id": "edfb4d6f-5e78-472e-885b-9d98e820c266",
+        "as_of": "2026-11-21",
+        "status": "equity_status_unclear",
+        "finding_ids": [],
+        "stages": [],
+        "reasons": [
+          "No verified equity finding or sufficiently reviewed search coverage."
+        ]
+      },
+      "identity_and_finance_notes": [
+        "Official imprint confirms OnSite Solutions GmbH in Karlsruhe.",
+        "EXIST support is reported for the founding team, not as company equity; amount and legal recipient are not specified."
+      ]
+    },
+    {
+      "entity_id": "273fb5d2-515d-4bad-a921-0a928611ece3",
+      "canonical_name": "nodeline GmbH",
+      "identity_source_record_ids": [
+        "8dd989b8-ec0d-4344-8010-0b8cbdd9cd2e"
+      ],
+      "events": [
+        {
+          "schema_version": "1.0",
+          "event_id": "support_event:3996cbfc77f4f9e4f3ba3ce8f41e16a8e996e67039b0dc7b603457088d55d468",
+          "candidate_id": "273fb5d2-515d-4bad-a921-0a928611ece3",
+          "category": "public_grant",
+          "scope": "individual",
+          "beneficiary": null,
+          "applicant": "nodeline GmbH",
+          "legal_recipient": null,
+          "funder": "BMFTR (StartUpSecure program context)",
+          "amount": null,
+          "currency": null,
+          "amount_qualifier": null,
+          "instrument": null,
+          "program_or_project": "StartupSecure grant application; decision pending in the 2026-08-21 KIT-FORGE interview",
+          "event_date": null,
+          "period_start": null,
+          "period_end": null,
+          "statuses": [
+            "applied"
+          ],
+          "repayable": "unknown",
+          "dilutive": "unknown",
+          "provenance": {
+            "sources": [
+              {
+                "schema_version": "1.0",
+                "source_id": "source:32a3fa471171ddc27edb44e83476850999f3d470e5ad557de7cbb67159cc4045",
+                "title": "Gründung des Monats: nodeline",
+                "url": "https://www.kit-forge.de/de/magazin/grndung-des-monats-nodeline/",
+                "publisher": "KIT-FORGE",
+                "source_type": "university_incubator_article",
+                "policy_reference": null
+              },
+              {
+                "schema_version": "1.0",
+                "source_id": "source:8490d5f638fdf175a8ffdff93bfd1ecedf1e52e75243eb8e36ff062705da042d",
+                "title": "Startup Secure Kastel",
+                "url": "https://www.kit-forge.de/de/netzwerk/startup-secure-kastel/",
+                "publisher": "KIT-FORGE",
+                "source_type": "official_program_page",
+                "policy_reference": null
+              }
+            ],
+            "documents": [
+              {
+                "schema_version": "1.0",
+                "document_id": "document:1d553a2b52d4578a0f7e55749ab51c745dee020859b724256defe43cd7fb8054",
+                "source_id": "source:32a3fa471171ddc27edb44e83476850999f3d470e5ad557de7cbb67159cc4045",
+                "content_hash": "9f3512740d33f637f1880607c3e5a88da32970ba6cf12f625b2d909b7e0102c9",
+                "published_on": "2026-08-21",
+                "retrieved_on": "2026-11-21",
+                "fields": {
+                  "excerpts": [
+                    "Förderantrag im Programm StartupSecure eingereicht. Aktuell warten wir noch auf den Förderbescheid."
+                  ]
+                }
+              },
+              {
+                "schema_version": "1.0",
+                "document_id": "document:d91e8912ea0757b07e85474b3c80b3646ad083dc148917f21885ec806f67c5e6",
+                "source_id": "source:8490d5f638fdf175a8ffdff93bfd1ecedf1e52e75243eb8e36ff062705da042d",
+                "content_hash": "e23849796f98b2fc6415398d884d3ab247a5b12bd4ca578e9e3a4b471fecadaf",
+                "published_on": null,
+                "retrieved_on": "2026-11-21",
+                "fields": {
+                  "excerpts": [
+                    "StartupSecure KASTEL ist der KIT-Inkubator für Startups im Bereich IT-Sicherheit"
+                  ]
+                }
+              }
+            ],
+            "extraction": {
+              "schema_version": "1.0",
+              "claims": [
+                {
+                  "schema_version": "1.0",
+                  "claim_id": "claim:c0024f1bf28e160b1380909afe9c1cda97f42c7bb137d240a2a20a3f307fe200",
+                  "candidate_id": "273fb5d2-515d-4bad-a921-0a928611ece3",
+                  "claim_type": "support",
+                  "kind": "fact_candidate",
+                  "statement": "The KIT-FORGE interview reports a StartupSecure grant application awaiting decision; no award, contract, payment, or amount is reported.",
+                  "evidence_ids": [
+                    "evidence:d30675415292b9ae4463fcd8599b71372f1f632f4c08f26e1df687801c88afc4",
+                    "evidence:79e19aba57db30d9334989fa87357d173765a8faf2b62af1dc46b70afd5aeff3"
+                  ],
+                  "uncertainties": [
+                    "The application was pending; no grant award, contract, payment, or amount was reported.",
+                    "A grant application is not evidence of equity financing."
+                  ],
+                  "conflict_ids": []
+                }
+              ],
+              "evidence": [
+                {
+                  "schema_version": "1.0",
+                  "evidence_id": "evidence:d30675415292b9ae4463fcd8599b71372f1f632f4c08f26e1df687801c88afc4",
+                  "document_id": "document:1d553a2b52d4578a0f7e55749ab51c745dee020859b724256defe43cd7fb8054",
+                  "field_path": "excerpts",
+                  "quote": "Förderantrag im Programm StartupSecure eingereicht. Aktuell warten wir noch auf den Förderbescheid."
+                },
+                {
+                  "schema_version": "1.0",
+                  "evidence_id": "evidence:79e19aba57db30d9334989fa87357d173765a8faf2b62af1dc46b70afd5aeff3",
+                  "document_id": "document:d91e8912ea0757b07e85474b3c80b3646ad083dc148917f21885ec806f67c5e6",
+                  "field_path": "excerpts",
+                  "quote": "StartupSecure KASTEL ist der KIT-Inkubator für Startups im Bereich IT-Sicherheit"
+                }
+              ],
+              "conflicts": []
+            }
+          },
+          "uncertainties": [
+            "The application was pending; no grant award, contract, payment, or amount was reported.",
+            "A grant application is not evidence of equity financing."
+          ]
+        }
+      ],
+      "event_source_record_ids": {
+        "support_event:3996cbfc77f4f9e4f3ba3ce8f41e16a8e996e67039b0dc7b603457088d55d468": [
+          "d67d7c6c-84d1-42a1-9a1a-346649265a74",
+          "0031a916-e9a7-4881-97dd-0160476ab44c"
+        ]
+      },
+      "equity_findings": [],
+      "equity_assessment": {
+        "schema_version": "1.0",
+        "candidate_id": "273fb5d2-515d-4bad-a921-0a928611ece3",
+        "as_of": "2026-11-21",
+        "status": "equity_status_unclear",
+        "finding_ids": [],
+        "stages": [],
+        "reasons": [
+          "No verified equity finding or sufficiently reviewed search coverage."
+        ]
+      },
+      "identity_and_finance_notes": [
+        "Official imprint confirms nodeline GmbH.",
+        "The StartupSecure application was pending; the previously circulated EUR 798,682 is not recorded as an awarded nodeline grant."
+      ]
+    },
+    {
+      "entity_id": "fb0446b4-2ff7-47f2-9ef1-9eaa106a8fc3",
+      "canonical_name": "Floronics",
+      "identity_source_record_ids": [
+        "38de0d82-7640-41f8-a5e1-e9f961698637",
+        "7e18fb89-c96e-4f5b-aaf1-2f54c604b7d5"
+      ],
+      "events": [
+        {
+          "schema_version": "1.0",
+          "event_id": "support_event:82fb398b30e0fac54b655f95a43a1828c7b01730b7553ba45696997f5892e8b9",
+          "candidate_id": "fb0446b4-2ff7-47f2-9ef1-9eaa106a8fc3",
+          "category": "public_grant",
+          "scope": "program_offer",
+          "beneficiary": null,
+          "applicant": null,
+          "legal_recipient": null,
+          "funder": "Future GreenTech Incubator",
+          "amount": "300000",
+          "currency": "EUR",
+          "amount_qualifier": "up_to",
+          "instrument": null,
+          "program_or_project": "Future GreenTech Incubator public offer",
+          "event_date": null,
+          "period_start": null,
+          "period_end": null,
+          "statuses": [
+            "unknown"
+          ],
+          "repayable": "unknown",
+          "dilutive": "no",
+          "provenance": {
+            "sources": [
+              {
+                "schema_version": "1.0",
+                "source_id": "source:5ac202a746b8467450e868e4a628e8d3d09771319b66289842c49626affee526",
+                "title": "Future Greentech Incubator",
+                "url": "https://www.futureforest.de/en/future-greentech-incubator",
+                "publisher": "Future Forest Initiative",
+                "source_type": "official_program_page",
+                "policy_reference": null
+              }
+            ],
+            "documents": [
+              {
+                "schema_version": "1.0",
+                "document_id": "document:f635dff56852d8d04df1f9343475cc5e481c0eb4d86ee0544658867812823a8f",
+                "source_id": "source:5ac202a746b8467450e868e4a628e8d3d09771319b66289842c49626affee526",
+                "content_hash": "d2bf5105fd223071e9ddeed8740abe2c1d0a1726c8d1c1974448d7dcd8123b13",
+                "published_on": null,
+                "retrieved_on": "2026-11-21",
+                "fields": {
+                  "excerpts": [
+                    "Future GreenTech Incubator offers up to €300,000 non-dilutive funding for selected startups."
+                  ]
+                }
+              }
+            ],
+            "extraction": {
+              "schema_version": "1.0",
+              "claims": [
+                {
+                  "schema_version": "1.0",
+                  "claim_id": "claim:659ff0cd67b423c20f8ecc7c4baebc14cb687e6307ec7c2ec7c2ab9c283e4696",
+                  "candidate_id": "fb0446b4-2ff7-47f2-9ef1-9eaa106a8fc3",
+                  "claim_type": "support",
+                  "kind": "fact_candidate",
+                  "statement": "The program offers selected startups up to EUR 300,000 in non-dilutive funding; this does not establish that Floronics applied, was selected, or received funds.",
+                  "evidence_ids": [
+                    "evidence:5cb809bf98fa6ee606e805b49f318b6ee54dd2c91ae5a17530866151d7e0d5ab"
+                  ],
+                  "uncertainties": [
+                    "The offer applies to selected startups; no company-specific application or selection evidence was located.",
+                    "The brief's approximate EUR 300,000 initial-funding claim was not corroborated; no receipt is recorded.",
+                    "The legal form GmbH i.G. was not verified from an official legal notice."
+                  ],
+                  "conflict_ids": []
+                }
+              ],
+              "evidence": [
+                {
+                  "schema_version": "1.0",
+                  "evidence_id": "evidence:5cb809bf98fa6ee606e805b49f318b6ee54dd2c91ae5a17530866151d7e0d5ab",
+                  "document_id": "document:f635dff56852d8d04df1f9343475cc5e481c0eb4d86ee0544658867812823a8f",
+                  "field_path": "excerpts",
+                  "quote": "Future GreenTech Incubator offers up to €300,000 non-dilutive funding for selected startups."
+                }
+              ],
+              "conflicts": []
+            }
+          },
+          "uncertainties": [
+            "The offer applies to selected startups; no company-specific application or selection evidence was located.",
+            "The brief's approximate EUR 300,000 initial-funding claim was not corroborated; no receipt is recorded.",
+            "The legal form GmbH i.G. was not verified from an official legal notice."
+          ]
+        }
+      ],
+      "event_source_record_ids": {
+        "support_event:82fb398b30e0fac54b655f95a43a1828c7b01730b7553ba45696997f5892e8b9": [
+          "8d8ff092-d3c6-4a0d-aba8-43520e39298a"
+        ]
+      },
+      "equity_findings": [],
+      "equity_assessment": {
+        "schema_version": "1.0",
+        "candidate_id": "fb0446b4-2ff7-47f2-9ef1-9eaa106a8fc3",
+        "as_of": "2026-11-21",
+        "status": "equity_status_unclear",
+        "finding_ids": [],
+        "stages": [],
+        "reasons": [
+          "No verified equity finding or sufficiently reviewed search coverage."
+        ]
+      },
+      "identity_and_finance_notes": [
+        "Official site describes Floronics as pre-launch and identifies SIFcam; legal form was not verified.",
+        "The EUR 300,000 figure is a general selected-startup program offer, not a company-specific receipt.",
+        "No independent evidence of Floronics selection or participation in the Future GreenTech Incubator was located."
+      ]
+    },
+    {
+      "entity_id": "da9cdb25-d6be-41a5-91c0-901eeecbf433",
+      "canonical_name": "deepset GmbH",
+      "identity_source_record_ids": [
+        "40ad5105-740d-4c50-a423-793dd0f881e2"
+      ],
+      "events": [
+        {
+          "schema_version": "1.0",
+          "event_id": "support_event:a514fa7580755094b457cbd363ded1d70d27786d79704214e74ccd6fb68d0f57",
+          "candidate_id": "da9cdb25-d6be-41a5-91c0-901eeecbf433",
+          "category": "venture_capital",
+          "scope": "individual",
+          "beneficiary": "deepset GmbH",
+          "applicant": null,
+          "legal_recipient": null,
+          "funder": "Balderton Capital; GV; Harpoon Ventures",
+          "amount": "30000000",
+          "currency": "USD",
+          "amount_qualifier": "exact",
+          "instrument": null,
+          "program_or_project": "Funding round reported in 2023; round stage not specified in the retrieved report",
+          "event_date": null,
+          "period_start": null,
+          "period_end": null,
+          "statuses": [
+            "announced"
+          ],
+          "repayable": "unknown",
+          "dilutive": "unknown",
+          "provenance": {
+            "sources": [
+              {
+                "schema_version": "1.0",
+                "source_id": "source:bef878685e6345c9dda27a97db76ed527257d622f401bcb05487b689ed2edec5",
+                "title": "Deepset secures $30M to expand its LLM-focused MLOps offerings",
+                "url": "https://techcrunch.com/2023/08/09/deepset-secures-30m-to-expand-its-llm-focused-mlops-offerings/",
+                "publisher": "TechCrunch",
+                "source_type": "independent_media",
+                "policy_reference": null
+              }
+            ],
+            "documents": [
+              {
+                "schema_version": "1.0",
+                "document_id": "document:acd2e81569212eeab06a725362d5b76e0fb50fdd7496fc90a12c935fecdcf2bf",
+                "source_id": "source:bef878685e6345c9dda27a97db76ed527257d622f401bcb05487b689ed2edec5",
+                "content_hash": "6ef69bd58569a556b59ceca58bd7e6af5f80b234e9e639dabc942cd09201551e",
+                "published_on": "2023-08-09",
+                "retrieved_on": "2026-11-21",
+                "fields": {
+                  "excerpts": [
+                    "it raised $30 million in a funding round led by Balderton Capital with participation from GV and Harpoon Ventures."
+                  ]
+                }
+              }
+            ],
+            "extraction": {
+              "schema_version": "1.0",
+              "claims": [
+                {
+                  "schema_version": "1.0",
+                  "claim_id": "claim:430610919529058311335407e4358857b90dba03f6dfa4aef70b4e10fd15f8d4",
+                  "candidate_id": "da9cdb25-d6be-41a5-91c0-901eeecbf433",
+                  "claim_type": "support",
+                  "kind": "fact_candidate",
+                  "statement": "TechCrunch reported that deepset raised USD 30 million in a funding round led by Balderton Capital with GV and Harpoon Ventures participating; instrument and equity terms are not specified.",
+                  "evidence_ids": [
+                    "evidence:afff91341d155da16ae446a94a5f7949603ec57cbe0d9d5f9a9c5dd86ce4e6dc"
+                  ],
+                  "uncertainties": [
+                    "The report does not specify financing instrument, share terms, or completion details.",
+                    "No human review is recorded; equity status remains unclear."
+                  ],
+                  "conflict_ids": []
+                }
+              ],
+              "evidence": [
+                {
+                  "schema_version": "1.0",
+                  "evidence_id": "evidence:afff91341d155da16ae446a94a5f7949603ec57cbe0d9d5f9a9c5dd86ce4e6dc",
+                  "document_id": "document:acd2e81569212eeab06a725362d5b76e0fb50fdd7496fc90a12c935fecdcf2bf",
+                  "field_path": "excerpts",
+                  "quote": "it raised $30 million in a funding round led by Balderton Capital with participation from GV and Harpoon Ventures."
+                }
+              ],
+              "conflicts": []
+            }
+          },
+          "uncertainties": [
+            "The report does not specify financing instrument, share terms, or completion details.",
+            "No human review is recorded; equity status remains unclear."
+          ]
+        }
+      ],
+      "event_source_record_ids": {
+        "support_event:a514fa7580755094b457cbd363ded1d70d27786d79704214e74ccd6fb68d0f57": [
+          "87f5d603-a676-4e84-aefc-24725292939b"
+        ]
+      },
+      "equity_findings": [
+        {
+          "finding_id": "equity_finding:5d2f089ff1961ef4e9c6a3344979a4306ce10c593df99cfddd38fd507739ea1f",
+          "candidate_id": "da9cdb25-d6be-41a5-91c0-901eeecbf433",
+          "stage": "unclear",
+          "provenance": {
+            "sources": [
+              {
+                "schema_version": "1.0",
+                "source_id": "source:bef878685e6345c9dda27a97db76ed527257d622f401bcb05487b689ed2edec5",
+                "title": "Deepset secures $30M to expand its LLM-focused MLOps offerings",
+                "url": "https://techcrunch.com/2023/08/09/deepset-secures-30m-to-expand-its-llm-focused-mlops-offerings/",
+                "publisher": "TechCrunch",
+                "source_type": "independent_media",
+                "policy_reference": null
+              }
+            ],
+            "documents": [
+              {
+                "schema_version": "1.0",
+                "document_id": "document:acd2e81569212eeab06a725362d5b76e0fb50fdd7496fc90a12c935fecdcf2bf",
+                "source_id": "source:bef878685e6345c9dda27a97db76ed527257d622f401bcb05487b689ed2edec5",
+                "content_hash": "6ef69bd58569a556b59ceca58bd7e6af5f80b234e9e639dabc942cd09201551e",
+                "published_on": "2023-08-09",
+                "retrieved_on": "2026-11-21",
+                "fields": {
+                  "excerpts": [
+                    "it raised $30 million in a funding round led by Balderton Capital with participation from GV and Harpoon Ventures."
+                  ]
+                }
+              }
+            ],
+            "extraction": {
+              "schema_version": "1.0",
+              "claims": [
+                {
+                  "schema_version": "1.0",
+                  "claim_id": "claim:f78e87b5d4664b2a3b0e7a8d32db524480cefd3bfc99aefe28689bd02462df15",
+                  "candidate_id": "da9cdb25-d6be-41a5-91c0-901eeecbf433",
+                  "claim_type": "external_equity",
+                  "kind": "hypothesis",
+                  "statement": "The reported USD 30 million funding round may represent external equity; confirm instrument and closing terms through human review.",
+                  "evidence_ids": [
+                    "evidence:afff91341d155da16ae446a94a5f7949603ec57cbe0d9d5f9a9c5dd86ce4e6dc"
+                  ],
+                  "uncertainties": [
+                    "The source does not provide equity-instrument or share-allocation details.",
+                    "No human review or primary issuer/investor confirmation is recorded."
+                  ],
+                  "conflict_ids": []
+                }
+              ],
+              "evidence": [
+                {
+                  "schema_version": "1.0",
+                  "evidence_id": "evidence:afff91341d155da16ae446a94a5f7949603ec57cbe0d9d5f9a9c5dd86ce4e6dc",
+                  "document_id": "document:acd2e81569212eeab06a725362d5b76e0fb50fdd7496fc90a12c935fecdcf2bf",
+                  "field_path": "excerpts",
+                  "quote": "it raised $30 million in a funding round led by Balderton Capital with participation from GV and Harpoon Ventures."
+                }
+              ],
+              "conflicts": []
+            }
+          },
+          "verification_status": "unverified",
+          "review": null
+        }
+      ],
+      "equity_assessment": {
+        "schema_version": "1.0",
+        "candidate_id": "da9cdb25-d6be-41a5-91c0-901eeecbf433",
+        "as_of": "2026-11-21",
+        "status": "equity_status_unclear",
+        "finding_ids": [],
+        "stages": [],
+        "reasons": [
+          "No verified equity finding or sufficiently reviewed search coverage."
+        ]
+      },
+      "identity_and_finance_notes": [
+        "Official imprint confirms deepset GmbH in Berlin.",
+        "TechCrunch reports a USD 30 million funding round in 2023; instrument and equity status remain unverified without human review.",
+        "No pre-first-round classification is present or assigned."
+      ]
+    }
+  ],
+  "source_record_ids_by_key": {
+    "onsite_article": "92781aff-b7ca-4407-bc0d-b319a5135307",
+    "onsite_imprint": "7e0188c0-9f61-438a-afe3-ac4f5df357dd",
+    "nodeline_article": "d67d7c6c-84d1-42a1-9a1a-346649265a74",
+    "nodeline_home": "f4cacb91-73eb-40ca-8b83-a221403d07f6",
+    "nodeline_imprint": "8dd989b8-ec0d-4344-8010-0b8cbdd9cd2e",
+    "startupsecure_program": "0031a916-e9a7-4881-97dd-0160476ab44c",
+    "floronics_home": "38de0d82-7640-41f8-a5e1-e9f961698637",
+    "floronics_about": "7e18fb89-c96e-4f5b-aaf1-2f54c604b7d5",
+    "future_greentech_program": "8d8ff092-d3c6-4a0d-aba8-43520e39298a",
+    "deepset_imprint": "40ad5105-740d-4c50-a423-793dd0f881e2",
+    "deepset_techcrunch": "87f5d603-a676-4e84-aefc-24725292939b"
+  },
+  "equity_policy_note": "Grants and program offers are not equity. No reviewer identity was supplied, so none of the four assessments is equity_confirmed or no_public_equity_round_found."
+}
