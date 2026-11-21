@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at_utc": "2026-11-21T00:34:28.412005+00:00",
+  "generated_at_utc": "2026-11-21T00:37:33.739191+00:00",
   "assessment_as_of": "2026-11-21",
   "database_revision": "0001",
   "candidate_id_semantics": "Finance candidate_id equals the actual pilot company Entity UUID; no Candidate table exists.",
@@ -50,16 +50,13 @@
             "documents": [
               {
                 "schema_version": "1.0",
-                "document_id": "document:0900a45f5bafd891c3bbeaba35ee9a12d756dc267f798071cd519f5f3510bafc",
+                "document_id": "document:b4b6935a1d9841fa8750fb8257c0876fcb64736e21482a53084e24d5f9c3b06e",
                 "source_id": "source:5a559fcaa3ba33094af37943432c5a11f150010ae28b19dd38ad699972b76c2d",
-                "content_hash": "9e749cc600531ba36a5bed3e80c578d00023f4198c923504f72c1dc8850fb731",
+                "content_hash": "5f3e9321af1a9490d3a035a8f52c91cf8a2ce5580514a1fe7ae7a3bfa644e63a",
                 "published_on": "2026-09-23",
                 "retrieved_on": "2026-11-21",
                 "fields": {
                   "excerpts": [
-                    "Mit BAIOSS entwickeln wir eine Plattform, die Gebäudeeigentümer, Betreiber und Planer hilft, den digitalen Reifegrad eines Gebäudes zu verstehen und daraus konkrete Maßnahmen abzuleiten.",
-                    "Die Idee ist aus unserer gemeinsamen Arbeit am KIT entstanden.",
-                    "Unterstützung durch die KIT-Gründerschmiede",
                     "Wir befinden uns aktuell noch in der Förderung durch das EXIST Gründerstipendium."
                   ]
                 }
@@ -70,16 +67,13 @@
               "claims": [
                 {
                   "schema_version": "1.0",
-                  "claim_id": "claim:d8775ad89e68398be496fe68e3a1fa4a16f325d13989b7963901633a6a5ff94f",
+                  "claim_id": "claim:0a3eef2b8d2bb61c44618373339900081b74699314d62d3eff9841141052b0c9",
                   "candidate_id": "edfb4d6f-5e78-472e-885b-9d98e820c266",
                   "claim_type": "support",
                   "kind": "fact_candidate",
                   "statement": "The KIT-FORGE interview reports that the team is currently supported through the EXIST-Gründerstipendium; it does not identify a company award amount or legal recipient.",
                   "evidence_ids": [
-                    "evidence:ee39bf01e9548e2a541a91d044b0ee03f2a39800209c68b53b506e931752b426",
-                    "evidence:d2d1c5170d17121ffa7c9d78fa92b71bc4cf63b50a0b8a8024c4bf25858a4de7",
-                    "evidence:38cd155ad66ff98f555b613d360a9fed2471576cb90431d6dfedd0d150c9715e",
-                    "evidence:10f55b83e7c07affe64a85f02911e8934e1955ec850b67af322ef195e2704fda"
+                    "evidence:0ac46f01c2f94b738eb14a01200a5dc5f0a2584fef619caadc05bb23fda426c5"
                   ],
                   "uncertainties": [
                     "Award recipients and legal recipient are not specified; the source describes founder-team support, not company equity.",
@@ -91,29 +85,8 @@
               "evidence": [
                 {
                   "schema_version": "1.0",
-                  "evidence_id": "evidence:ee39bf01e9548e2a541a91d044b0ee03f2a39800209c68b53b506e931752b426",
-                  "document_id": "document:0900a45f5bafd891c3bbeaba35ee9a12d756dc267f798071cd519f5f3510bafc",
-                  "field_path": "excerpts",
-                  "quote": "Mit BAIOSS entwickeln wir eine Plattform, die Gebäudeeigentümer, Betreiber und Planer hilft, den digitalen Reifegrad eines Gebäudes zu verstehen und daraus konkrete Maßnahmen abzuleiten."
-                },
-                {
-                  "schema_version": "1.0",
-                  "evidence_id": "evidence:d2d1c5170d17121ffa7c9d78fa92b71bc4cf63b50a0b8a8024c4bf25858a4de7",
-                  "document_id": "document:0900a45f5bafd891c3bbeaba35ee9a12d756dc267f798071cd519f5f3510bafc",
-                  "field_path": "excerpts",
-                  "quote": "Die Idee ist aus unserer gemeinsamen Arbeit am KIT entstanden."
-                },
-                {
-                  "schema_version": "1.0",
-                  "evidence_id": "evidence:38cd155ad66ff98f555b613d360a9fed2471576cb90431d6dfedd0d150c9715e",
-                  "document_id": "document:0900a45f5bafd891c3bbeaba35ee9a12d756dc267f798071cd519f5f3510bafc",
-                  "field_path": "excerpts",
-                  "quote": "Unterstützung durch die KIT-Gründerschmiede"
-                },
-                {
-                  "schema_version": "1.0",
-                  "evidence_id": "evidence:10f55b83e7c07affe64a85f02911e8934e1955ec850b67af322ef195e2704fda",
-                  "document_id": "document:0900a45f5bafd891c3bbeaba35ee9a12d756dc267f798071cd519f5f3510bafc",
+                  "evidence_id": "evidence:0ac46f01c2f94b738eb14a01200a5dc5f0a2584fef619caadc05bb23fda426c5",
+                  "document_id": "document:b4b6935a1d9841fa8750fb8257c0876fcb64736e21482a53084e24d5f9c3b06e",
                   "field_path": "excerpts",
                   "quote": "Wir befinden uns aktuell noch in der Förderung durch das EXIST Gründerstipendium."
                 }
@@ -203,15 +176,13 @@
             "documents": [
               {
                 "schema_version": "1.0",
-                "document_id": "document:9f5267fbedb60986872f2e466a3a0c62d26fe679bfb5994fd9b6d49ab23bea4f",
+                "document_id": "document:1d553a2b52d4578a0f7e55749ab51c745dee020859b724256defe43cd7fb8054",
                 "source_id": "source:32a3fa471171ddc27edb44e83476850999f3d470e5ad557de7cbb67159cc4045",
-                "content_hash": "df906ac023ec7e94365862ffe7020aad54e633dace8c5561b94528040c5ac70b",
+                "content_hash": "9f3512740d33f637f1880607c3e5a88da32970ba6cf12f625b2d909b7e0102c9",
                 "published_on": "2026-08-21",
                 "retrieved_on": "2026-11-21",
                 "fields": {
                   "excerpts": [
-                    "Wir entwickeln KI-gestützte Software, die fachliche Anforderungen in technische Datenprozesse übersetzt.",
-                    "Mit der ersten Ausprägung von flowAI beginnen wir",
                     "Förderantrag im Programm StartupSecure eingereicht. Aktuell warten wir noch auf den Förderbescheid."
                   ]
                 }
@@ -235,15 +206,13 @@
               "claims": [
                 {
                   "schema_version": "1.0",
-                  "claim_id": "claim:8f1275fb841f855c994ea387acb214f926f468db69f6db8a3e188d73f99c9ba6",
+                  "claim_id": "claim:c0024f1bf28e160b1380909afe9c1cda97f42c7bb137d240a2a20a3f307fe200",
                   "candidate_id": "273fb5d2-515d-4bad-a921-0a928611ece3",
                   "claim_type": "support",
                   "kind": "fact_candidate",
                   "statement": "The KIT-FORGE interview reports a StartupSecure grant application awaiting decision; no award, contract, payment, or amount is reported.",
                   "evidence_ids": [
-                    "evidence:f480e5e13e8f8fd6830e54946892b9f0891add0c305912bcba27d2a259e3ce41",
-                    "evidence:f12176a195cbb0b784fc0b4496fa03d891ac688367beb566aed4ac3873b540a0",
-                    "evidence:db92403d987169960ed041b682ff1b14dc72f6ab2ff116b6a91dd84c3d8799de",
+                    "evidence:d30675415292b9ae4463fcd8599b71372f1f632f4c08f26e1df687801c88afc4",
                     "evidence:79e19aba57db30d9334989fa87357d173765a8faf2b62af1dc46b70afd5aeff3"
                   ],
                   "uncertainties": [
@@ -256,22 +225,8 @@
               "evidence": [
                 {
                   "schema_version": "1.0",
-                  "evidence_id": "evidence:f480e5e13e8f8fd6830e54946892b9f0891add0c305912bcba27d2a259e3ce41",
-                  "document_id": "document:9f5267fbedb60986872f2e466a3a0c62d26fe679bfb5994fd9b6d49ab23bea4f",
-                  "field_path": "excerpts",
-                  "quote": "Wir entwickeln KI-gestützte Software, die fachliche Anforderungen in technische Datenprozesse übersetzt."
-                },
-                {
-                  "schema_version": "1.0",
-                  "evidence_id": "evidence:f12176a195cbb0b784fc0b4496fa03d891ac688367beb566aed4ac3873b540a0",
-                  "document_id": "document:9f5267fbedb60986872f2e466a3a0c62d26fe679bfb5994fd9b6d49ab23bea4f",
-                  "field_path": "excerpts",
-                  "quote": "Mit der ersten Ausprägung von flowAI beginnen wir"
-                },
-                {
-                  "schema_version": "1.0",
-                  "evidence_id": "evidence:db92403d987169960ed041b682ff1b14dc72f6ab2ff116b6a91dd84c3d8799de",
-                  "document_id": "document:9f5267fbedb60986872f2e466a3a0c62d26fe679bfb5994fd9b6d49ab23bea4f",
+                  "evidence_id": "evidence:d30675415292b9ae4463fcd8599b71372f1f632f4c08f26e1df687801c88afc4",
+                  "document_id": "document:1d553a2b52d4578a0f7e55749ab51c745dee020859b724256defe43cd7fb8054",
                   "field_path": "excerpts",
                   "quote": "Förderantrag im Programm StartupSecure eingereicht. Aktuell warten wir noch auf den Förderbescheid."
                 },
@@ -481,15 +436,14 @@
             "documents": [
               {
                 "schema_version": "1.0",
-                "document_id": "document:4e364e922694920b8258c47346278650ae5ff23b377e936c9d104d2ade4d3c95",
+                "document_id": "document:acd2e81569212eeab06a725362d5b76e0fb50fdd7496fc90a12c935fecdcf2bf",
                 "source_id": "source:bef878685e6345c9dda27a97db76ed527257d622f401bcb05487b689ed2edec5",
-                "content_hash": "38bc2042a20868e5085acdb73288889ce8448597b54ea3fb47c01119e121a50f",
+                "content_hash": "6ef69bd58569a556b59ceca58bd7e6af5f80b234e9e639dabc942cd09201551e",
                 "published_on": "2023-08-09",
                 "retrieved_on": "2026-11-21",
                 "fields": {
                   "excerpts": [
-                    "it raised $30 million in a funding round led by Balderton Capital with participation from GV and Harpoon Ventures.",
-                    "released Haystack, an open source framework to build NLP back-end services"
+                    "it raised $30 million in a funding round led by Balderton Capital with participation from GV and Harpoon Ventures."
                   ]
                 }
               }
@@ -499,14 +453,13 @@
               "claims": [
                 {
                   "schema_version": "1.0",
-                  "claim_id": "claim:2c26681a92f20000791dd117b97ee91ae4ccbe696b6168276f32ae4af9a41391",
+                  "claim_id": "claim:430610919529058311335407e4358857b90dba03f6dfa4aef70b4e10fd15f8d4",
                   "candidate_id": "da9cdb25-d6be-41a5-91c0-901eeecbf433",
                   "claim_type": "support",
                   "kind": "fact_candidate",
                   "statement": "TechCrunch reported that deepset raised USD 30 million in a funding round led by Balderton Capital with GV and Harpoon Ventures participating; instrument and equity terms are not specified.",
                   "evidence_ids": [
-                    "evidence:841f3a30cec8ae0c46011f254613df0454ff6b4e2d4c1bd0e1d2557f81a2b013",
-                    "evidence:e2f73cf208d9443b75581b4e089b7c01d6cc047c20cfe81506b51c6155c7ef03"
+                    "evidence:afff91341d155da16ae446a94a5f7949603ec57cbe0d9d5f9a9c5dd86ce4e6dc"
                   ],
                   "uncertainties": [
                     "The report does not specify financing instrument, share terms, or completion details.",
@@ -518,17 +471,10 @@
               "evidence": [
                 {
                   "schema_version": "1.0",
-                  "evidence_id": "evidence:841f3a30cec8ae0c46011f254613df0454ff6b4e2d4c1bd0e1d2557f81a2b013",
-                  "document_id": "document:4e364e922694920b8258c47346278650ae5ff23b377e936c9d104d2ade4d3c95",
+                  "evidence_id": "evidence:afff91341d155da16ae446a94a5f7949603ec57cbe0d9d5f9a9c5dd86ce4e6dc",
+                  "document_id": "document:acd2e81569212eeab06a725362d5b76e0fb50fdd7496fc90a12c935fecdcf2bf",
                   "field_path": "excerpts",
                   "quote": "it raised $30 million in a funding round led by Balderton Capital with participation from GV and Harpoon Ventures."
-                },
-                {
-                  "schema_version": "1.0",
-                  "evidence_id": "evidence:e2f73cf208d9443b75581b4e089b7c01d6cc047c20cfe81506b51c6155c7ef03",
-                  "document_id": "document:4e364e922694920b8258c47346278650ae5ff23b377e936c9d104d2ade4d3c95",
-                  "field_path": "excerpts",
-                  "quote": "released Haystack, an open source framework to build NLP back-end services"
                 }
               ],
               "conflicts": []
@@ -565,15 +511,14 @@
             "documents": [
               {
                 "schema_version": "1.0",
-                "document_id": "document:4e364e922694920b8258c47346278650ae5ff23b377e936c9d104d2ade4d3c95",
+                "document_id": "document:acd2e81569212eeab06a725362d5b76e0fb50fdd7496fc90a12c935fecdcf2bf",
                 "source_id": "source:bef878685e6345c9dda27a97db76ed527257d622f401bcb05487b689ed2edec5",
-                "content_hash": "38bc2042a20868e5085acdb73288889ce8448597b54ea3fb47c01119e121a50f",
+                "content_hash": "6ef69bd58569a556b59ceca58bd7e6af5f80b234e9e639dabc942cd09201551e",
                 "published_on": "2023-08-09",
                 "retrieved_on": "2026-11-21",
                 "fields": {
                   "excerpts": [
-                    "it raised $30 million in a funding round led by Balderton Capital with participation from GV and Harpoon Ventures.",
-                    "released Haystack, an open source framework to build NLP back-end services"
+                    "it raised $30 million in a funding round led by Balderton Capital with participation from GV and Harpoon Ventures."
                   ]
                 }
               }
@@ -583,14 +528,13 @@
               "claims": [
                 {
                   "schema_version": "1.0",
-                  "claim_id": "claim:42681c9f49de45f33a0d88b7fc5c0fdc80f7f2efbed08a6d8947ddbb46c2e8a9",
+                  "claim_id": "claim:f78e87b5d4664b2a3b0e7a8d32db524480cefd3bfc99aefe28689bd02462df15",
                   "candidate_id": "da9cdb25-d6be-41a5-91c0-901eeecbf433",
                   "claim_type": "external_equity",
                   "kind": "hypothesis",
                   "statement": "The reported USD 30 million funding round may represent external equity; confirm instrument and closing terms through human review.",
                   "evidence_ids": [
-                    "evidence:841f3a30cec8ae0c46011f254613df0454ff6b4e2d4c1bd0e1d2557f81a2b013",
-                    "evidence:e2f73cf208d9443b75581b4e089b7c01d6cc047c20cfe81506b51c6155c7ef03"
+                    "evidence:afff91341d155da16ae446a94a5f7949603ec57cbe0d9d5f9a9c5dd86ce4e6dc"
                   ],
                   "uncertainties": [
                     "The source does not provide equity-instrument or share-allocation details.",
@@ -602,17 +546,10 @@
               "evidence": [
                 {
                   "schema_version": "1.0",
-                  "evidence_id": "evidence:841f3a30cec8ae0c46011f254613df0454ff6b4e2d4c1bd0e1d2557f81a2b013",
-                  "document_id": "document:4e364e922694920b8258c47346278650ae5ff23b377e936c9d104d2ade4d3c95",
+                  "evidence_id": "evidence:afff91341d155da16ae446a94a5f7949603ec57cbe0d9d5f9a9c5dd86ce4e6dc",
+                  "document_id": "document:acd2e81569212eeab06a725362d5b76e0fb50fdd7496fc90a12c935fecdcf2bf",
                   "field_path": "excerpts",
                   "quote": "it raised $30 million in a funding round led by Balderton Capital with participation from GV and Harpoon Ventures."
-                },
-                {
-                  "schema_version": "1.0",
-                  "evidence_id": "evidence:e2f73cf208d9443b75581b4e089b7c01d6cc047c20cfe81506b51c6155c7ef03",
-                  "document_id": "document:4e364e922694920b8258c47346278650ae5ff23b377e936c9d104d2ade4d3c95",
-                  "field_path": "excerpts",
-                  "quote": "released Haystack, an open source framework to build NLP back-end services"
                 }
               ],
               "conflicts": []

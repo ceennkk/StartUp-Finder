@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at_utc": "2026-11-21T00:34:28.411157+00:00",
+  "generated_at_utc": "2026-11-21T00:37:33.738368+00:00",
   "database_revision": "0001",
   "scope": "manual_pilot_research source; source-scoped entities only",
   "identity_note": "Entities are source-scoped; matching names across sources are not merged.",
@@ -435,6 +435,10 @@
           {
             "field": "public_source_excerpt",
             "quote": "Mit der ersten Ausprägung von flowAI beginnen wir"
+          },
+          {
+            "field": "public_source_excerpt",
+            "quote": "Die Idee entstand aus unserer langjährigen gemeinsamen Arbeit am Fraunhofer IOSB."
           },
           {
             "field": "public_source_excerpt",
