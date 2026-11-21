@@ -48,12 +48,85 @@ export interface Assessment {
   evidence_ids: string[];
   criteria: Criterion[];
   score?: number | null;
+  criteria_score?: number | null;
+  equity_status?: "equity_confirmed" | "equity_status_unclear" | "no_public_equity_round_found" | null;
+  eligibility_status?: "htgf_eligible" | "htgf_not_eligible" | "htgf_unclear" | "pre_company_candidate" | null;
+  eligibility_effect?: "requirements_met" | "requirements_not_met" | "eligibility_unverified" | "company_not_registered" | string;
+  funding_effect?: string;
+  funding_adjustment?: number | null;
   scored_criteria?: number;
   model?: string;
   profile_version?: number;
   criteria_version?: string | number;
   created_at?: string;
   profile_snapshot?: unknown;
+}
+
+export interface FinancialSupportEvent {
+  event_id: string;
+  candidate_id: string;
+  category: string;
+  scope: string;
+  funder?: string | null;
+  program_or_project?: string | null;
+  amount?: string | number | null;
+  currency?: string | null;
+  statuses?: string[];
+  repayable?: "yes" | "no" | "unknown";
+  dilutive?: "yes" | "no" | "unknown";
+}
+
+export interface FinanceSnapshot {
+  id: string;
+  candidate_id: string;
+  version: number;
+  as_of: string;
+  events: FinancialSupportEvent[];
+  equity_assessment?: {
+    status: "equity_confirmed" | "equity_status_unclear" | "no_public_equity_round_found";
+    finding_ids?: string[];
+    reasons?: string[];
+  };
+  reviewers?: string[];
+  created_at: string;
+}
+
+export interface EligibilityCriterionEvidence {
+  title: string;
+  url: string;
+  publisher: string;
+  claim: string;
+  source_type: string;
+  reliability: "high" | "medium" | "low";
+}
+
+export interface EligibilityCriterion {
+  rationale: string;
+  uncertainties: string[];
+  contradictions: string[];
+  evidence: EligibilityCriterionEvidence[];
+}
+
+export interface EligibilitySnapshot {
+  id: string;
+  candidate_id: string;
+  version: number;
+  assessment_date: string;
+  reviewer: string;
+  created_at: string;
+  assessment_result: {
+    tech_startup_status: "satisfied" | "not_satisfied" | "unclear";
+    technology_fields: string[];
+    technology_status: "satisfied" | "not_satisfied" | "unclear";
+    company_age_status: "within_three_years" | "older_than_three_years" | "not_registered" | "unclear";
+    germany_presence_status: string;
+    htgf_eligibility_status: "htgf_eligible" | "htgf_not_eligible" | "htgf_unclear" | "pre_company_candidate";
+    criteria: {
+      technology: EligibilityCriterion;
+      company_age: EligibilityCriterion;
+      germany: EligibilityCriterion;
+    };
+  };
 }
 
 export interface Candidate {
@@ -80,11 +153,12 @@ export interface Candidate {
   assessment_current?: boolean;
   assessment_rankable?: boolean;
   funding_status?: "confirmed" | "not_found" | "unclear" | "not_researched" | string;
+  funding_type?: "dilutive" | "non_dilutive" | "mixed" | "unclear" | "not_applicable" | string;
   funding_summary?: string;
   funding_evidence_ids?: string[];
   enrichment_status?: string;
   research_profile?: {
-    claims?: { field: string; value: string; evidence_id?: string; finding_id?: string }[];
+    claims?: { field: string; value: string; evidence_id?: string; finding_id?: string; funding_nature?: string }[];
   };
 }
 
@@ -125,6 +199,8 @@ export interface CandidateDetail extends Candidate {
   assessment: Assessment | null;
   notes: Note[];
   research_runs: ResearchRun[];
+  finance?: FinanceSnapshot | null;
+  eligibility?: EligibilitySnapshot | null;
 }
 
 export interface Job {
@@ -234,6 +310,20 @@ export interface Graph {
   edges: GraphEdge[];
   mode?: string;
   is_materialized_view?: boolean;
+}
+
+export interface ChatCitation {
+  id: string;
+  kind: string;
+  title: string;
+  quote: string;
+  url: string | null;
+  candidate_id?: string | null;
+}
+
+export interface ChatResponse {
+  answer: string;
+  citations: ChatCitation[];
 }
 
 export interface CandidateQuery {

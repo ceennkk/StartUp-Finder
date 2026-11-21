@@ -18,8 +18,8 @@ export default async function DataInventoryPage({ searchParams }: { searchParams
     return <CollectorDashboard data={data} error={null} view={view} search={search} entityType={entityType} />;
   } catch (error) {
     const message = error instanceof Error && error.message === "DATABASE_URL fehlt in der Projekt-.env."
-      ? "DATABASE_URL fehlt. Hinterlege die Neon-Verbindung in der .env im Projektstamm."
-      : "Verbindung nicht möglich. Prüfe DATABASE_URL und den Netzwerkzugriff des Frontend-Servers.";
+      ? "missing_database"
+      : "database_connection";
     return <CollectorDashboard data={null} error={message} view={view} search={search} entityType={entityType} />;
   }
 }

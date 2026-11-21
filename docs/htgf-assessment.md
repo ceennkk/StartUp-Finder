@@ -1,8 +1,10 @@
 # HTGF Eligibility Assessment
 
-This independent offline component evaluates the three supplied HTGF questions.
-It is a sourcing aid, not an HTGF investment or funding decision. It does not
-perform online research, call an LLM, open a database connection or infer the
+This deterministic component evaluates three evidence-backed fit requirements.
+It is a sourcing aid, not an investment or funding decision. The offline CLI
+still reads curated JSON, while the live backend validates and stores the same
+assessment input as an append-only PostgreSQL snapshot and queues a new ranking.
+The evaluator itself does not perform online research, call an LLM, or infer
 funding status.
 
 ## Files and commands
@@ -74,6 +76,18 @@ research-to-company summaries. Technology mappings are provisional because
 current commercial and business-model details have not been independently
 verified; official register entries and Germany-presence evidence are missing.
 No current web check is implied by the assessment date.
+
+## Effect on live candidate ranking
+
+The backend applies these as hard gates before exposing a candidate score. A
+confirmed failed requirement sets the score to zero; an unverified review or a
+pre-company candidate has no rankable score. Only candidates with all three
+requirements supported proceed to the separate sourcing score. A registered
+German seat, a supported relocation plan, or a supported plan to establish a
+German permanent establishment satisfies the location requirement. The age
+limit is three years inclusive from the official registry entry date. The
+candidate profile exposes the latest eligibility snapshot and criterion source
+links; `GET` and `POST /api/candidates/{id}/eligibility` read and append reviews.
 
 ## Isolated tests
 

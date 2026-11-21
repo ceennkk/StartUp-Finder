@@ -8,7 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import logging
 from urllib.parse import parse_qs, urlparse
-from .domain import NotFound
+from .domain import ChatUnavailable, NotFound
 from .store import now
 
 log = logging.getLogger(__name__)
@@ -31,6 +31,9 @@ def dispatch(app, method, path, query, data):
                          graph_status='not_probed', model_status='not_probed')
     if method == 'GET' and path == '/api/capabilities':
         return 200, app.capabilities()
+    if method == 'POST' and path == '/api/chat':
+        return 200, app.answer_question(data.get('question'), data.get('language', 'en'),
+                                       data.get('history'), data.get('candidate_id'))
     list_kinds = {'sources', 'findings', 'searches', 'events'}
     if len(parts) == 2 and parts[0] == 'api' and parts[1] in list_kinds and method == 'GET':
         rows = store.list(parts[1])
@@ -91,6 +94,18 @@ def dispatch(app, method, path, query, data):
         if method == 'POST' and len(parts) == 4 and (kind, parts[3]) in actions:
             return 202, {'job': app.queue(actions[(kind, parts[3])], record_id)}
         if kind == 'candidates':
+            if len(parts) == 4 and parts[3] == 'eligibility':
+                if method == 'GET':
+                    return 200, app.candidate_eligibility(record_id)
+                if method == 'POST':
+                    result = app.save_candidate_eligibility(record_id, data)
+                    return (200 if result['unchanged'] else 202), result
+            if len(parts) == 4 and parts[3] == 'finance':
+                if method == 'GET':
+                    return 200, app.candidate_finance(record_id)
+                if method == 'POST':
+                    result = app.save_candidate_finance(record_id, data)
+                    return (200 if result['unchanged'] else 202), result
             if len(parts) == 3:
                 if method == 'GET':
                     return 200, app.candidate_detail(record_id)
@@ -143,6 +158,8 @@ def make_server(app):
                 self.send(status, result)
             except NotFound as exc:
                 self.send(404, {'detail': str(exc)})
+            except ChatUnavailable as exc:
+                self.send(503, {'detail': str(exc)})
             except (ValueError, TypeError, KeyError, UnicodeDecodeError) as exc:
                 self.send(422, {'detail': str(exc)[:300]})
             except Exception:

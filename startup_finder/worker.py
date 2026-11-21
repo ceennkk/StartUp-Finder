@@ -1,5 +1,5 @@
 """Persistent jobs, lease renewal, retries and incremental ingestion."""
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from types import SimpleNamespace
 import logging
 import threading
@@ -13,7 +13,8 @@ from .candidates import materialize
 from .clients import GraphBridge, OpenAIDecisionRelevance, OpenAIModels
 from .fetching import collect, fetch, text_from_html
 from .graph import Finding
-from .ranking import CRITERIA_VERSION, is_current_assessment, score_assessment
+from .ranking import (CRITERIA_VERSION, FUNDING_CLASSIFICATION_VERSION,
+                      is_current_assessment, score_assessment)
 from .store import now, uid
 
 log = logging.getLogger(__name__)
@@ -123,19 +124,69 @@ class Worker:
             return {'assessment_id': current_assessment['id'], 'unchanged': True}
         profile = {key: value for key, value in detail.items()
                    if key not in ('assessment', 'assessment_stale', 'research_runs', 'notes')}
-        result = self.models.evaluate(profile)
+        financing_evidence_ids = set(profile.get('funding_evidence_ids') or [])
+        evaluation_profile = {key: value for key, value in profile.items()
+            if key not in ('finance', 'eligibility', 'funding_status', 'funding_type', 'funding_summary',
+                           'funding_evidence_ids', 'funding_classification_version')}
+        evaluation_profile['evidence'] = [item for item in profile['evidence']
+            if item.get('id') not in financing_evidence_ids]
+        if 'signals' in evaluation_profile:
+            evaluation_profile['signals'] = [item for item in profile['signals']
+                if item.get('kind') != 'funding']
+        if isinstance(evaluation_profile.get('research_profile'), dict):
+            research_profile = dict(evaluation_profile['research_profile'])
+            research_profile['claims'] = [claim for claim in research_profile.get('claims', [])
+                if claim.get('field') not in ('funding', 'funding_round')]
+            evaluation_profile['research_profile'] = research_profile
+        result = self.models.evaluate(evaluation_profile)
         # Validate citation IDs even for custom model implementations.
-        allowed = {e['id'] for e in profile['evidence']}
+        allowed = {e['id'] for e in evaluation_profile['evidence']}
         citations = result['evidence_ids'] + [i for criterion in result['criteria'] for i in criterion['evidence_ids']]
         if not set(citations) <= allowed:
             raise ValueError('Unknown evidence IDs in assessment')
         result.update(id=assessment_id, candidate_id=candidate_id, profile_version=profile['profile_version'],
                       criteria_version=CRITERIA_VERSION,
                       created_at=now(), profile_snapshot=profile)
-        score_assessment(result)
+        equity_assessment = self._equity_assessment(candidate_id, profile)
+        eligibility_assessment = self._eligibility_assessment(candidate_id, profile)
+        score_assessment(result, profile.get('funding_status'),
+                         profile.get('funding_type'), equity_assessment, eligibility_assessment)
+        if equity_assessment is not None:
+            result['equity_assessment'] = equity_assessment
+        if eligibility_assessment is not None:
+            result['eligibility_assessment'] = eligibility_assessment
         self.store.put('assessments', result)
         self.store.event('candidate.evaluated', candidate_id, {'assessment_id': result['id']})
         return {'assessment_id': result['id'], 'profile_version': profile['profile_version']}
+
+    @staticmethod
+    def _equity_assessment(candidate_id, profile):
+        """Re-validate the stored finance snapshot before it affects ranking."""
+        finance = profile.get('finance')
+        if not finance:
+            return None
+        if finance.get('candidate_id') != candidate_id:
+            raise ValueError('Finance snapshot belongs to another candidate')
+        from app.finance.assessment import assess_equity
+        assessed = assess_equity(
+            candidate_id=candidate_id,
+            as_of=date.fromisoformat(finance['as_of']),
+            findings=finance.get('findings', []),
+            events=finance.get('events', []),
+            coverage=finance.get('coverage'),
+        )
+        return assessed.model_dump(mode='json')
+
+    @staticmethod
+    def _eligibility_assessment(candidate_id, profile):
+        """Recompute the validated eligibility result from its stored input."""
+        snapshot = profile.get('eligibility')
+        if not snapshot:
+            return None
+        if snapshot.get('candidate_id') != candidate_id:
+            raise ValueError('Eligibility snapshot belongs to another candidate')
+        from app.htgf.assessment import assess
+        return assess(snapshot['assessment_input'])
 
     def research(self, candidate_id, job_id, requested_profile_version=None):
         record_id = f'research:{job_id}'
@@ -149,7 +200,8 @@ class Worker:
                     'current_profile_version': candidate.get('profile_version')}
         candidate_record = self.store.get('candidates', candidate_id)
         if (candidate_record.get('enrichment_status') == 'completed'
-                and candidate_record.get('enrichment_profile_version') == candidate_record.get('profile_version')):
+                and candidate_record.get('enrichment_profile_version') == candidate_record.get('profile_version')
+                and candidate_record.get('funding_classification_version') == FUNDING_CLASSIFICATION_VERSION):
             return {'id': record_id, 'candidate_id': candidate_id, 'status': 'already_current'}
         candidate_record['enrichment_status'] = 'running'
         self.store.put('candidates', candidate_record)
@@ -207,7 +259,22 @@ class Worker:
             funding_summary = ('Der Finanzierungsstatus ließ sich aus den verfügbaren '
                 'öffentlichen Quellen nicht sicher bestimmen.')
 
-        summary_lines = [f'Finanzierung: {funding_summary}']
+        funding_natures = {claim.get('funding_nature', 'unclear') for claim in funding_claims}
+        if funding_status == 'not_found':
+            funding_type = 'not_applicable'
+        elif funding_status != 'confirmed' or not funding_claims:
+            funding_type = 'unclear'
+        elif 'dilutive' in funding_natures or 'mixed' in funding_natures:
+            funding_type = ('mixed' if 'non_dilutive' in funding_natures or 'mixed' in funding_natures
+                            else 'dilutive')
+        elif 'unclear' in funding_natures:
+            funding_type = 'unclear'
+        elif funding_natures == {'non_dilutive'}:
+            funding_type = 'non_dilutive'
+        else:
+            funding_type = 'unclear'
+
+        summary_lines = [f'Finanzierung: {funding_summary}', f'Finanzierungsart: {funding_type}']
         if result['verified_claims']:
             summary_lines.append('Belegte Recherchefunde:')
             summary_lines.extend(f"- {claim['field']}: {claim['value']}" for claim in result['verified_claims'][:8])
@@ -215,6 +282,8 @@ class Worker:
             summary_lines.append('Keine Modellangaben konnten durch wörtliche Zitate der abgerufenen Originalseiten bestätigt werden.')
         result['summary'] = '\n'.join(summary_lines)
         result['funding_status'] = funding_status
+        result['funding_type'] = funding_type
+        result['funding_classification_version'] = FUNDING_CLASSIFICATION_VERSION
         result['funding_summary'] = funding_summary
         result['source_fetch_count'] = len(fetched_sources)
 
@@ -230,9 +299,13 @@ class Worker:
                     published_at=None, fetched_at=now(), created_at=now()), connection)
             profile = dict(current.get('research_profile') or {})
             profile.update(claims=result['verified_claims'], funding_status=funding_status,
+                funding_type=funding_type,
+                funding_classification_version=FUNDING_CLASSIFICATION_VERSION,
                 funding_summary=funding_summary, sources=result['sources'], updated_at=now())
             current['research_profile'] = profile
             current['funding_status'] = funding_status
+            current['funding_type'] = funding_type
+            current['funding_classification_version'] = FUNDING_CLASSIFICATION_VERSION
             current['funding_summary'] = funding_summary
             current['funding_evidence_ids'] = [claim['evidence_id'] for claim in funding_claims]
             current['enrichment_status'] = 'completed'
@@ -318,6 +391,7 @@ class Worker:
             for candidate in self.app.list_candidates({}):
                 enrichment_status = candidate.get('enrichment_status')
                 research_due = (enrichment_status in (None, 'pending', 'not_researched', 'failed')
+                    or candidate.get('funding_classification_version') != FUNDING_CLASSIFICATION_VERSION
                     or (enrichment_status == 'completed'
                         and candidate.get('enrichment_profile_version') != candidate.get('profile_version')))
                 if research_due:

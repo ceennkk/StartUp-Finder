@@ -1,5 +1,6 @@
 import type {
   Capabilities,
+  ChatResponse,
   Candidate,
   CandidateDetail,
   CandidateQuery,
@@ -43,6 +44,7 @@ export interface FinderApi {
   getSearch(id: string): Promise<Search>;
   runSearch(id: string): Promise<{ job: Job }>;
   graph(): Promise<Graph>;
+  chat(question: string, language: "en" | "de", history?: { role: "user" | "assistant"; content: string }[], candidateId?: string | null): Promise<ChatResponse>;
   events(p?: Page & { entity_id?: string }): Promise<ListResponse<FinderEvent>>;
 }
 
@@ -71,11 +73,11 @@ const qs = (params?: object) => {
 };
 
 const STATUS_TEXT: Record<number, string> = {
-  401: "Nicht angemeldet – API-Token fehlt oder ist falsch (Systemstatus).",
-  404: "Nicht gefunden.",
-  413: "Eingabe zu groß.",
-  422: "Eingabe ungültig.",
-  500: "Interner Fehler im Backend.",
+  401: "Not authorized — the API token is missing or invalid.",
+  404: "Not found.",
+  413: "Request is too large.",
+  422: "Invalid input.",
+  500: "Internal backend error.",
 };
 
 export function createHttpApi(baseUrl: string, token?: string): FinderApi {
@@ -88,7 +90,7 @@ export function createHttpApi(baseUrl: string, token?: string): FinderApi {
     try {
       res = await fetch(`${base}/api${path}`, { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined });
     } catch {
-      throw new ApiError(`Backend nicht erreichbar (${base}). Läuft es, und erlaubt CORS_ORIGINS diese Seite?`, 0);
+      throw new ApiError(`Backend not reachable (${base}). Check that it is running and allows this page in CORS_ORIGINS.`, 0);
     }
     const text = await res.text();
     let data: unknown = null;
@@ -99,7 +101,7 @@ export function createHttpApi(baseUrl: string, token?: string): FinderApi {
     }
     if (!res.ok) {
       const detail = data && typeof data === "object" && "detail" in data ? String((data as { detail: unknown }).detail) : "";
-      throw new ApiError(detail || STATUS_TEXT[res.status] || `Fehler ${res.status}`, res.status);
+      throw new ApiError(detail || STATUS_TEXT[res.status] || `Error ${res.status}`, res.status);
     }
     return data as T;
   }
@@ -131,6 +133,7 @@ export function createHttpApi(baseUrl: string, token?: string): FinderApi {
     getSearch: (i) => req("GET", `/searches/${id(i)}`),
     runSearch: (i) => req("POST", `/searches/${id(i)}/run`, {}),
     graph: () => req("GET", "/graph"),
+    chat: (question, language, history = [], candidateId) => req("POST", "/chat", { question, language, history, candidate_id: candidateId }),
     events: (p) => req("GET", `/events${qs(p)}`),
   };
 }

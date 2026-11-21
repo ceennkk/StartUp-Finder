@@ -8,6 +8,7 @@ import type {
   JobStatus,
   Priority,
 } from "./types";
+import { useLanguage } from "./i18n";
 
 export const PRIORITY_LABEL: Record<Priority, string> = {
   high: "Hoch",
@@ -45,17 +46,17 @@ export const RATING_LABEL: Record<string, string> = {
   unknown: "unbekannt",
 };
 
-export const fmtDate = (iso?: string | null) =>
+export const fmtDate = (iso?: string | null, language: "en" | "de" = "en") =>
   iso
-    ? new Date(iso).toLocaleDateString("de-DE", {
+    ? new Date(iso).toLocaleDateString(language === "de" ? "de-DE" : "en-US", {
         day: "numeric",
         month: "short",
         year: "numeric",
       })
     : "–";
-export const fmtTime = (iso?: string | null) =>
+export const fmtTime = (iso?: string | null, language: "en" | "de" = "en") =>
   iso
-    ? new Date(iso).toLocaleString("de-DE", {
+    ? new Date(iso).toLocaleString(language === "de" ? "de-DE" : "en-US", {
         day: "numeric",
         month: "short",
         hour: "2-digit",
@@ -63,11 +64,12 @@ export const fmtTime = (iso?: string | null) =>
       })
     : "–";
 
-export function Loading({ label = "Lädt …" }: { label?: string }) {
+export function Loading({ label = "" }: { label?: string }) {
+  const { t } = useLanguage();
   return (
     <div className="fa-state" role="status" aria-live="polite">
       <span className="fa-spinner" aria-hidden="true" />
-      {label}
+      {label || t("loading")}
     </div>
   );
 }
@@ -79,12 +81,24 @@ export function ErrorBox({
   message: string;
   onRetry?: () => void;
 }) {
+  const { language, t } = useLanguage();
+  const knownMessages: Record<string, Parameters<typeof t>[0]> = {
+    "Not authorized — the API token is missing or invalid.": "authMissing",
+    "Not found.": "notFound",
+    "Request is too large.": "tooLarge",
+    "Invalid input.": "invalidInput",
+    "Internal backend error.": "internalError",
+  };
+  const backendFailure = message.match(/^Backend not reachable \((.+)\)\./);
+  const displayMessage = language === "de"
+    ? backendFailure ? t("backendNotReachable", { base: backendFailure[1] }) : knownMessages[message] ? t(knownMessages[message]) : message
+    : message;
   return (
     <div className="fa-state fa-state--error" role="alert">
-      <b>Das hat nicht geklappt.</b> {message}
+      <b>{t("errorTitle")}</b> {displayMessage}
       {onRetry && (
         <button className="fa-link" onClick={onRetry}>
-          Erneut versuchen
+          {t("tryAgain")}
         </button>
       )}
     </div>
@@ -122,11 +136,12 @@ export function PriorityPill({ p }: { p?: Priority | null }) {
 }
 
 export function RankDisplay({ assessment, current }: { assessment?: Assessment | null; current?: boolean }) {
-  if (!assessment) return <span className="fa-rank fa-rank--empty">Noch nicht bewertet</span>;
-  if (!current) return <span className="fa-rank fa-rank--empty">Neu bewerten für aktuellen Score</span>;
-  if (assessment.score == null) return <span className="fa-rank fa-rank--empty">Zu wenig Belege · {assessment.scored_criteria ?? 0}/4</span>;
+  const { t } = useLanguage();
+  if (!assessment) return <span className="fa-rank fa-rank--empty">{t("notAssessed")}</span>;
+  if (!current) return <span className="fa-rank fa-rank--empty">{t("reassess")}</span>;
+  if (assessment.score == null) return <span className="fa-rank fa-rank--empty">{t("insufficientEvidence", { count: assessment.scored_criteria ?? 0 })}</span>;
   return <span className={`fa-rank fa-rank--${assessment.priority}`}>
-    <b>{assessment.score}</b><span>/100</span><small>{PRIORITY_LABEL[assessment.priority]} · {assessment.scored_criteria ?? 0}/4 Kriterien belegt</small>
+    <b>{assessment.score}</b><span>/100</span><small>{t(`priority${assessment.priority[0].toUpperCase()}${assessment.priority.slice(1)}` as "priorityHigh" | "priorityMedium" | "priorityLow" | "priorityInsufficient")} · {t("criteriaCovered", { count: assessment.scored_criteria ?? 0 })}</small>
   </span>;
 }
 

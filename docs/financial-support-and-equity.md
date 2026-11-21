@@ -1,9 +1,11 @@
-# Financial support and external equity: offline domain foundation
+# Financial support and external equity
 
 `app.finance` defines versioned Pydantic models and a deterministic assessment
-function. It does not open a database, call a provider, fetch sources, persist
-data, change candidate results, or modify the HTGF assessment. It is not a
-financial, legal or investment decision.
+function. The StartUp Finder backend persists finance snapshots in PostgreSQL's
+existing JSON record store, exposes them through the candidate finance API, and
+uses the validated equity assessment during ranking. It does not call providers
+or fetch sources as part of the finance write endpoint. This is not a financial,
+legal or investment decision.
 
 ## Financial support
 
@@ -70,15 +72,20 @@ ownership. LLM claims are candidates only; a recorded human review is required
 for a confirmed finding or a negative search assessment. The existing
 deny-by-default LLM policy and provider authorization remain untouched.
 
-## Isolated tests and future storage
+## Persistence, API and review limits
 
-Run `python -m unittest discover -s tests\\finance -t .` without DB fixtures or
-network access. The named company examples are illustrative, partial research
-inputs, not persisted or independently re-verified financing records.
+`GET /api/candidates/{id}/finance` returns the current finance snapshot and its
+assessment history. `POST` to the same route accepts a complete snapshot with
+`as_of`, `events`, `findings`, and optional `coverage`. The backend validates it,
+appends a versioned snapshot, records a `candidate.finance_updated` event, bumps
+the candidate profile version, and queues a new ranking job. Reposting identical
+content is idempotent. Candidate detail exposes the current snapshot under
+`finance`.
 
-No schema or persistence is added in this phase. Later Neon integration would
-need separate approval for a schema design and migration: versioned event and
-assessment identities, entity/recipient roles, immutable document snapshots,
-many-to-many evidence and claims, coverage and authenticated review history,
-deduplication and idempotent transactions. Existing JSONB and generic
-`FUNDED_BY` edges alone do not guarantee these invariants.
+The append-only snapshots use the existing `records` table, so no SQL schema
+migration is required. Each snapshot keeps the event and finding records, source
+documents, exact quotes, human review attribution, coverage, and computed
+assessment together. The record store does not authenticate the reviewer name:
+the configured API boundary is still a local/team prototype and must not be
+treated as authenticated multi-user approval. Provider research and the existing
+graph's `FUNDED_BY` edges do not create a confirmed equity assessment.

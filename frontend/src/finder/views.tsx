@@ -4,8 +4,10 @@ import { useLoad } from "./hooks";
 import { useEffect } from "react";
 import type { Candidate } from "./types";
 import { Empty, ErrorBox, Loading } from "./ui";
+import { useLanguage } from "./i18n";
 
 export function Shortlist({ onOpen }: { onOpen: (id: string) => void }) {
+  const { t } = useLanguage();
   const { data, error, loading, reload } = useLoad(
     (api) => api.listCandidates({ status: "shortlisted", limit: 200 }), [],
   );
@@ -17,11 +19,11 @@ export function Shortlist({ onOpen }: { onOpen: (id: string) => void }) {
   }, [reload]);
 
   return <div className="fa-page">
-    <header className="fa-landscape__header"><h1>Shortlist</h1></header>
+    <header className="fa-landscape__header"><h1>{t("shortlist")}</h1></header>
     <section className="fa-card fa-shortlist">
       {loading && !data && <Loading label="" />}
       {error && <ErrorBox message={error} onRetry={reload} />}
-      {data && data.items.length === 0 && <Empty title="Noch keine gemerkten Kandidaten." />}
+      {data && data.items.length === 0 && <Empty title={t("shortlistEmpty")} />}
       {data && data.items.length > 0 && <ul className="fa-shortlist__items">
         {data.items.map((candidate) => <ShortlistRow key={candidate.id} candidate={candidate} onOpen={onOpen} />)}
       </ul>}

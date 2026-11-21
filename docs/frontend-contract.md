@@ -6,7 +6,7 @@ Alle Zeitangaben ISO 8601 mit Zeitzone. Leere/unbekannte Fakten bleiben leer.
 
 Bei Loopback-Bindung (`127.0.0.1`/`localhost`) ist kein API-Token nötig; bei
 Netzwerkbindung verlangt das Backend `Authorization: Bearer <API_TOKEN>` für alle
-API-Routen. Modellschlüssel bleiben im Worker. CORS_ORIGINS enthält die erlaubten
+API-Routen. Modellschlüssel bleiben serverseitig im Backend und Worker. CORS_ORIGINS enthält die erlaubten
 Frontend-Origins. Ein Team-Token ersetzt kein späteres Benutzer-/Mandanten-Rechtesystem. Das Frontend
 zeigt Produktdaten nur, wenn `/capabilities` `mode: "live"` meldet.
 
@@ -22,9 +22,13 @@ zeigt Produktdaten nur, wenn `/capabilities` `mode: "live"` meldet.
 | GET | /findings/{id} | Originaltext, Quellenmetadaten, Verarbeitungsstatus |
 | POST | /findings/{id}/process | `{}` → 202 + Job |
 | GET | /candidates | Filter: q, status, germany_status, priority |
-| GET | /candidates/{id} | Profil + evidence, assessment, notes, research_runs |
+| GET | /candidates/{id} | Profil + evidence, assessment, notes, research_runs, current eligibility snapshot |
+| GET | /candidates/{id}/eligibility | Current eligibility snapshot and append-only history |
+| POST | /candidates/{id}/eligibility | Save evidence-backed eligibility review and queue a new assessment |
 | PATCH | /candidates/{id} | `{status:new\|shortlisted\|rejected}` |
 | POST | /candidates/{id}/notes | `{text}` → gespeicherte Notiz |
+| GET | /candidates/{id}/finance | Aktueller Finanzierungsstand plus unveränderliche Prüfungshistorie |
+| POST | /candidates/{id}/finance | Finanzierungs-Snapshot `{as_of,events,findings,coverage?}` → 202 + neuem Bewertungsjob; identische Snapshots → 200 |
 | POST | /candidates/{id}/research | `{}` → 202 + Job |
 | POST | /candidates/{id}/evaluate | `{}` → 202 + Job |
 | GET | /jobs | Filter: kind, status |
@@ -34,11 +38,19 @@ zeigt Produktdaten nur, wenn `/capabilities` `mode: "live"` meldet.
 | GET | /searches/{id} | Auftrag inkl. letzter Fundstellen und Job-ID |
 | POST | /searches/{id}/run | `{}` → 202 + Job |
 | GET | /graph | `{nodes,edges,mode,is_materialized_view:true}` |
+| POST | /chat | `{question,language:en\|de,history?:[{role:user\|assistant,content}],candidate_id?:string}` → `{answer,citations:[{id,kind,title,quote,url,candidate_id}]}` |
 | GET | /events | Ereignisse; Filter entity_id |
 
 Alle Listen: `limit` 1–200 (Standard 50), `offset` >= 0. Fundstellen zusätzlich
 `source_id`, `status`, `q`. HTTP: 201 erzeugt, 202 Job, 401 Token fehlt,
 404 unbekannte ID/Route, 413 Body zu groß, 422 Eingabe ungültig, 500 intern.
+`/chat` nutzt serverseitiges OpenAI-Tool-Calling. Das Modell kann
+`search_knowledge_graph` (Graphiti → Neo4j) und `search_candidate_profiles`
+(Kandidatenprofile, Bewertungen und Originalbelege aus PostgreSQL) aufrufen.
+Die Tools liefern gespeicherte Fakten; Quellen-IDs der finalen Antwort werden
+serverseitig validiert. Der API-Key bleibt im Backend. 503 bedeutet, dass ein
+Daten- oder Modell-Tool nicht verfügbar war. Maximal 8 Konversationsturns und
+1.200 Zeichen pro Nachricht.
 
 ## Kandidat
 
@@ -74,6 +86,19 @@ Listen ergänzen `assessment`, `assessment_stale`, `assessment_current` und
 - `notes`: id, candidate_id, text, created_at.
 - `research_runs`: id, candidate_id, summary, sources, imported_finding_ids,
   fetch_errors, created_at.
+- `finance`: current versioned finance snapshot, with events, equity findings,
+  search coverage, human-review attribution, and deterministic equity assessment.
+- Candidate financing fields: `funding_status` (`confirmed|not_found|unclear`),
+  `funding_type` (`dilutive|non_dilutive|mixed|unclear|not_applicable`), and
+  `funding_evidence_ids`. Research claims include `funding_nature`; verified
+  source quotes classify reported funding but do not confirm external equity
+  or change the score. The finance-domain assessment is separate and curated;
+  write complete snapshots through `/candidates/{id}/finance`. These records
+  are validated and appended to PostgreSQL, then a new assessment is queued.
+- `eligibility`: latest evidence-backed review of Germany connection, technology
+  sector, and commercial-register age. Reviews are append-only. The write payload
+  contains `assessment_date`, `technology`, `company_age`, `germany`, and `reviewer`;
+  criterion evidence retains its source URL, publisher, claim and reliability.
 - `assessment`: null oder gespeicherte Bewertung.
 
 `source_excerpt` ist ein Dokumentausschnitt, keine verifizierte Textspanne für
@@ -82,7 +107,8 @@ Widersprüche bleiben in `conflicts`; sie werden nicht still überschrieben.
 
 ## Bewertung
 
-Felder: id, candidate_id, score (0–100 oder null), scored_criteria (0–4),
+Felder: id, candidate_id, score (0–100 oder null), criteria_score (0–100 oder null),
+funding_status, funding_type, equity_status, funding_adjustment, funding_effect, scored_criteria (0–4),
 priority (`high|medium|low|insufficient_data`), summary,
 strengths[], concerns[], open_questions[], evidence_ids[], criteria[], model,
 profile_version, criteria_version, created_at, profile_snapshot.
@@ -93,7 +119,27 @@ demand. Alle vier Kriterien sind gleich gewichtet: `strong`=100, `moderate`=67,
 `weak`=33. `unknown` wird nicht in den Mittelwert eingerechnet. Ein Score wird
 erst ab drei Kriterien mit Belegreferenzen berechnet. `high` beginnt bei 75,
 `medium` bei 50, darunter `low`; bei zu wenigen bewertbaren Kriterien gilt
-`insufficient_data`. Sortiert wird nach numerischem Score absteigend. Fehlende,
+`insufficient_data`. `criteria_score` ist der reine Kriterienmittelwert.
+Nur `equity_status: equity_confirmed` aus der getrennten Finanzierungsbewertung
+setzt den finalen Score auf 0 und die Priorität auf `low`. Diese Bewertung setzt einen manuell geprüften
+externen Equity-Beleg voraus. LLM-Finanzierungslabels, bloß zitierte Förderungen
+und unklare Finanzierung begrenzen den Score nicht. Zuschüsse, Stipendien,
+Forschungsgelder und Preise gelten nicht als Equity; ihr Dilution-Status wird
+separat geführt. `funding_effect` erklärt die Behandlung; `funding_adjustment`
+zeigt die Änderung gegenüber `criteria_score`. Ohne manuell kuratierte Finanzdaten
+bleibt `equity_status` leer und die Finanzierung beeinflusst das Ranking nicht.
+The three HTGF fit checks are hard gates: a documented failure sets the final
+score to `0`, while missing or inconclusive evidence withholds the score until
+reviewed. A company must be a technology startup in Digital Tech, Industrial,
+Climate & Deep Tech, Life Sciences, Chemistry or an adjacent field; have a
+registered German seat or a documented plan to relocate/open a German
+establishment; and be registered for no more than three years. Age is measured
+from the official commercial-register date, inclusively through the third
+calendar anniversary. A pre-company venture is not ranked. The four sourcing
+criteria score only candidates that pass all three gates; confirmed external
+equity remains a separate override to zero.
+
+Sortiert wird nach finalem Score absteigend. Fehlende,
 veraltete und alte Kriterienversionen stehen danach und zählen nicht für
 Prioritätsfilter. Standort und Deutschlandbezug sind Profilmetadaten und keine
 Bewertungskriterien oder Standardfilter. Keine Erfolgswahrscheinlichkeiten.

@@ -3,47 +3,55 @@
 /* eslint-disable @next/next/no-img-element */
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { ApiProvider, useLoad } from "./hooks";
+import { useLanguage, type TranslationKey } from "./i18n";
+import { CandidateChat } from "./CandidateChat";
 import { PotentialMap } from "./PotentialMap";
+import { PipelinePage } from "./PipelinePage";
+import { HomeDashboard } from "./HomeDashboard";
 import { Shortlist } from "./views";
 
-type View = "entdecken" | "shortlist";
-const NAV: { id: View; label: string }[] = [
-  { id: "entdecken", label: "Entdecken" },
-  { id: "shortlist", label: "Shortlist" },
+type View = "home" | "entdecken" | "pipeline" | "shortlist";
+const NAV: { id: View; key: TranslationKey }[] = [
+  { id: "home", key: "home" },
+  { id: "entdecken", key: "discover" },
+  { id: "pipeline", key: "howItWorks" },
+  { id: "shortlist", key: "shortlist" },
 ];
 
-/** Hash routes: #/entdecken, #/entdecken/<candidateId>, #/shortlist. */
+/** Hash routes for the three product areas. */
 function parseHash(): { view: View; id: string | null } {
   const [, v, id] = window.location.hash.replace(/^#/, "").split("/");
-  return { view: NAV.find((n) => n.id === v)?.id ?? "entdecken", id: id ? decodeURIComponent(id) : null };
+  return { view: NAV.find((n) => n.id === v)?.id ?? "home", id: id ? decodeURIComponent(id) : null };
 }
 
 /** Product data remains hidden unless the API explicitly confirms production mode. */
 function ProductionGate({ children }: { children: ReactNode }) {
+  const { t } = useLanguage();
   const { data, error } = useLoad((a) => a.capabilities(), []);
   if (error)
     return (
       <div className="fa-banner fa-banner--warn" role="alert">
-        <b>Produktivbackend nicht verfügbar.</b> {error}
+        <b>{t("backendUnavailable")}</b> {error}
       </div>
     );
   if (!data)
     return (
       <div className="fa-banner" role="status">
-        Produktivstatus der API wird geprüft …
+        {t("checkingBackend")}
       </div>
     );
   if (data.mode !== "live")
     return (
       <div className="fa-banner fa-banner--warn" role="alert">
-        <b>Produktivzugriff gesperrt.</b> Die API bestätigt keinen Livebetrieb. Kandidatenprofile werden nicht angezeigt.
+        <b>{t("accessBlocked")}</b> {t("liveNotConfirmed")}
       </div>
     );
   return <>{children}</>;
 }
 
 function Shell() {
-  const [route, setRoute] = useState<{ view: View; id: string | null }>({ view: "entdecken", id: null });
+  const { language, setLanguage, t } = useLanguage();
+  const [route, setRoute] = useState<{ view: View; id: string | null }>({ view: "home", id: null });
   useEffect(() => {
     const sync = () => setRoute(parseHash());
     sync();
@@ -55,26 +63,33 @@ function Shell() {
     if (window.location.hash !== hash) window.location.hash = hash;
     setRoute({ view, id });
   }, []);
+  const selectCandidate = useCallback((id: string | null) => go("entdecken", id), [go]);
 
   return (
     <div className="fa">
       <header className="fa-bar">
-        <a href="#/entdecken" className="fa-logo" aria-label="Startup Finder – Entdecken">
+        <a href="#/home" className="fa-logo" aria-label={`Pre-Round – ${t("home")} `}>
           <img src="/htgf/images/htgf-logo--black.svg" alt="HTGF" />
-          <span>Startup Finder</span>
+          <span>Pre-Round</span>
         </a>
-        <nav className="fa-nav" aria-label="Bereiche">
+        <nav className="fa-nav" aria-label={t("navigation") }>
           {NAV.map((n) => (
             <button key={n.id} className={route.view === n.id ? "is-on" : ""} aria-current={route.view === n.id ? "page" : undefined} onClick={() => go(n.id)}>
-              {n.label}
+              {t(n.key)}
             </button>
           ))}
         </nav>
+        <div className="fa-language" role="group" aria-label={t("language")}>
+          {(["en", "de"] as const).map((value) => <button key={value} type="button" className={language === value ? "is-on" : ""} aria-pressed={language === value} onClick={() => setLanguage(value)}>{value.toUpperCase()}</button>)}
+        </div>
       </header>
       <main className="fa-main">
         <ProductionGate>
-          {route.view === "entdecken" && <PotentialMap selectedId={route.id} onSelect={(id) => go("entdecken", id)} />}
+          {route.view === "home" && <HomeDashboard onDiscover={() => go("entdecken")} onShortlist={() => go("shortlist")} onOpen={(id) => go("entdecken", id)} />}
+          {route.view === "entdecken" && <PotentialMap selectedId={route.id} onSelect={selectCandidate} />}
+          {route.view === "pipeline" && <PipelinePage />}
           {route.view === "shortlist" && <Shortlist onOpen={(id) => go("entdecken", id)} />}
+          <CandidateChat candidateId={route.view === "entdecken" ? route.id : null} />
         </ProductionGate>
       </main>
     </div>

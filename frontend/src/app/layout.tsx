@@ -1,19 +1,21 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { LanguageProvider } from "../finder/i18n";
 import "../finder/htgf-base.css";
 import "../finder/finder-app.css";
 import "../collector/collector-dashboard.css";
+import "../finder/htgf-brand.css";
 
 export const metadata: Metadata = {
-  title: "StartUp Finder",
-  description: "Kandidaten entdecken, prüfen und priorisieren.",
+  title: "Pre-Round | Early Startup Intelligence",
+  description: "Discover early-stage technology startups before their first equity round.",
   robots: { index: false, follow: false },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="de">
-      <body style={{ margin: 0 }}>{children}</body>
+    <html lang="en">
+      <body style={{ margin: 0 }}><LanguageProvider>{children}</LanguageProvider></body>
     </html>
   );
 }
