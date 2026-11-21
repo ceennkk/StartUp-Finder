@@ -89,3 +89,12 @@ assessment together. The record store does not authenticate the reviewer name:
 the configured API boundary is still a local/team prototype and must not be
 treated as authenticated multi-user approval. Provider research and the existing
 graph's `FUNDED_BY` edges do not create a confirmed equity assessment.
+
+## Effect on candidate ranking
+
+The live ranking separately applies a conservative funding penalty when
+quote-verified research reports `funding_status: confirmed` and classifies the
+funding as `dilutive` or `mixed`: the candidate score is set to zero. This does
+not change the human-reviewed `equity_confirmed` status above. Unclear funding
+is not penalized. Purely non-dilutive grants, stipends, research support and
+prizes remain neutral.

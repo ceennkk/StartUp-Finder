@@ -20,6 +20,8 @@ SCENES = [
     {"id": "fin_types", "hold": 0.6, "kind": "html", "voice": "Find the Founder tells grants apart from equity. Because not every euro means an investor holds shares."},
     {"id": "fin_review", "hold": 0.6, "kind": "html", "voice": "An investment only counts as confirmed once there is evidence and a person has reviewed it. That keeps every statement traceable."},
     {"id": "fin_export", "hold": 0.8, "kind": "html", "voice": "In the current MVP, these financial details live in a separate export, not yet in the database that powers the website."},
+    {"id": "pick_intro", "hold": 0.6, "kind": "html", "voice": "Our top pick right now: nodeline, a spin-out from the KIT founder ecosystem in Karlsruhe. Its AI turns business requirements into secure data pipelines for industry and small manufacturers."},
+    {"id": "pick_why", "hold": 0.8, "kind": "html", "voice": "Two founders straight out of research. Backed so far by a public grant of almost eight hundred thousand euros, not by equity. First pilot customers, a team being built. Early, technical, and no confirmed investor yet: exactly the moment to talk."},
     {"id": "end", "hold": 1.5, "kind": "html", "voice": "[warm, confident] Find the Founder. Meet tomorrow\'s founders before everyone else."},
 ]
 

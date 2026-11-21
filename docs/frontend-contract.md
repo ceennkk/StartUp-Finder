@@ -116,28 +116,31 @@ profile_version, criteria_version, created_at, profile_snapshot.
 Kriterium: key, label, rating (`strong|moderate|weak|unknown`), rationale,
 evidence_ids[]. Kriterien: founding_intent, technical_substance, customer_problem,
 demand. Alle vier Kriterien sind gleich gewichtet: `strong`=100, `moderate`=67,
-`weak`=33. `unknown` wird nicht in den Mittelwert eingerechnet. Ein Score wird
-erst ab drei Kriterien mit Belegreferenzen berechnet. `high` beginnt bei 75,
-`medium` bei 50, darunter `low`; bei zu wenigen bewertbaren Kriterien gilt
-`insufficient_data`. `criteria_score` ist der reine Kriterienmittelwert.
-Nur `equity_status: equity_confirmed` aus der getrennten Finanzierungsbewertung
-setzt den finalen Score auf 0 und die Priorität auf `low`. Diese Bewertung setzt einen manuell geprüften
-externen Equity-Beleg voraus. LLM-Finanzierungslabels, bloß zitierte Förderungen
-und unklare Finanzierung begrenzen den Score nicht. Zuschüsse, Stipendien,
+`weak`=33. `criteria_score` ist der Mittelwert der belegten Kriterien. Für den
+immer sichtbaren Gesamtscore erhalten unbekannte Kriterien einen neutralen Wert
+von 50. `scored_criteria`, `score_confidence` (`high|medium|low`) und
+`score_provisional` zeigen die Belegabdeckung. `high` beginnt bei 75, `medium`
+bei 50, darunter `low`.
+`equity_status: equity_confirmed` aus der getrennten Finanzierungsbewertung oder
+`funding_status: confirmed` zusammen mit `funding_type: dilutive|mixed` setzt den
+finalen Score auf 0 und die Priorität auf `low`. Die erste Regel setzt einen
+manuell geprüften externen Equity-Beleg voraus; die zweite braucht eine
+bestätigte, im Originaltext zitierte private/verwässernde Finanzierungsrunde.
+Unklare Finanzierung begrenzt den Score nicht. Zuschüsse, Stipendien,
 Forschungsgelder und Preise gelten nicht als Equity; ihr Dilution-Status wird
 separat geführt. `funding_effect` erklärt die Behandlung; `funding_adjustment`
 zeigt die Änderung gegenüber `criteria_score`. Ohne manuell kuratierte Finanzdaten
 bleibt `equity_status` leer und die Finanzierung beeinflusst das Ranking nicht.
-The three HTGF fit checks are hard gates: a documented failure sets the final
-score to `0`, while missing or inconclusive evidence withholds the score until
-reviewed. A company must be a technology startup in Digital Tech, Industrial,
+The three HTGF fit checks accompany each score: a documented failure sets the
+final score to `0`, while missing or inconclusive evidence leaves a provisional
+score visible until reviewed. A company must be a technology startup in Digital Tech, Industrial,
 Climate & Deep Tech, Life Sciences, Chemistry or an adjacent field; have a
 registered German seat or a documented plan to relocate/open a German
 establishment; and be registered for no more than three years. Age is measured
 from the official commercial-register date, inclusively through the third
-calendar anniversary. A pre-company venture is not ranked. The four sourcing
-criteria score only candidates that pass all three gates; confirmed external
-equity remains a separate override to zero.
+calendar anniversary. A pre-company venture remains provisionally scored until
+the company-age evidence is resolved. Unknown sourcing criteria use a neutral
+50-point prior; confirmed external equity remains a separate override to zero.
 
 Sortiert wird nach finalem Score absteigend. Fehlende,
 veraltete und alte Kriterienversionen stehen danach und zählen nicht für

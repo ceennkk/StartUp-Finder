@@ -2,6 +2,7 @@
 from datetime import date, datetime, timedelta, timezone
 from types import SimpleNamespace
 import logging
+import json
 import threading
 import time
 import html
@@ -138,12 +139,19 @@ class Worker:
             research_profile['claims'] = [claim for claim in research_profile.get('claims', [])
                 if claim.get('field') not in ('funding', 'funding_round')]
             evaluation_profile['research_profile'] = research_profile
-        result = self.models.evaluate(evaluation_profile)
-        # Validate citation IDs even for custom model implementations.
-        allowed = {e['id'] for e in evaluation_profile['evidence']}
-        citations = result['evidence_ids'] + [i for criterion in result['criteria'] for i in criterion['evidence_ids']]
-        if not set(citations) <= allowed:
-            raise ValueError('Unknown evidence IDs in assessment')
+        reused = bool(current_assessment and
+                      current_assessment.get('profile_version') == profile.get('profile_version'))
+        if reused:
+            # A scoring-policy change needs no new LLM call: append a new score
+            # while preserving the existing evidence-backed assessment.
+            result = json.loads(json.dumps(current_assessment))
+        else:
+            result = self.models.evaluate(evaluation_profile)
+            # Validate citation IDs even for custom model implementations.
+            allowed = {e['id'] for e in evaluation_profile['evidence']}
+            citations = result['evidence_ids'] + [i for criterion in result['criteria'] for i in criterion['evidence_ids']]
+            if not set(citations) <= allowed:
+                raise ValueError('Unknown evidence IDs in assessment')
         result.update(id=assessment_id, candidate_id=candidate_id, profile_version=profile['profile_version'],
                       criteria_version=CRITERIA_VERSION,
                       created_at=now(), profile_snapshot=profile)
@@ -156,8 +164,10 @@ class Worker:
         if eligibility_assessment is not None:
             result['eligibility_assessment'] = eligibility_assessment
         self.store.put('assessments', result)
-        self.store.event('candidate.evaluated', candidate_id, {'assessment_id': result['id']})
-        return {'assessment_id': result['id'], 'profile_version': profile['profile_version']}
+        self.store.event('candidate.reranked' if reused else 'candidate.evaluated', candidate_id,
+                         {'assessment_id': result['id']})
+        return {'assessment_id': result['id'], 'profile_version': profile['profile_version'],
+                'model_reused': reused}
 
     @staticmethod
     def _equity_assessment(candidate_id, profile):

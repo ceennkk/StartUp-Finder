@@ -49,6 +49,8 @@ export interface Assessment {
   criteria: Criterion[];
   score?: number | null;
   criteria_score?: number | null;
+  score_confidence?: "high" | "medium" | "low";
+  score_provisional?: boolean;
   equity_status?: "equity_confirmed" | "equity_status_unclear" | "no_public_equity_round_found" | null;
   eligibility_status?: "htgf_eligible" | "htgf_not_eligible" | "htgf_unclear" | "pre_company_candidate" | null;
   eligibility_effect?: "requirements_met" | "requirements_not_met" | "eligibility_unverified" | "company_not_registered" | string;

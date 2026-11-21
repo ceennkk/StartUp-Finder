@@ -79,10 +79,11 @@ No current web check is implied by the assessment date.
 
 ## Effect on live candidate ranking
 
-The backend applies these as hard gates before exposing a candidate score. A
-confirmed failed requirement sets the score to zero; an unverified review or a
-pre-company candidate has no rankable score. Only candidates with all three
-requirements supported proceed to the separate sourcing score. A registered
+The backend exposes a sourcing score for every completed assessment. A
+confirmed failed requirement sets the score to zero; unverified requirements
+leave the score visible as provisional. Missing sourcing criteria use a neutral
+50-point prior, with evidence coverage and confidence exposed alongside the
+score. A registered
 German seat, a supported relocation plan, or a supported plan to establish a
 German permanent establishment satisfies the location requirement. The age
 limit is three years inclusive from the official registry entry date. The

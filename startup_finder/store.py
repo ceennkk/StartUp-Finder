@@ -124,7 +124,7 @@ class Store:
             clock = time.time()
             self.sql(c, "UPDATE jobs SET status=CASE WHEN attempts < max_attempts THEN 'queued' ELSE 'failed' END, error='Worker lease expired', updated_at=? WHERE status='running' AND lease_until < ?", (now(), clock))
             suffix = ' FOR UPDATE SKIP LOCKED' if self.postgres else ''
-            row = self.sql(c, "SELECT * FROM jobs WHERE status='queued' AND available_at <= ? ORDER BY created_at LIMIT 1" + suffix, (clock,)).fetchone()
+            row = self.sql(c, "SELECT * FROM jobs WHERE status='queued' AND available_at <= ? ORDER BY CASE kind WHEN 'evaluate' THEN 0 WHEN 'research' THEN 1 WHEN 'process' THEN 2 ELSE 3 END, created_at LIMIT 1" + suffix, (clock,)).fetchone()
             if not row:
                 return None
             token = uid()

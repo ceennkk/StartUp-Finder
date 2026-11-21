@@ -258,6 +258,8 @@ export function CandidatePanel({ id, preview, onChanged, onClose }: { id: string
       <div className="fa-profile__section-heading"><h3>{t("assessment")}</h3>{assessment ? <span className="fa-profile__score">{assessment.score}<small>/100</small></span> : <span className="fa-profile__pending">{t("scorePending")}</span>}</div>
       {assessment && <>
       <p className="fa-cand__summary">{assessment.summary} <EvidenceRefs ids={assessment.evidence_ids} evidence={candidate.evidence} /></p>
+      {assessment.score_provisional && <small className="fa-profile__finance-caveat">{t("provisionalScoreNote", { count: assessment.scored_criteria ?? 0 })}</small>}
+      {(assessment.funding_effect === "confirmed_dilutive_funding_zero_score" || assessment.funding_effect === "equity_confirmed_zero_score") && <small className="fa-profile__finance-caveat">{t("dilutiveFundingPenalty")}</small>}
       <details className="fa-profile__details">
         <summary>{t("whyScore")}</summary>
         <div className="fa-cand__criteria">

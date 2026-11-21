@@ -4,7 +4,7 @@
 
 StartUp-Finder identifies potential startups and early-stage ventures from public traces in research, universities, grant-funded projects, open source, and early business activity, and makes them traceable and reviewable. The focus is on evidence with provenance, not on collecting the largest possible number of records.
 
-This repository is a **team prototype (MVP)**, not a finished public multi-user platform. Assessments and scores are research aids, not investment recommendations or HTGF investment decisions.
+This repository contains the data collectors and the live StartUp-Finder product prototype. It is intended for local development by the team; it is not a finished public multi-user platform. Assessments and scores are research aids, not investment recommendations or HTGF investment decisions.
 
 `ventureradar`, `VentureRadar-Ingestion`, and the package/table names are historical technical names; the product is **StartUp-Finder**.
 
@@ -14,21 +14,22 @@ This repository is a **team prototype (MVP)**, not a finished public multi-user 
 2. [Repository layout](#repository-layout)
 3. [Architecture](#architecture)
 4. [Setup](#setup)
-5. [Data collection (collector)](#data-collection-collector)
-6. [Early-signal discovery](#early-signal-discovery)
-7. [Finder pipeline: API, worker, and knowledge graph](#finder-pipeline-api-worker-and-knowledge-graph)
-8. [Frontend](#frontend)
-9. [Grants, equity, and the financial model](#grants-equity-and-the-financial-model)
-10. [HTGF assessment (offline)](#htgf-assessment-offline)
-11. [LLM allowlist (ingestion)](#llm-allowlist-ingestion)
-12. [Data artifacts](#data-artifacts)
-13. [Database schema](#database-schema)
-14. [Data quality, privacy, and legal considerations](#data-quality-privacy-and-legal-considerations)
-15. [Error handling](#error-handling)
-16. [Adding a source](#adding-a-source)
-17. [Tests](#tests)
-18. [Known limitations](#known-limitations)
-19. [Further documentation](#further-documentation)
+5. [Use the repository](#use-the-repository)
+6. [Data collection (collector)](#data-collection-collector)
+7. [Early-signal discovery](#early-signal-discovery)
+8. [Finder pipeline: API, worker, and knowledge graph](#finder-pipeline-api-worker-and-knowledge-graph)
+9. [Frontend](#frontend)
+10. [Grants, equity, and the financial model](#grants-equity-and-the-financial-model)
+11. [Eligibility and ranking](#eligibility-and-ranking)
+12. [HTGF assessment (offline)](#htgf-assessment-offline)
+13. [LLM allowlist (ingestion)](#llm-allowlist-ingestion)
+14. [Data artifacts and database schema](#data-artifacts-and-database-schema)
+15. [Data quality, privacy, and legal considerations](#data-quality-privacy-and-legal-considerations)
+16. [Error handling](#error-handling)
+17. [Adding a source](#adding-a-source)
+18. [Checks](#checks)
+19. [Known limitations](#known-limitations)
+20. [Further documentation](#further-documentation)
 
 ## Overview and implementation status
 
@@ -36,10 +37,10 @@ This repository is a **team prototype (MVP)**, not a finished public multi-user 
 |---|---|---|
 | **Data collection** (`app/`, `ventureradar` CLI) | Collect public or manually supplied sources, normalize them, and store them in PostgreSQL (Neon) with provenance | Implemented for `openalex`, `arxiv`, `github`, `huggingface`, `exist`, `university`, `cordis`, and `manual_import`; live verification varies by source |
 | **Early-signal discovery** (`app/discovery/`) | Deterministic classification of stored signals/observations and limited text-mention rules | Implemented and tested; does not classify startups |
-| **Finder pipeline** (`startup_finder/`) | Adapter bridge, relevance checks, Graphiti/Neo4j knowledge graph, candidate profiles, research, assessment, ranking, JSON API | Prototype; requires PostgreSQL, Neo4j, and OpenAI; no exactly-once guarantee |
-| **Frontend** (`frontend/`) | Next.js interface for candidates, shortlist, search jobs, sources, pipeline, graph, and a read-only data inventory view | Prototype; communicates only with the Finder API (except `/datenbestand`) |
-| **Financial model** (`app/finance/`, `app/evidence/`) | Model grants and external equity separately and assess them conservatively | Offline models and tests; **not persisted in Neon** |
-| **HTGF assessment** (`app/htgf/`) | Assess curated candidate evidence against three HTGF criteria | Offline, file-based, with no database, LLM, or network access |
+| **Finder pipeline** (`startup_finder/`) | Adapter bridge, relevance decisions, Graphiti/Neo4j knowledge graph, candidate profiles, research, assessment, evidence-gated ranking, JSON API | Implemented prototype; requires PostgreSQL, Neo4j, and OpenAI; no distributed transaction guarantee |
+| **Frontend** (`frontend/`) | Home dashboard, Discover potential map, How it works, Shortlist, candidate assistant, plus a read-only `/datenbestand` view | Next.js 16 / React 19; product data comes from the live Finder API; no mock mode |
+| **Financial model** (`app/finance/`, Finder API/domain) | Models grants and external equity separately; Finder stores versioned finance reviews in its PostgreSQL record store | Implemented data model and API; evidence/review remains curated and separate from LLM research claims |
+| **Eligibility assessment** (`app/htgf/`, Finder API/domain) | Assesses Germany connection, technology scope, and commercial-register age from cited evidence | Deterministic offline CLI plus append-only live Finder snapshots; no automatic official-register verification |
 | **LLM allowlist** (`app/llm/`) | Permission checks, evidence validation, and a fake provider for synthetic data | Deny by default; no real provider integration on the ingestion side |
 | **Pitch** (`pitch/`) | Pitch video with synthetic demo data | Separate supporting project |
 
@@ -65,7 +66,7 @@ Important boundaries:
 | `app/llm/` | Allowlist, authorization, analysis schema, fake provider, and runner |
 | `app/http/`, `app/ingestion/`, `app/normalization/`, `app/utils/` | HTTP client, Pydantic types, normalization, and utilities |
 | `startup_finder/` | Finder API, worker, store, adapter bridge, Graphiti clients, ontology, candidates, ranking, rebuild |
-| `frontend/` | Next.js 16 / React 19 frontend |
+| `frontend/` | Next.js 16 / React 19 product frontend and server-rendered read-only data inventory |
 | `data/candidates/` | Point-in-time candidate analysis (as of 2026-11-20) and HTGF inputs/outputs |
 | `data/exports/` | Pilot exports for the knowledge graph and finance |
 | `docs/` | Architecture, API contract, signal contract, LLM allowlist, financial model, HTGF, pilot handoff, ontology |
@@ -106,21 +107,67 @@ flowchart LR
 
 ## Setup
 
-Requirements: Python 3.12+, Docker (local test database), Node.js (frontend), and a Neon project for production data. The Finder pipeline additionally requires Neo4j and OpenAI access.
+Requirements: Git, Python 3.12+, Node.js 20.9+, Docker with Compose, and an OpenAI API key for the Finder worker. The local stack uses PostgreSQL and Neo4j containers. No Neon account is needed for local development.
 
-```powershell
-# Keep the virtual environment outside OneDrive
-python -m venv C:\Users\<you>\venvs\startup-finder
-C:\Users\<you>\venvs\startup-finder\Scripts\python.exe -m pip install -r requirements.txt
-# Optional: Finder pipeline with Graphiti
-C:\Users\<you>\venvs\startup-finder\Scripts\python.exe -m pip install -e ".[live,dev]"
+### 1. Clone and install Python dependencies
 
-Copy-Item .env.example .env        # Fill in locally; never commit this file
-docker compose up -d               # Local PostgreSQL 16 on port 5433 (tests / fallback)
-python -m app.cli database status
+macOS/Linux:
+
+```sh
+git clone https://github.com/ceennkk/StartUp-Finder.git
+cd StartUp-Finder
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e ".[live,dev]"
 ```
 
-`python -m app.cli database init` runs `alembic upgrade head` and applies all revisions (currently `0001` base schema and `0002` `llm_analyses`). **Never run this against Neon without first verifying the target.**
+Windows PowerShell:
+
+```powershell
+git clone https://github.com/ceennkk/StartUp-Finder.git
+cd StartUp-Finder
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -e ".[live,dev]"
+```
+
+The `live` extra installs `graphiti-core`; `dev` installs test dependencies. The collector-only workflow can instead use `python -m pip install -e ".[dev]"`.
+
+### 2. Configure local services and secrets
+
+```sh
+cp .env.example .env
+```
+
+Edit `.env` locally. For a self-contained development database, set `DATABASE_URL` to the PostgreSQL container started below and set matching `POSTGRES_*` and `NEO4J_PASSWORD` values. Add your OpenAI key. Keep `.env` private and never commit it. Do not point local setup or database tests at Neon or a shared database.
+
+```dotenv
+POSTGRES_USER=startup
+POSTGRES_PASSWORD=choose-a-local-password
+POSTGRES_DB=startup
+DATABASE_URL=postgresql://startup:choose-a-local-password@127.0.0.1:5432/startup
+NEO4J_PASSWORD=choose-another-local-password
+NEO4J_URI=bolt://127.0.0.1:7687
+OPENAI_API_KEY=your-key
+DECISION_PROVIDER=off
+```
+
+`DECISION_PROVIDER=off` disables optional decision routing while retaining the generative Finder model. To use OpenAI Decision routing, choose `DECISION_PROVIDER=openai` and set `OPENAI_DECISIONS_MODEL` to a model ID enabled for your account. The Finder uses `OPENAI_MODEL` (default `gpt-6-luna`) for generation.
+
+### 3. Start the local databases and initialize schemas
+
+```sh
+docker compose up -d postgres neo4j
+python -m app.cli database init       # Collector schema via Alembic
+python -m app.cli database status
+python -m startup_finder init-db      # Finder records, jobs, leases, schema_version
+```
+
+The collector and Finder use the same `DATABASE_URL` but separate schemas/models: Alembic manages collector tables; `startup_finder init-db` creates the Finder record/job tables. The `docker-compose.yml` (hyphenated) is a separate disposable test database on port `5433`; do not confuse it with the local application stack in `compose.yml` on port `5432`.
+
+`python -m app.cli database init` runs `alembic upgrade head`. Before running either initialization command, verify that `DATABASE_URL` points at the intended local database. **Never initialize or run destructive database tests against Neon or a shared database.**
 
 ### Configuration (`.env`)
 
@@ -128,7 +175,7 @@ python -m app.cli database status
 
 | Variable | Required for | Notes |
 |---|---|---|
-| `DATABASE_URL` | Collector, discovery, LLM, Finder | Used by both the collector CLI and Finder. For the collector, `postgresql://` is automatically converted to psycopg 3. |
+| `DATABASE_URL` | Collector, discovery, LLM, Finder | Shared PostgreSQL connection string. The collector uses SQLAlchemy; Finder uses psycopg 3. |
 | `DATABASE_URL_DIRECT` | Alembic | Unpooled Neon URL; Alembic falls back to `DATABASE_URL` if this is unset. Collectors do **not** use it — to run collectors against the direct endpoint, set `DATABASE_URL` accordingly. |
 | `TEST_DATABASE_URL` | Database tests | Use only a disposable database (e.g. Docker at `127.0.0.1:5433`). Tests drop the `public` schema. |
 | `GITHUB_TOKEN` | `github` | Token with public read access |
@@ -138,10 +185,10 @@ python -m app.cli database status
 | `MANUAL_IMPORT_DIR` | `manual_import` | Defaults to `data/manual_imports/`; git-ignored |
 | `HTTP_TIMEOUT_SECONDS`, `HTTP_MAX_RETRIES`, `LOG_LEVEL`, `LOG_FORMAT`, `OBSERVATION_BUCKET` | Collector | Runtime parameters |
 | `HOST`, `PORT`, `API_TOKEN`, `CORS_ORIGINS`, `APP_MODE` | Finder API | `API_TOKEN` is required if `HOST` is not loopback; `APP_MODE` must be unset or `live` |
-| `OPENAI_API_KEY`, `OPENAI_MODEL` | Finder worker | Required to start the Finder |
+| `OPENAI_API_KEY`, `OPENAI_MODEL` | Finder worker | Required for generation, research, and assessment; default model is `gpt-6-luna` |
 | `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`, `NEO4J_DATABASE` | Finder | Required to start the Finder |
 | `GRAPHITI_GROUP_ID`, `GRAPHITI_CLIENT_FACTORY`, `GRAPHITI_TELEMETRY_ENABLED`, `SEMAPHORE_LIMIT` | Finder | Graphiti configuration |
-| `DECISION_PROVIDER`, `OPENAI_DECISIONS_MODEL`, `JEV_API_KEY`, `JEV_MODEL` | Finder (optional) | `off`, `openai`, or `jev`; unsupported options raise an error instead of silently falling back |
+| `DECISION_PROVIDER`, `OPENAI_DECISIONS_MODEL`, `JEV_API_KEY`, `JEV_MODEL` | Finder | Set `off`, `openai`, or `jev`; provider-specific access and model IDs are required when enabled |
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | `compose.yml` | Local Finder stack |
 
 ### Docker variants
@@ -152,6 +199,64 @@ python -m app.cli database status
 | `compose.yml` | Local PostgreSQL (port `5432`) and Neo4j (`7474`/`7687`) for the Finder pipeline |
 | `compose.app.yml` | Adds `api` and `worker`: `docker compose -f compose.yml -f compose.app.yml up --build` |
 | `Dockerfile` | Image for the Finder API/worker (`python -m startup_finder serve`) |
+
+For the simplest local workflow, run only PostgreSQL and Neo4j in Docker and start API/worker from the Python environment. The optional `compose.app.yml` binds the API inside the container to `0.0.0.0`; set a nonempty `API_TOKEN` before using it.
+
+## Use the repository
+
+The project has two connected workflows: **collect source data** with `app/`, then **turn eligible source records into candidate profiles** with `startup_finder/`. The frontend is the normal user interface. A useful first local run is:
+
+1. Complete the [setup](#setup), verify `DATABASE_URL`, and start PostgreSQL/Neo4j.
+2. Run one small collector preview, then collect a small sample:
+
+   ```sh
+   python -m app.cli collect openalex --limit 10 --dry-run
+   python -m app.cli collect openalex --limit 10
+   python -m app.cli database status
+   ```
+
+3. In separate terminals, start the API and worker:
+
+   ```sh
+   python -m startup_finder serve
+   ```
+
+   ```sh
+   python -m startup_finder worker
+   ```
+
+   The worker checks for new or changed collector records on a 60-second schedule, then queues relevance, graph extraction, profile, research, and assessment work. Model and graph calls can incur cost.
+
+4. Start the UI in another terminal:
+
+   ```sh
+   cd frontend
+   npm ci
+   npm run dev
+   ```
+
+   Open <http://localhost:3000>. The API must allow this origin in `CORS_ORIGINS` (already listed in `.env.example`). The UI has no mock/demo mode and hides product data unless the backend confirms live mode.
+
+5. Use **Home** for system activity, **Discover** for candidate profiles, **How it works** for the pipeline overview, and **Shortlist** for saved candidates. Candidate profiles show evidence and assessment details; the assistant answers against candidate and graph data.
+
+Useful day-to-day commands:
+
+```sh
+python -m app.cli database status
+python -m app.cli ingestion history --limit 10
+python -m startup_finder sync-adapters --limit 10 --dry-run
+python -m pytest -m "not db and not live"
+cd frontend && npm run check
+```
+
+`sync-adapters --dry-run` still opens the configured database and initializes the Finder's own tables, but it does not queue process jobs. A normal `sync-adapters` run queues work for the worker. Before collecting or processing data, double-check the target database and remember that the worker can call paid model/embedding services.
+
+### Typical contribution flow
+
+1. Create a feature branch from the latest `main`.
+2. Make the change in the appropriate module, update the corresponding contract/docs, and add or update a focused test when behavior changes.
+3. Run safe checks from [Checks](#checks); use only a disposable local database for database tests.
+4. Commit the change and open a PR to `main`. Do not commit `.env`, database dumps, credentials, or generated media under `pitch/*/out/`.
 
 ## Data collection (collector)
 
@@ -250,12 +355,12 @@ Details: [docs/phase2-signal-contract.md](docs/phase2-signal-contract.md).
 
 The Finder pipeline (`startup_finder/`) builds candidate profiles and a knowledge graph from collector data. It runs only in production mode and starts only with PostgreSQL `DATABASE_URL`, Neo4j, and `OPENAI_API_KEY`.
 
-```powershell
+```sh
 python -m startup_finder init-db        # Creates Finder tables (records, jobs, leases, schema_version)
 python -m startup_finder serve          # JSON API; default http://127.0.0.1:8000
 python -m startup_finder worker         # Queue, relevance checks, Graphiti, research, assessment
-python -m startup_finder sync-adapters --source exist --record-type success_story --limit 1 --dry-run
-python -m startup_finder sync-adapters --source exist --record-type success_story --limit 1
+python -m startup_finder sync-adapters --source exist --limit 10 --dry-run
+python -m startup_finder sync-adapters --source exist --limit 10
 python -m startup_finder rebuild-graph --group-id startup_finder_de_ontology_v1
 ```
 
@@ -264,25 +369,25 @@ python -m startup_finder rebuild-graph --group-id startup_finder_de_ontology_v1
 Workflow:
 
 1. **Adapter bridge:** Reads `source_records` and their revisions, entities, aliases, relationships, signals, and observations in read-only mode and creates Finder records. Only records with an HTTP(S) URL, a title, and usable text are imported. The worker polls for new adapter records every 60 seconds.
-2. **Relevance check:** The decision route assesses each record; only relevant records are checked by the generative model for a specifically named venture candidate with a verbatim evidence quote. General publications and programs remain source records in Neon but are not added to the graph.
+2. **Relevance check:** The decision route assesses each record; only relevant records are checked by the generative model for a specifically named venture candidate with a verbatim evidence quote. General publications and programs remain in collector PostgreSQL but are not added to the Finder graph.
 3. **Knowledge graph:** Graphiti writes to Neo4j using the vocabulary in [docs/startup-sourcing-ontology.ttl](docs/startup-sourcing-ontology.ttl) (ventures, people, organizations, products, technologies, markets, investors, funding rounds, programs, locations, metrics). The API reads a materialized subset in PostgreSQL.
 4. **Research and assessment:** Each new candidate triggers research (product, team, location, market, funding rounds/investors) and assessment. Funding is confirmed only when a quote has been verified in a retrieved original document; `not_found` means only “no evidence found in the sources searched.”
-5. **Ranking:** Four equally weighted criteria; at least three must be assessed with evidence references. The weighting is an unvalidated initial version.
+5. **Ranking:** Four equally weighted sourcing criteria create a visible score; incomplete evidence is marked provisional. Confirmed eligibility failure or external equity sets the final score to zero. Evaluation jobs have priority over ingestion backlog so profiles receive scores promptly. See [Eligibility and ranking](#eligibility-and-ranking).
 
 API endpoints and data formats: [docs/frontend-contract.md](docs/frontend-contract.md). Search jobs collect configured sources; the prompt is stored as context only—semantic search is not implemented.
 
 ## Frontend
 
-```powershell
+```sh
 cd frontend
 npm ci
 npm run dev      # http://localhost:3000
-npm run check    # Typecheck + Build
+npm run check    # Typecheck + production build
 ```
 
-The interface communicates with the Finder API through `frontend/src/finder/api/client.ts` (default `http://localhost:8000`; `CORS_ORIGINS` must include `http://localhost:3000`). Product data is displayed only when the API reports `live`; there is no mock API. No token is required on loopback; when bound to a network interface, the backend requires `API_TOKEN`.
+The product frontend is served at `/`. Its navigation is **Home**, **Discover**, **How it works**, and **Shortlist**; candidate details open from Discover and the candidate assistant can query candidate and graph data. The language switch supports English and German. The interface communicates with the Finder API through `frontend/src/finder/api/client.ts` (default `http://localhost:8000`; `CORS_ORIGINS` must include `http://localhost:3000`). Product data is displayed only when the API reports `live`; there is no mock API. No token is required for a loopback-bound API; a non-loopback API requires `API_TOKEN`.
 
-`/datenbestand` is a separate technical view that reads collector data from Neon on the server side using read-only transactions (entities, relationships, records, runs). Use a database role without write permissions for deployments. Details: [frontend/README.md](frontend/README.md).
+`/datenbestand` is a separate technical view that reads collector data from the configured PostgreSQL database on the server side using read-only transactions (entities, relationships, records, runs). It is not the candidate or knowledge-graph view. Details: [frontend/README.md](frontend/README.md).
 
 ## Grants, equity, and the financial model
 
@@ -294,23 +399,37 @@ The interface communicates with the Finder API through `frontend/src/finder/api/
   * `no_public_equity_round_found` — only after documented, human-reviewed research across company, registry, investor, and media sources; this is **not** proof that no private financing exists.
   * `equity_status_unclear` — all other cases.
 * A category such as “Venture Capital” alone does not establish an equity finding. There is no dedicated donation category or fields for purchased shares or ownership percentages.
-* **Persistence:** Financial events and equity assessments are **not** stored in Neon tables. For four pilot cases (OnSite, nodeline, Floronics, deepset), they are in [data/exports/pilot_finance.json](data/exports/pilot_finance.json) and reference Neon entity and source record IDs. All four assessments are `equity_status_unclear`; the reported 2023 USD 30 million deepset round is recorded, but there is no human-reviewed equity finding.
+* **Persistence:** The standalone `app/finance/` model is a deterministic Python domain model. The live Finder stores curated, append-only finance snapshots in its own PostgreSQL record namespace; it does not write them to the collector's normalized finance tables. The pilot export at [data/exports/pilot_finance.json](data/exports/pilot_finance.json) is a separate point-in-time artifact.
 
-## HTGF assessment (offline)
+## Eligibility and ranking
 
-Assesses manually curated candidate evidence against three HTGF criteria (technology, company age, and connection to Germany). No database access, online research, or LLM is used; this is not an investment decision.
+The live Finder records three eligibility checks alongside every numeric score:
 
-```powershell
-python -m app.htgf            # or: python -m app.cli htgf run
+1. The company has a German registered seat, or there is evidence of a concrete plan to move to Germany or establish a German permanent establishment.
+2. It is a technology startup in Digital Tech, Industrial, Climate & Deep Tech, Life Sciences, Chemistry, or an adjacent field.
+3. Its official commercial-register entry date is no more than three years before the assessment date (inclusive through the third calendar anniversary).
+
+Evidence-backed snapshots remain append-only and can be read/written through `GET`/`POST /api/candidates/{id}/eligibility`. A confirmed failure sets the score to `0`. Missing or inconclusive eligibility evidence leaves a **provisional** score visible; a documented pre-company venture is also scored provisionally. The system does not infer a register date or Germany plan from an unsupported founding year, incubator location, or model guess. Candidate profiles show the evidence and uncertainty.
+
+The model assesses four sourcing criteria: founding intent, technical substance, customer problem, and demand. They are equally weighted (`strong`=100, `moderate`=67, `weak`=33). Unknown criteria receive a neutral `50` in the composite score, so every completed assessment has a numeric result; `scored_criteria` and `score_confidence` show how much is evidence-backed, and the profile marks incomplete reviews provisional. A confirmed eligibility failure, manually confirmed external equity, or quote-verified confirmed dilutive/mixed funding sets the final score to `0`. Non-dilutive grants, stipends, research funding, and prizes do not incur that penalty. “No public round found” does not prove that no private financing exists.
+
+Ranking policy is implemented in `startup_finder/ranking.py`; eligibility validation is in `app/htgf/assessment.py`. The numerical sourcing weights are an initial, unvalidated model and need evaluation against human-reviewed examples.
+
+## HTGF assessment (offline and live)
+
+The CLI workflow assesses manually curated evidence against the same three criteria without database, network, or LLM access. The live Finder uses the deterministic evaluator with evidence snapshots stored in PostgreSQL; it does not automatically verify official registry or Germany-relocation evidence. This assessment is a sourcing aid, not an investment decision.
+
+```sh
+python -m app.cli htgf run
 ```
 
-Input: `data/candidates/htgf_input.json`; outputs: `htgf_assessments.json` (append-only history), `htgf_overview.csv`, `htgf_research_report.md`. Details: [docs/htgf-assessment.md](docs/htgf-assessment.md).
+Input defaults to `data/candidates/htgf_input.json`; outputs include append-only assessment history, an overview CSV, and a research report under `data/candidates/`. Details: [docs/htgf-assessment.md](docs/htgf-assessment.md).
 
 ## LLM allowlist (ingestion)
 
 Before each analysis, `app/llm/` checks a source/field allowlist ([app/config/llm_allowlist.yaml](app/config/llm_allowlist.yaml), `default_policy: deny`, currently empty) and validates that each piece of evidence appears verbatim in a curated field.
 
-```powershell
+```sh
 python -m app.cli llm preview --limit 100   # Read-only permission check
 python -m app.cli llm run --limit 100       # Writes to llm_analyses; synthetic sources only, local fake provider
 ```

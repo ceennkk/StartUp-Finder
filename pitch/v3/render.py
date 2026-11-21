@@ -91,11 +91,23 @@ class Site:
         self.page.mouse.move(x, y)
         extra = js or ""
         ticker = f"const tr=document.querySelector('.hm-ticker__track'); if(tr) tr.style.transform='translateX(-{ticker_t * 55:.1f}px)';" if ticker_t is not None else ""
-        self.page.evaluate(
+        script = (
             f"() => {{ const c=document.getElementById('pitch-cursor'); if(c){{c.style.left='{x}px';c.style.top='{y}px';}}"
             f" const r=document.getElementById('pitch-ring'); if(r){{r.style.left='{x}px';r.style.top='{y}px';r.style.opacity='{max(0.0, 1 - ring):.2f}';r.style.transform='scale({0.6 + ring * 0.9:.2f})';}}"
             f" {ticker} {extra} }}"
         )
+        for attempt in range(4):
+            try:
+                self.page.evaluate(script)
+                return self.page.screenshot(type="png")
+            except Exception:  # dev server reloaded the page mid-capture: wait, restore overlay, retry
+                self.page.wait_for_timeout(3000)
+                try:
+                    self.page.wait_for_selector(".fa-bar", timeout=60000)
+                    self.page.wait_for_timeout(1500)
+                    self.prep()
+                except Exception:
+                    pass
         return self.page.screenshot(type="png")
 
 

@@ -193,6 +193,29 @@
   .db svg { width: 170px; height: 200px; }
   .db b { font: 700 26px/1.1 var(--ag); }
   .db small { font: 500 16px/1.3 var(--ag); letter-spacing: .06em; text-transform: uppercase; }
+  /* ---- top pick ---- */
+  [data-scene="pick_intro"] .pk { position: absolute; left: 140px; right: 140px; top: 120px; bottom: 100px; display: grid; grid-template-columns: 1.15fr 1fr; gap: 80px; align-items: center; }
+  .pk__name { font: 700 180px/.9 var(--ag); letter-spacing: -.05em; margin: 26px 0 30px; }
+  .pk__meta { font: 400 34px/1.35 var(--face); max-width: 20em; }
+  .pk__card { border-radius: 48px; background: #fff; border: 1px solid var(--hair); padding: 56px; position: relative; overflow: hidden; }
+  .pk__card .orb { right: -30%; top: -40%; width: 90%; height: 120%; }
+  .pk__score { position: relative; display: flex; align-items: baseline; gap: 14px; margin-bottom: 30px; }
+  .pk__score b { font: 400 240px/.8 var(--face); letter-spacing: -.06em; }
+  .pk__score small { font: 500 24px/1 var(--ag); }
+  .pk__crit { position: relative; }
+  .pk__crit div { display: grid; grid-template-columns: 1fr auto; padding: 18px 0 15px; border-top: 1px solid var(--hair); font: 400 28px/1 var(--face); }
+  .pk__crit small { font: 500 16px/1 var(--ag); letter-spacing: .06em; text-transform: uppercase; }
+  .steps { position: absolute; left: 140px; right: 140px; top: 470px; display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1.5px solid #000; }
+  .steps div { padding: 26px 22px 0 0; display: grid; gap: 12px; align-content: start; }
+  .steps div + div { padding-left: 22px; border-left: 1px solid var(--hair); }
+  .steps small { font: 500 16px/1 var(--ag); letter-spacing: .08em; text-transform: uppercase; }
+  .steps b { font: 700 28px/1.1 var(--ag); letter-spacing: -.015em; }
+  .steps span { font: 400 22px/1.3 var(--face); }
+  .steps .hot { background: none; }
+  .steps .hot b { background: var(--grad) center / 300%; -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .verdict { position: absolute; left: 140px; right: 140px; bottom: 90px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+  .verdict .pill { font-size: 24px; }
+  .verdict .pill.grad { background: #fff var(--grad) center / 260%; box-shadow: none; }
 </style>
 </head>
 <body>
@@ -325,6 +348,35 @@
     <div class="db" data-in="0.38"><svg viewBox="0 0 170 200"><ellipse cx="85" cy="30" rx="70" ry="22" fill="#fff" stroke="#000" stroke-width="2"/><path d="M15 30v140c0 12 31 22 70 22s70-10 70-22V30" fill="#fff" stroke="#000" stroke-width="2"/><path d="M15 80c0 12 31 22 70 22s70-10 70-22M15 125c0 12 31 22 70 22s70-10 70-22" fill="none" stroke="#000" stroke-width="2"/></svg><b>Website database</b><small>Profiles &amp; scores</small></div>
   </div>
 </div><span class="tag" data-in="0.1">Example</span></section>
+
+<section class="scene" data-scene="pick_intro"><div class="cam"><div class="pk">
+  <div><div class="kicker" data-in="0.03">Our top pick</div><div class="pk__name" data-in="0.08">nodeline</div>
+    <p class="pk__meta" data-in="0.2">Spin-out from the KIT founder ecosystem. AI that turns business requirements into secure data pipelines for industry.</p></div>
+  <div class="pk__card" data-in="0.14"><div class="orb"></div>
+    <div class="pk__score"><b data-count="92" data-in="0.2">0</b><small>/100</small></div>
+    <div class="pk__crit">
+      <div data-in="0.3"><span>Founding intent</span><small>strong</small></div>
+      <div data-in="0.36"><span>Technical substance</span><small>strong</small></div>
+      <div data-in="0.42"><span>Customer problem</span><small>strong</small></div>
+      <div data-in="0.48"><span>Demand</span><small>moderate</small></div>
+    </div>
+  </div>
+</div><span class="tag" data-in="0.1">Real candidate · public sources</span></div></section>
+
+<section class="scene" data-scene="pick_why"><div class="cam">
+  <div class="hdr"><div class="kicker" data-in="0.02">Why nodeline</div><h2 data-in="0.05">Early, technical,<br /><em>not yet equity-funded.</em></h2></div>
+  <div class="steps">
+    <div data-in="0.08"><small>Origin</small><b>Founders from research</b><span>KIT Gründerschmiede</span></div>
+    <div data-in="0.16"><small>Grant</small><b>€798,682 StartUpSecure</b><span>public funding for ShieldConnect</span></div>
+    <div data-in="0.24"><small>Product</small><b>flowAI · nodeline box</b><span>AI schema mapping and ETL</span></div>
+    <div data-in="0.32"><small>Traction</small><b>First pilot customers</b><span>pilot partnerships underway</span></div>
+    <div class="hot" data-in="0.42"><small>Now</small><b>Building the team</b><span>engineering and product hires</span></div>
+  </div>
+  <div class="verdict">
+    <span class="pill" data-in="0.55">No confirmed equity yet</span>
+    <span class="pill grad" data-in="0.62">The right moment for a seed conversation</span>
+  </div>
+</div><span class="tag" data-in="0.1">Real candidate · public sources</span></section>
 
 <section class="scene" data-scene="end"><div class="cam"><div class="wrap">
   <img src="../../frontend/public/htgf/images/htgf-logo--black.svg" alt="" data-in="0.05" />
